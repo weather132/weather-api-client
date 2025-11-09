@@ -28,10 +28,10 @@ public class WeatherApiClient {
     public List<List<Float>> RequestShortTermGridForecast(String targetTime, ForecastCategory forecastVar) throws URISyntaxException {
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.SHORT_GRID_FORECAST))
-                .attribute("tmfc", getLatestAnnounceTime())
-                .attribute("tmef", targetTime)
-                .attribute("vars", forecastVar)
-                .attribute("authKey", apiKey)
+                .attribute("tmfc", getLatestAnnounceTime()) // 발표시간
+                .attribute("tmef", targetTime)              // 발효시간
+                .attribute("vars", forecastVar)             // 예보변수
+                .attribute("authKey", apiKey)               // api 키
                 .retrieve()
                 .body(String.class);
 
