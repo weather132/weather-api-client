@@ -1,6 +1,5 @@
 package com.github.yun531.climate.config;
 
-import com.github.yun531.climate.weatherApi.WeatherApiClient;
 import com.github.yun531.climate.weatherApi.WeatherApiUrls;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
