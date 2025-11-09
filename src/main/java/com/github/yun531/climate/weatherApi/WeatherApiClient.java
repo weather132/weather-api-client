@@ -6,7 +6,6 @@ import org.springframework.web.client.RestClient;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,24 +40,25 @@ public class WeatherApiClient {
 
     private String getLatestAnnounceTime() {
         LocalDateTime nowDateTime = LocalDateTime.now();
+
         int nowHour = nowDateTime.getHour();
-        final int[] announceTime = {2, 5, 8, 11, 14, 17, 20, 23};
-        int latestAnnounceHour = Arrays.stream(announceTime).filter((h) -> h <= nowHour)
-                .max()
-                .orElse(23);
+        String latestAnnounceHourStr = hourTo2digitHour(nowHourToLatestAnnounceHour(nowHour));
 
-        String latestAnnounceHourStr = makeHourTo2digitHour(latestAnnounceHour);
-
-        LocalDate nowLocalDate = nowDateTime.toLocalDate();
-        return nowLocalDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-                + latestAnnounceHourStr;
+        return nowDateTime.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + latestAnnounceHourStr;
     }
 
-    private String makeHourTo2digitHour(int latestAnnounceHour) {
+    private int nowHourToLatestAnnounceHour(int nowHour) {
+        final int[] announceTime = {2, 5, 8, 11, 14, 17, 20, 23};
+        return Arrays.stream(announceTime).filter((h) -> h <= nowHour)
+                .max()
+                .orElse(23);
+    }
+
+    private String hourTo2digitHour(int hour) {
         final List<Integer> oneDigitHours = Arrays.asList(2, 5, 8);
-        String latestAnnounceHourStr = Integer.toString(latestAnnounceHour);
-        latestAnnounceHourStr = oneDigitHours.contains(latestAnnounceHour) ? "0" + latestAnnounceHourStr : latestAnnounceHourStr;
-        return latestAnnounceHourStr;
+
+        String hourStr = Integer.toString(hour);
+        return oneDigitHours.contains(hour) ? "0" + hourStr : hourStr;
     }
 
     private List<List<Float>> parseGridData(String responseBody) {
@@ -73,6 +73,7 @@ public class WeatherApiClient {
         for (int i = 0; i < ROW_SIZE * COL_SIZE; i += ROW_SIZE) {
             gridData.add(bodyList.subList(i, Math.min(i + ROW_SIZE, bodyList.size())));
         }
+
         return gridData;
     }
 }
