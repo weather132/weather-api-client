@@ -1,5 +1,6 @@
 package com.github.yun531.climate.weatherApi;
 
+import com.github.yun531.climate.util.WeatherApiUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -28,52 +29,13 @@ public class WeatherApiClient {
     public List<List<Float>> RequestShortTermGridForecast(String targetTime, ForecastCategory forecastVar) throws URISyntaxException {
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.SHORT_GRID_FORECAST))
-                .attribute("tmfc", getLatestAnnounceTime()) // 발표시간
+                .attribute("tmfc", WeatherApiUtil.getLatestAnnounceTime()) // 발표시간
                 .attribute("tmef", targetTime)              // 발효시간
                 .attribute("vars", forecastVar)             // 예보변수
                 .attribute("authKey", apiKey)               // api 키
                 .retrieve()
                 .body(String.class);
 
-        return parseGridData(responseBody);
-    }
-
-    private String getLatestAnnounceTime() {
-        LocalDateTime nowDateTime = LocalDateTime.now();
-
-        int nowHour = nowDateTime.getHour();
-        String latestAnnounceHourStr = hourTo2digitHour(nowHourToLatestAnnounceHour(nowHour));
-
-        return nowDateTime.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + latestAnnounceHourStr;
-    }
-
-    private int nowHourToLatestAnnounceHour(int nowHour) {
-        final int[] announceTime = {2, 5, 8, 11, 14, 17, 20, 23};
-        return Arrays.stream(announceTime).filter((h) -> h <= nowHour)
-                .max()
-                .orElse(23);
-    }
-
-    private String hourTo2digitHour(int hour) {
-        final List<Integer> oneDigitHours = Arrays.asList(2, 5, 8);
-
-        String hourStr = Integer.toString(hour);
-        return oneDigitHours.contains(hour) ? "0" + hourStr : hourStr;
-    }
-
-    private List<List<Float>> parseGridData(String responseBody) {
-        final int ROW_SIZE = 149;
-        final int COL_SIZE = 253;
-
-        List<Float> bodyList = Arrays.stream(responseBody.split(","))
-                .map(Float::parseFloat)
-                .toList();
-
-        List<List<Float>> gridData = new ArrayList<>();
-        for (int i = 0; i < ROW_SIZE * COL_SIZE; i += ROW_SIZE) {
-            gridData.add(bodyList.subList(i, Math.min(i + ROW_SIZE, bodyList.size())));
-        }
-
-        return gridData;
+        return WeatherApiUtil.parseGridData(responseBody);
     }
 }
