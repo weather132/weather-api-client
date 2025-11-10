@@ -14,9 +14,9 @@ class WeatherApiUtilTest {
             "3, 2",
             "23, 23"
     })
-    void nowHourToLatestAnnounceHour(int nowHour, int expected) {
+    void nowHourToShortTermLatestAnnounceHour(int nowHour, int expected) {
         WeatherApiUtil util = new WeatherApiUtil();
-        int actual = ReflectionTestUtils.invokeMethod(util, "nowHourToLatestAnnounceHour", nowHour);
+        int actual = ReflectionTestUtils.invokeMethod(util, "nowHourToShortTermLatestAnnounceHour", nowHour);
         assertEquals(expected, actual);
     }
 

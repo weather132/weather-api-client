@@ -26,6 +26,10 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // https://mvnrepository.com/artifact/com.jayway.jsonpath/json-path
+    implementation 'com.jayway.jsonpath:json-path:2.10.0'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

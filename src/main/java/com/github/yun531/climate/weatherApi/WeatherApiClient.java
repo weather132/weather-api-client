@@ -1,5 +1,6 @@
 package com.github.yun531.climate.weatherApi;
 
+import com.github.yun531.climate.dto.TempForecast;
 import com.github.yun531.climate.util.WeatherApiUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class WeatherApiClient {
     public List<List<Float>> RequestShortTermGridForecast(String targetTime, ForecastCategory forecastVar) throws URISyntaxException {
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.SHORT_GRID_FORECAST))
-                .attribute("tmfc", WeatherApiUtil.getLatestAnnounceTime()) // 발표시간
+                .attribute("tmfc", WeatherApiUtil.getShortTermLatestAnnounceTime()) // 발표시간
                 .attribute("tmef", targetTime)              // 발효시간
                 .attribute("vars", forecastVar)             // 예보변수
                 .attribute("authKey", apiKey)               // api 키
@@ -33,5 +34,19 @@ public class WeatherApiClient {
                 .body(String.class);
 
         return WeatherApiUtil.parseGridData(responseBody);
+    }
+
+    public List<TempForecast> requestMidTermTempForecast(String regid) throws URISyntaxException {
+        String responseBody = restClient.get()
+                .uri(new URI(weatherApiUrls.MID_TEMPERATURE_FORECAST))
+                .attribute("pageNo", 1)
+                .attribute("numOfRows", 1)
+                .attribute("dataType", "JSON")
+                .attribute("regid", regid)
+                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime())
+                .retrieve()
+                .body(String.class);
+
+        return WeatherApiUtil.parseTempForecast(responseBody);
     }
 }

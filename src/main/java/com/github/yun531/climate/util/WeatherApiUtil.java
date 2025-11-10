@@ -1,5 +1,9 @@
 package com.github.yun531.climate.util;
 
+import com.github.yun531.climate.dto.TempForecastResponseItem;
+import com.github.yun531.climate.dto.TempForecast;
+import com.jayway.jsonpath.JsonPath;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -7,27 +11,23 @@ import java.util.Arrays;
 import java.util.List;
 
 public class WeatherApiUtil {
-    public static String getLatestAnnounceTime() {
+
+    public static String getShortTermLatestAnnounceTime() {
         LocalDateTime nowDateTime = LocalDateTime.now();
 
         int nowHour = nowDateTime.getHour();
-        String latestAnnounceHourStr = hourTo2digitHour(nowHourToLatestAnnounceHour(nowHour));
+        String latestAnnounceHourStr = hourTo2digitHour(nowHourToShortTermLatestAnnounceHour(nowHour));
 
         return nowDateTime.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + latestAnnounceHourStr;
     }
 
-    private static int nowHourToLatestAnnounceHour(int nowHour) {
-        final int[] announceTime = {2, 5, 8, 11, 14, 17, 20, 23};
-        return Arrays.stream(announceTime).filter((h) -> h <= nowHour)
-                .max()
-                .orElse(23);
-    }
+    public static String getMidTermLatestAnnounceTime() {
+        LocalDateTime nowDateTime = LocalDateTime.now();
 
-    private static String hourTo2digitHour(int hour) {
-        final List<Integer> oneDigitHours = Arrays.asList(2, 5, 8);
+        int nowHour = nowDateTime.getHour();
+        String latestAnnounceHourStr = hourTo4digitHour(nowHourToMidTermLatestAnnounceHour(nowHour));
 
-        String hourStr = Integer.toString(hour);
-        return oneDigitHours.contains(hour) ? "0" + hourStr : hourStr;
+        return nowDateTime.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + latestAnnounceHourStr;
     }
 
     public static List<List<Float>> parseGridData(String responseBody) {
@@ -44,5 +44,36 @@ public class WeatherApiUtil {
         }
 
         return gridData;
+    }
+
+    public static List<TempForecast> parseTempForecast(String json) {
+        TempForecastResponseItem tempForecastResponseItem = JsonPath.read(json, "$.response.body.items.item[0]");
+        return tempForecastResponseItem.toTempForecastList();
+    }
+
+    private static int nowHourToShortTermLatestAnnounceHour(int nowHour) {
+        final int[] announceTime = {2, 5, 8, 11, 14, 17, 20, 23};
+        return Arrays.stream(announceTime).filter((h) -> h <= nowHour)
+                .max()
+                .orElse(23);
+    }
+
+    private static String hourTo2digitHour(int hour) {
+        final List<Integer> oneDigitHours = Arrays.asList(2, 5, 8);
+
+        String hourStr = Integer.toString(hour);
+        return oneDigitHours.contains(hour) ? "0" + hourStr : hourStr;
+    }
+
+    private static int nowHourToMidTermLatestAnnounceHour(int nowHour) {
+        final int[] announceTime = {6, 18};
+        return Arrays.stream(announceTime)
+                .filter((h) -> h <= nowHour)
+                .max()
+                .orElse(18);
+    }
+
+    private static String hourTo4digitHour(int hour) {
+        return hour == 6 ? "0600" : "1800";
     }
 }
