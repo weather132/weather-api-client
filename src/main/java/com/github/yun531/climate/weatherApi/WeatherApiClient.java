@@ -45,6 +45,7 @@ public class WeatherApiClient {
                 .attribute("dataType", "JSON")
                 .attribute("regid", regid)
                 .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime())
+                .attribute("authKey", apiKey)
                 .retrieve()
                 .body(String.class);
 
