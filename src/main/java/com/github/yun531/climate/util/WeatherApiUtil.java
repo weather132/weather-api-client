@@ -1,5 +1,7 @@
 package com.github.yun531.climate.util;
 
+import com.github.yun531.climate.dto.LandForecast;
+import com.github.yun531.climate.dto.LandForecastResponseItem;
 import com.github.yun531.climate.dto.TempForecastResponseItem;
 import com.github.yun531.climate.dto.TempForecast;
 import com.jayway.jsonpath.JsonPath;
@@ -49,6 +51,11 @@ public class WeatherApiUtil {
     public static List<TempForecast> parseTempForecast(String json) {
         TempForecastResponseItem tempForecastResponseItem = JsonPath.read(json, "$.response.body.items.item[0]");
         return tempForecastResponseItem.toTempForecastList();
+    }
+
+    public static List<LandForecast> parseLandForecast(String json) {
+        LandForecastResponseItem landForecastResponseItem = JsonPath.read(json, "$.response.body.items.item[0]");
+        return landForecastResponseItem.toLandForecastList();
     }
 
     private static int nowHourToShortTermLatestAnnounceHour(int nowHour) {

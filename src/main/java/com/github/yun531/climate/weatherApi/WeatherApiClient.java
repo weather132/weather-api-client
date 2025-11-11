@@ -1,5 +1,6 @@
 package com.github.yun531.climate.weatherApi;
 
+import com.github.yun531.climate.dto.LandForecast;
 import com.github.yun531.climate.dto.TempForecast;
 import com.github.yun531.climate.util.WeatherApiUtil;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,5 +49,20 @@ public class WeatherApiClient {
                 .body(String.class);
 
         return WeatherApiUtil.parseTempForecast(responseBody);
+    }
+
+    public List<LandForecast> requestMidTermLandForecast(String regid) throws URISyntaxException {
+        String responseBody = restClient.get()
+                .uri(new URI(weatherApiUrls.MID_LAND_FORECAST))
+                .attribute("pageNo", 1)
+                .attribute("numOfRows", 1)
+                .attribute("dataType", "JSON")
+                .attribute("regid", regid)
+                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime())
+                .attribute("authKey", apiKey)
+                .retrieve()
+                .body(String.class);
+
+        return WeatherApiUtil.parseLandForecast(responseBody);
     }
 }
