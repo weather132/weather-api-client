@@ -24,6 +24,7 @@ public class WeatherApiClient {
         this.restClient = RestClient.create();
     }
 
+    // TODO : targetTime 정수로 받도록 수정하기.
     public List<List<Float>> RequestShortTermGridForecast(String targetTime, ForecastCategory forecastVar) throws URISyntaxException {
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.SHORT_GRID_FORECAST))
