@@ -66,10 +66,8 @@ public class WeatherApiUtil {
     }
 
     private static String hourTo2digitHour(int hour) {
-        final List<Integer> oneDigitHours = Arrays.asList(2, 5, 8);
-
         String hourStr = Integer.toString(hour);
-        return oneDigitHours.contains(hour) ? "0" + hourStr : hourStr;
+        return hourStr.length() == 1 ? "0" + hourStr : hourStr;
     }
 
     private static int nowHourToMidTermLatestAnnounceHour(int nowHour) {
@@ -81,6 +79,8 @@ public class WeatherApiUtil {
     }
 
     private static String hourTo4digitHour(int hour) {
-        return hour == 6 ? "0600" : "1800";
+        String hourStr = Integer.toString(hour);
+
+        return hourStr.length() == 1 ? "0" + hourStr + "00" : hourStr + "00";
     }
 }
