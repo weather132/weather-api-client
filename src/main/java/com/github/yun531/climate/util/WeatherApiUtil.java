@@ -14,22 +14,26 @@ import java.util.List;
 
 public class WeatherApiUtil {
 
-    public static String getShortTermLatestAnnounceTime() {
-        LocalDateTime nowDateTime = LocalDateTime.now();
+    public static String getShortTermLatestAnnounceTime(LocalDateTime nowDateTime) {
+        int pastHours = pastHoursSinceLatestShortTermAnnouncement(nowDateTime.getHour());
+        LocalDateTime latestAnnounceTime = nowDateTime.minusHours(pastHours);
 
-        int nowHour = nowDateTime.getHour();
-        String latestAnnounceHourStr = hourTo2digitHour(nowHourToShortTermLatestAnnounceHour(nowHour));
-
-        return nowDateTime.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + latestAnnounceHourStr;
+        return formatToShortTermTime(latestAnnounceTime);
     }
 
-    public static String getMidTermLatestAnnounceTime() {
-        LocalDateTime nowDateTime = LocalDateTime.now();
+    public static String getMidTermLatestAnnounceTime(LocalDateTime nowDateTime) {
+        int pastHours = pastHoursSinceLatestMidTermAnnouncement(nowDateTime.getHour());
+        LocalDateTime latestAnnounceTime = nowDateTime.minusHours(pastHours);
 
-        int nowHour = nowDateTime.getHour();
-        String latestAnnounceHourStr = hourTo4digitHour(nowHourToMidTermLatestAnnounceHour(nowHour));
+        return formatToMidTermTime(latestAnnounceTime);
+    }
 
-        return nowDateTime.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + latestAnnounceHourStr;
+    public static String formatToShortTermTime(LocalDateTime localDateTime) {
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+    }
+
+    public static String formatToMidTermTime(LocalDateTime localDateTime) {
+        return localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
     }
 
     public static List<List<Float>> parseGridData(String responseBody) {
@@ -58,29 +62,14 @@ public class WeatherApiUtil {
         return landForecastResponseItem.toLandForecastList();
     }
 
-    private static int nowHourToShortTermLatestAnnounceHour(int nowHour) {
-        final int[] announceTime = {2, 5, 8, 11, 14, 17, 20, 23};
-        return Arrays.stream(announceTime).filter((h) -> h <= nowHour)
-                .max()
-                .orElse(23);
+
+    // 단기예보 발표시간 : 2, 5, 8, 11, 14, 17, 20, 23시 (3시간 간격)
+    private static int pastHoursSinceLatestShortTermAnnouncement(int nowHour) {
+        return (nowHour + 1) % 3;
     }
 
-    private static String hourTo2digitHour(int hour) {
-        String hourStr = Integer.toString(hour);
-        return hourStr.length() == 1 ? "0" + hourStr : hourStr;
-    }
-
-    private static int nowHourToMidTermLatestAnnounceHour(int nowHour) {
-        final int[] announceTime = {6, 18};
-        return Arrays.stream(announceTime)
-                .filter((h) -> h <= nowHour)
-                .max()
-                .orElse(18);
-    }
-
-    private static String hourTo4digitHour(int hour) {
-        String hourStr = Integer.toString(hour);
-
-        return hourStr.length() == 1 ? "0" + hourStr + "00" : hourStr + "00";
+    // 중기예보 발표시간 : 6, 18시 (12시간 간격)
+    private static int pastHoursSinceLatestMidTermAnnouncement(int nowHour) {
+        return (nowHour + 6) % 12;
     }
 }

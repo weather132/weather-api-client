@@ -9,6 +9,7 @@ import org.springframework.web.client.RestClient;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -24,28 +25,30 @@ public class WeatherApiClient {
         this.restClient = RestClient.create();
     }
 
-    // TODO : targetTime 정수로 받도록 수정하기.
-    public List<List<Float>> RequestShortTermGridForecast(String targetTime, ForecastCategory forecastVar) throws URISyntaxException {
+    public List<List<Float>> RequestShortTermGridForecast(int hoursToTargetTime, ForecastCategory forecastVar) throws URISyntaxException {
+        LocalDateTime nowDateTime = LocalDateTime.now();
+        LocalDateTime targetTime = nowDateTime.plusHours(hoursToTargetTime);
+
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.SHORT_GRID_FORECAST))
-                .attribute("tmfc", WeatherApiUtil.getShortTermLatestAnnounceTime()) // 발표시간
-                .attribute("tmef", targetTime)              // 발효시간
-                .attribute("vars", forecastVar)             // 예보변수
-                .attribute("authKey", apiKey)               // api 키
+                .attribute("tmfc", WeatherApiUtil.getShortTermLatestAnnounceTime(nowDateTime)) // 발표시간
+                .attribute("tmef", WeatherApiUtil.formatToShortTermTime(targetTime))           // 발효시간
+                .attribute("vars", forecastVar) // 예보변수
+                .attribute("authKey", apiKey) // api 키
                 .retrieve()
                 .body(String.class);
 
         return WeatherApiUtil.parseGridData(responseBody);
     }
 
-    public List<TempForecast> requestMidTermTempForecast(String regid) throws URISyntaxException {
+    public List<TempForecast> requestMidTermTempForecast(String regionId) throws URISyntaxException {
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.MID_TEMPERATURE_FORECAST))
                 .attribute("pageNo", 1)
                 .attribute("numOfRows", 1)
                 .attribute("dataType", "JSON")
-                .attribute("regid", regid)
-                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime())
+                .attribute("regid", regionId)
+                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime(LocalDateTime.now()))
                 .attribute("authKey", apiKey)
                 .retrieve()
                 .body(String.class);
@@ -53,14 +56,14 @@ public class WeatherApiClient {
         return WeatherApiUtil.parseTempForecast(responseBody);
     }
 
-    public List<LandForecast> requestMidTermLandForecast(String regid) throws URISyntaxException {
+    public List<LandForecast> requestMidTermLandForecast(String regionId) throws URISyntaxException {
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.MID_LAND_FORECAST))
                 .attribute("pageNo", 1)
                 .attribute("numOfRows", 1)
                 .attribute("dataType", "JSON")
-                .attribute("regid", regid)
-                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime())
+                .attribute("regid", regionId)
+                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime(LocalDateTime.now()))
                 .attribute("authKey", apiKey)
                 .retrieve()
                 .body(String.class);

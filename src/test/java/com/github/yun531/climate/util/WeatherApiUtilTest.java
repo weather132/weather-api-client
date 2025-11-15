@@ -10,24 +10,27 @@ class WeatherApiUtilTest {
 
     @ParameterizedTest
     @CsvSource({
-            "1, 23",
-            "3, 2",
-            "23, 23"
+            "2, 0",
+            "1, 2",
+            "0, 1"
     })
-    void nowHourToShortTermLatestAnnounceHour(int nowHour, int expected) {
+    void pastHoursSinceLatestShortTermAnnouncement(int nowHour, int expected) {
         WeatherApiUtil util = new WeatherApiUtil();
-        int actual = ReflectionTestUtils.invokeMethod(util, "nowHourToShortTermLatestAnnounceHour", nowHour);
+        int actual = ReflectionTestUtils.invokeMethod(util, "pastHoursSinceLatestShortTermAnnouncement", nowHour);
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @CsvSource({
-            "2, 02",
-            "15, 15"
+            "6, 0",
+            "18, 0",
+            "0, 6",
+            "5, 11",
+            "23, 5"
     })
-    void hourTo2digitHour(int hour, String expected) {
+    void pastHoursSinceLatestMidTermAnnouncement(int nowHour, int expected) {
         WeatherApiUtil util = new WeatherApiUtil();
-        String actual = ReflectionTestUtils.invokeMethod(util, "hourTo2digitHour", hour);
+        int actual = ReflectionTestUtils.invokeMethod(util, "pastHoursSinceLatestMidTermAnnouncement", nowHour);
         assertEquals(expected, actual);
     }
 
