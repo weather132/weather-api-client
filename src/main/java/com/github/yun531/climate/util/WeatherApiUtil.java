@@ -36,15 +36,16 @@ public class WeatherApiUtil {
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
     }
 
-    public static List<List<Float>> parseGridData(String responseBody) {
+    public static List<List<Integer>> parseGridData(String responseBody) {
         final int ROW_SIZE = 149;
         final int COL_SIZE = 253;
 
-        List<Float> bodyList = Arrays.stream(responseBody.split(","))
+        List<Integer> bodyList = Arrays.stream(responseBody.split(","))
                 .map(Float::parseFloat)
+                .map(Float::intValue)
                 .toList();
 
-        List<List<Float>> gridData = new ArrayList<>();
+        List<List<Integer>> gridData = new ArrayList<>();
         for (int i = 0; i < ROW_SIZE * COL_SIZE; i += ROW_SIZE) {
             gridData.add(bodyList.subList(i, Math.min(i + ROW_SIZE, bodyList.size())));
         }
