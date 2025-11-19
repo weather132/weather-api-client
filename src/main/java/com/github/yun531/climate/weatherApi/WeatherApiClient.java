@@ -25,7 +25,7 @@ public class WeatherApiClient {
         this.restClient = RestClient.create();
     }
 
-    public List<List<Float>> RequestShortTermGridForecast(int hoursToTargetTime, ForecastCategory forecastVar) throws URISyntaxException {
+    public List<List<Integer>> RequestShortTermGridForecast(int hoursToTargetTime, ForecastCategory forecastVar) throws URISyntaxException {
         LocalDateTime nowDateTime = LocalDateTime.now();
         LocalDateTime targetTime = nowDateTime.plusHours(hoursToTargetTime);
 
