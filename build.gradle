@@ -26,6 +26,7 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // https://mvnrepository.com/artifact/com.jayway.jsonpath/json-path
     implementation 'com.jayway.jsonpath:json-path:2.10.0'
