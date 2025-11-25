@@ -2,6 +2,7 @@ package com.github.yun531.climate.dto;
 
 import lombok.AllArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,19 +21,29 @@ public class LandForecastResponseItem {
     private Integer rnSt9;
     private Integer rnSt10;
 
-    public List<LandForecast> toLandForecastList() {
-        List<LandForecast> landForecastList = new ArrayList<>();
+    public List<Pop> toPopList(LocalDateTime announceTime) {
+        List<Pop> popList = new ArrayList<>();
 
-        if (rnSt4Am != null && rnSt4Pm != null) {
-            landForecastList.add(new LandForecast(4, rnSt4Am, rnSt4Pm));
+        final int AM = 9;
+        final int PM = 21;
+
+        if (rnSt4Am != null) {
+            popList.add(new Pop(regid, announceTime, announceTime.plusDays(4).withHour(AM),  rnSt4Am));
         }
-        landForecastList.add(new LandForecast(5, rnSt5Am, rnSt5Pm));
-        landForecastList.add(new LandForecast(6, rnSt6Am, rnSt6Pm));
-        landForecastList.add(new LandForecast(7, rnSt7Am, rnSt7Pm));
-        landForecastList.add(new LandForecast(8, rnSt8, rnSt8));
-        landForecastList.add(new LandForecast(9, rnSt9, rnSt9));
-        landForecastList.add(new LandForecast(10, rnSt10, rnSt10));
+        if (rnSt4Pm != null) {
+            popList.add(new Pop(regid, announceTime, announceTime.plusDays(4).withHour(PM), rnSt4Pm));
+        }
 
-        return landForecastList;
+        popList.add(new Pop(regid, announceTime,  announceTime.plusDays(5).withHour(AM), rnSt5Am));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(5).withHour(PM), rnSt5Pm));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(6).withHour(AM), rnSt6Am));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(6).withHour(PM), rnSt6Pm));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(7).withHour(AM), rnSt7Am));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(7).withHour(PM), rnSt7Pm));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(8).withHour(AM), rnSt8));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(9).withHour(AM), rnSt9));
+        popList.add(new Pop(regid, announceTime, announceTime.plusDays(10).withHour(AM), rnSt10));
+
+        return popList;
     }
 }

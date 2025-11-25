@@ -1,11 +1,13 @@
 package com.github.yun531.climate.entity;
 
+import com.github.yun531.climate.util.WeatherApiUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 public class Weather {
 
-    // weather:발표시간:좌표:밣효시간
+    // weather:발표시간:좌표:발효시간
     @Id
     private String id;
 
@@ -26,6 +28,16 @@ public class Weather {
 
     public Weather(String announceTime, String coords, String effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
         this.id = announceTime + ":" + coords + ":" + effectTime;
+        this.pop = pop;
+        this.maxTemp = maxTemp;
+        this.minTemp = minTemp;
+    }
+
+    public Weather(LocalDateTime announceTime, String coords, LocalDateTime effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
+        this.id = WeatherApiUtil.getMidTermLatestAnnounceTimeFormatted(announceTime) + ":"
+                + coords + ":"
+                + WeatherApiUtil.getMidTermLatestAnnounceTime(effectTime);
+
         this.pop = pop;
         this.maxTemp = maxTemp;
         this.minTemp = minTemp;

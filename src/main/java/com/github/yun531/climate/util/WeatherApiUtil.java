@@ -1,9 +1,6 @@
 package com.github.yun531.climate.util;
 
-import com.github.yun531.climate.dto.LandForecast;
-import com.github.yun531.climate.dto.LandForecastResponseItem;
-import com.github.yun531.climate.dto.TempForecastResponseItem;
-import com.github.yun531.climate.dto.TempForecast;
+import com.github.yun531.climate.dto.*;
 import com.jayway.jsonpath.JsonPath;
 
 import java.time.LocalDateTime;
@@ -14,18 +11,23 @@ import java.util.List;
 
 public class WeatherApiUtil {
 
-    public static String getShortTermLatestAnnounceTime(LocalDateTime nowDateTime) {
+    public static LocalDateTime getShortTermLatestAnnounceTime(LocalDateTime nowDateTime) {
         int pastHours = pastHoursSinceLatestShortTermAnnouncement(nowDateTime.getHour());
-        LocalDateTime latestAnnounceTime = nowDateTime.minusHours(pastHours);
-
-        return formatToShortTermTime(latestAnnounceTime);
+        return nowDateTime.minusHours(pastHours);
     }
 
-    public static String getMidTermLatestAnnounceTime(LocalDateTime nowDateTime) {
-        int pastHours = pastHoursSinceLatestMidTermAnnouncement(nowDateTime.getHour());
-        LocalDateTime latestAnnounceTime = nowDateTime.minusHours(pastHours);
+    public static String getShortTermLatestAnnounceTimeFormatted(LocalDateTime nowDateTime) {
+        return formatToShortTermTime(getMidTermLatestAnnounceTime(nowDateTime));
+    }
 
-        return formatToMidTermTime(latestAnnounceTime);
+    public static LocalDateTime getMidTermLatestAnnounceTime(LocalDateTime nowDateTime) {
+        int pastHours = pastHoursSinceLatestMidTermAnnouncement(nowDateTime.getHour());
+
+        return nowDateTime.minusHours(pastHours);
+    }
+
+    public static String getMidTermLatestAnnounceTimeFormatted(LocalDateTime nowDateTime) {
+        return formatToMidTermTime(getMidTermLatestAnnounceTime(nowDateTime));
     }
 
     public static String formatToShortTermTime(LocalDateTime localDateTime) {
@@ -36,7 +38,7 @@ public class WeatherApiUtil {
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
     }
 
-    public static List<List<Integer>> parseGridData(String responseBody) {
+    public static List<CoordsForecast> parseGridData(String responseBody) {
         final int ROW_SIZE = 149;
         final int COL_SIZE = 253;
 
@@ -45,22 +47,25 @@ public class WeatherApiUtil {
                 .map(Float::intValue)
                 .toList();
 
-        List<List<Integer>> gridData = new ArrayList<>();
-        for (int i = 0; i < ROW_SIZE * COL_SIZE; i += ROW_SIZE) {
-            gridData.add(bodyList.subList(i, Math.min(i + ROW_SIZE, bodyList.size())));
+        List<CoordsForecast> coordsForecastList = new ArrayList<>();
+        for (int i = 0; i < bodyList.size(); i++) {
+            int value = bodyList.get(i);
+            if (isCoordsEmpty(value)) {
+                continue;
+            }
+
+            coordsForecastList.add(new CoordsForecast(i % ROW_SIZE, i / ROW_SIZE, value));
         }
 
-        return gridData;
+        return coordsForecastList;
     }
 
-    public static List<TempForecast> parseTempForecast(String json) {
-        TempForecastResponseItem tempForecastResponseItem = JsonPath.read(json, "$.response.body.items.item[0]");
-        return tempForecastResponseItem.toTempForecastList();
+    public static TempForecastResponseItem parseTempForecast(String json) {
+        return JsonPath.read(json, "$.response.body.items.item[0]");
     }
 
-    public static List<LandForecast> parseLandForecast(String json) {
-        LandForecastResponseItem landForecastResponseItem = JsonPath.read(json, "$.response.body.items.item[0]");
-        return landForecastResponseItem.toLandForecastList();
+    public static LandForecastResponseItem parseLandForecast(String json) {
+        return JsonPath.read(json, "$.response.body.items.item[0]");
     }
 
 
@@ -72,5 +77,9 @@ public class WeatherApiUtil {
     // 중기예보 발표시간 : 6, 18시 (12시간 간격)
     private static int pastHoursSinceLatestMidTermAnnouncement(int nowHour) {
         return (nowHour + 6) % 12;
+    }
+
+    private static boolean isCoordsEmpty(int value) {
+        return value == -99 || value == -999;
     }
 }

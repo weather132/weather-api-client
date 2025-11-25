@@ -1,7 +1,6 @@
 package com.github.yun531.climate.weatherApi;
 
-import com.github.yun531.climate.dto.LandForecast;
-import com.github.yun531.climate.dto.TempForecast;
+import com.github.yun531.climate.dto.*;
 import com.github.yun531.climate.util.WeatherApiUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,49 +24,63 @@ public class WeatherApiClient {
         this.restClient = RestClient.create();
     }
 
-    public List<List<Integer>> RequestShortTermGridForecast(int hoursToTargetTime, ForecastCategory forecastVar) throws URISyntaxException {
+    public GridForecast requestShortTermGridForecast(int hoursToTargetTime, String forecastVar) throws URISyntaxException {
         LocalDateTime nowDateTime = LocalDateTime.now();
         LocalDateTime targetTime = nowDateTime.plusHours(hoursToTargetTime);
+        LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(nowDateTime);
 
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.SHORT_GRID_FORECAST))
-                .attribute("tmfc", WeatherApiUtil.getShortTermLatestAnnounceTime(nowDateTime)) // 발표시간
-                .attribute("tmef", WeatherApiUtil.formatToShortTermTime(targetTime))           // 발효시간
+                .attribute("tmfc", WeatherApiUtil.formatToShortTermTime(announceTime)) // 발표시간
+                .attribute("tmef", WeatherApiUtil.formatToShortTermTime(targetTime)) // 발효시간
                 .attribute("vars", forecastVar) // 예보변수
                 .attribute("authKey", apiKey) // api 키
                 .retrieve()
                 .body(String.class);
 
-        return WeatherApiUtil.parseGridData(responseBody);
+        return new GridForecast(
+                announceTime,
+                targetTime,
+                forecastVar,
+                WeatherApiUtil.parseGridData(responseBody)
+        );
     }
 
-    public List<TempForecast> requestMidTermTempForecast(String regionId) throws URISyntaxException {
+    public List<Temperature> requestMidTermTempForecast(String regionId) throws URISyntaxException {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime announceTime = WeatherApiUtil.getMidTermLatestAnnounceTime(now);
+
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.MID_TEMPERATURE_FORECAST))
                 .attribute("pageNo", 1)
                 .attribute("numOfRows", 1)
                 .attribute("dataType", "JSON")
                 .attribute("regid", regionId)
-                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime(LocalDateTime.now()))
+                .attribute("tmFc", announceTime)
                 .attribute("authKey", apiKey)
                 .retrieve()
                 .body(String.class);
 
-        return WeatherApiUtil.parseTempForecast(responseBody);
+        TempForecastResponseItem tempForecastResponseItem = WeatherApiUtil.parseTempForecast(responseBody);
+        return tempForecastResponseItem.toTemperatureList(announceTime);
     }
 
-    public List<LandForecast> requestMidTermLandForecast(String regionId) throws URISyntaxException {
+    public List<Pop> requestMidTermLandForecast(String regionId) throws URISyntaxException {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime announceTime = WeatherApiUtil.getMidTermLatestAnnounceTime(now);
+
         String responseBody = restClient.get()
                 .uri(new URI(weatherApiUrls.MID_LAND_FORECAST))
                 .attribute("pageNo", 1)
                 .attribute("numOfRows", 1)
                 .attribute("dataType", "JSON")
                 .attribute("regid", regionId)
-                .attribute("tmFc", WeatherApiUtil.getMidTermLatestAnnounceTime(LocalDateTime.now()))
+                .attribute("tmFc", announceTime)
                 .attribute("authKey", apiKey)
                 .retrieve()
                 .body(String.class);
 
-        return WeatherApiUtil.parseLandForecast(responseBody);
+        LandForecastResponseItem landForecastResponseItem = WeatherApiUtil.parseLandForecast(responseBody);
+        return landForecastResponseItem.toPopList(announceTime);
     }
 }
