@@ -32,16 +32,16 @@ public class TempForecastResponseItem {
         final int STANDARD_HOUR = 9;
 
         if (taMin3 != null && taMax3 != null) {
-            tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(3).withHour(STANDARD_HOUR), taMin3, taMax3));
+            tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(3).withHour(STANDARD_HOUR), taMax3, taMin3));
         }
 
-        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(4).withHour(STANDARD_HOUR), taMin4, taMax4));
-        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(5).withHour(STANDARD_HOUR), taMin5, taMax5));
-        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(6).withHour(STANDARD_HOUR), taMin6, taMax6));
-        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(7).withHour(STANDARD_HOUR), taMin7, taMax7));
-        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(8).withHour(STANDARD_HOUR), taMin8, taMax8));
-        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(9).withHour(STANDARD_HOUR), taMin9, taMax9));
-        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(10).withHour(STANDARD_HOUR), taMin10, taMax10));
+        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(4).withHour(STANDARD_HOUR), taMax4, taMin4));
+        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(5).withHour(STANDARD_HOUR), taMax5, taMin5));
+        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(6).withHour(STANDARD_HOUR), taMax6, taMin6));
+        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(7).withHour(STANDARD_HOUR), taMax7, taMin7));
+        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(8).withHour(STANDARD_HOUR), taMax8, taMin8));
+        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(9).withHour(STANDARD_HOUR), taMax9, taMin9));
+        tempList.add(new Temperature(regid, announceTime, announceTime.plusDays(10).withHour(STANDARD_HOUR), taMax10, taMin10));
 
         return tempList;
     }

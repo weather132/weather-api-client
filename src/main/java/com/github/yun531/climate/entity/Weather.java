@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-// 7800초 = 2시간 10분
-@RedisHash(value = "weather", timeToLive = 7800)
+// 21600초 = 6시간
+@RedisHash(value = "weather", timeToLive = 21600)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -34,9 +34,9 @@ public class Weather {
     }
 
     public Weather(LocalDateTime announceTime, String coords, LocalDateTime effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
-        this.id = WeatherApiUtil.getMidTermLatestAnnounceTimeFormatted(announceTime) + ":"
+        this.id = WeatherApiUtil.formatToMidTermTime(announceTime) + ":"
                 + coords + ":"
-                + WeatherApiUtil.getMidTermLatestAnnounceTime(effectTime);
+                + WeatherApiUtil.formatToMidTermTime(effectTime);
 
         this.pop = pop;
         this.maxTemp = maxTemp;
