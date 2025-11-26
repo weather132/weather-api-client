@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-// 21600초 = 6시간
-@RedisHash(value = "weather", timeToLive = 21600)
+@RedisHash(value = "weather", timeToLive = 3600 * 24)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
