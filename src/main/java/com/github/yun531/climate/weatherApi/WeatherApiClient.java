@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class WeatherApiClient {
@@ -24,19 +24,14 @@ public class WeatherApiClient {
         this.restClient = RestClient.create();
     }
 
-    public GridForecast requestShortTermGridForecast(int hoursToTargetTime, String forecastVar) throws URISyntaxException {
+    public GridForecast requestShortTermGridForecast(int hoursToTargetTime, String forecastVar) {
         LocalDateTime nowDateTime = LocalDateTime.now();
         LocalDateTime targetTime = nowDateTime.plusHours(hoursToTargetTime);
         LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(nowDateTime);
 
-        String responseBody = restClient.get()
-                .uri(new URI(weatherApiUrls.SHORT_GRID_FORECAST))
-                .attribute("tmfc", WeatherApiUtil.formatToShortTermTime(announceTime)) // 발표시간
-                .attribute("tmef", WeatherApiUtil.formatToShortTermTime(targetTime)) // 발효시간
-                .attribute("vars", forecastVar) // 예보변수
-                .attribute("authKey", apiKey) // api 키
-                .retrieve()
-                .body(String.class);
+        Map<String, String> parameters = getShortTermParameters(forecastVar, announceTime, targetTime);
+
+        String responseBody = requestGet(weatherApiUrls.SHORT_GRID_FORECAST, parameters);
 
         return new GridForecast(
                 announceTime,
@@ -46,41 +41,51 @@ public class WeatherApiClient {
         );
     }
 
-    public List<Temperature> requestMidTermTempForecast(String regionId) throws URISyntaxException {
+    public List<Temperature> requestMidTermTempForecast(String regionId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime announceTime = WeatherApiUtil.getMidTermLatestAnnounceTime(now);
 
-        String responseBody = restClient.get()
-                .uri(new URI(weatherApiUrls.MID_TEMPERATURE_FORECAST))
-                .attribute("pageNo", 1)
-                .attribute("numOfRows", 1)
-                .attribute("dataType", "JSON")
-                .attribute("regid", regionId)
-                .attribute("tmFc", announceTime)
-                .attribute("authKey", apiKey)
-                .retrieve()
-                .body(String.class);
+        Map<String, String> parameters = getMidTermParameters(regionId, announceTime);
+        String responseBody = requestGet(weatherApiUrls.MID_TEMPERATURE_FORECAST, parameters);
 
         TempForecastResponseItem tempForecastResponseItem = WeatherApiUtil.parseTempForecast(responseBody);
         return tempForecastResponseItem.toTemperatureList(announceTime);
     }
 
-    public List<Pop> requestMidTermLandForecast(String regionId) throws URISyntaxException {
+    public List<Pop> requestMidTermLandForecast(String regionId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime announceTime = WeatherApiUtil.getMidTermLatestAnnounceTime(now);
 
-        String responseBody = restClient.get()
-                .uri(new URI(weatherApiUrls.MID_LAND_FORECAST))
-                .attribute("pageNo", 1)
-                .attribute("numOfRows", 1)
-                .attribute("dataType", "JSON")
-                .attribute("regid", regionId)
-                .attribute("tmFc", announceTime)
-                .attribute("authKey", apiKey)
-                .retrieve()
-                .body(String.class);
+        Map<String, String> parameters = getMidTermParameters(regionId, announceTime);
+        String responseBody = requestGet(weatherApiUrls.MID_LAND_FORECAST, parameters);
 
         LandForecastResponseItem landForecastResponseItem = WeatherApiUtil.parseLandForecast(responseBody);
         return landForecastResponseItem.toPopList(announceTime);
+    }
+
+
+    private String requestGet(String url, Map<String, String> variables) {
+        return restClient.get().uri(url, variables).retrieve().body(String.class);
+    }
+
+    private Map<String, String> getShortTermParameters(String forecastVar, LocalDateTime announceTime, LocalDateTime targetTime) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("tmfc", WeatherApiUtil.formatToShortTermTime(announceTime));
+        parameters.put("tmef",  WeatherApiUtil.formatToShortTermTime(targetTime));
+        parameters.put("vars", forecastVar);
+        parameters.put("authKey", apiKey);
+        return parameters;
+    }
+
+    private Map<String, String> getMidTermParameters(String regionId, LocalDateTime announceTime) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("pageNo", "1");
+        parameters.put("numOfRows", "1");
+        parameters.put("dataType", "JSON");
+        parameters.put("regid", regionId);
+        parameters.put("tmFc", WeatherApiUtil.formatToMidTermTime(announceTime));
+        parameters.put("authKey", apiKey);
+
+        return parameters;
     }
 }
