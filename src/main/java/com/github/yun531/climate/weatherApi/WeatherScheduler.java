@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +29,7 @@ public class WeatherScheduler {
         int hour = LocalDateTime.now().getHour();
 
         List<Weather> weathers = IntStream.range(1, 24 * 3 - hour + 1)
-                .mapToObj(h -> {
-                    try {
-                        return requestAndGetWeathers(h);
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                .mapToObj(this::requestAndGetWeathers)
                 .flatMap(List::stream)
                 .toList();
 
@@ -48,20 +41,15 @@ public class WeatherScheduler {
         int hour = LocalDateTime.now().getHour();
 
         List<Weather> weathers = IntStream.range(1, 24 * 4 - hour + 1)
-                .mapToObj(h -> {
-                    try {
-                        return requestAndGetWeathers(h);
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                .mapToObj(this::requestAndGetWeathers)
                 .flatMap(List::stream)
                 .toList();
 
         weatherRepository.saveAll(weathers);
     }
 
-    private List<Weather> requestAndGetWeathers(int hours) throws URISyntaxException {
+
+    private List<Weather> requestAndGetWeathers(int hours) {
         GridForecast maxTempGrid = weatherApiClient.requestShortTermGridForecast(hours, ForecastCategory.MAX_TEMP);
         GridForecast minTempGrid = weatherApiClient.requestShortTermGridForecast(hours, ForecastCategory.MIN_TEMP);
         GridForecast popGrid = weatherApiClient.requestShortTermGridForecast(hours, ForecastCategory.POP);
