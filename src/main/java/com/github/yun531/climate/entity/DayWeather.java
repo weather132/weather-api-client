@@ -11,13 +11,13 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-@RedisHash(value = "weather", timeToLive = 3600 * 2)
+@RedisHash(value = "dayweather", timeToLive = 3600 * 2)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class DayWeather {
 
-    // weather:발표시간:좌표:발효시간
+    // dayweather:발표시간:좌표:발효시간
     @Id
     private String id;
 
