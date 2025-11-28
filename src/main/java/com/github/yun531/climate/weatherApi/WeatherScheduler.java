@@ -2,7 +2,7 @@ package com.github.yun531.climate.weatherApi;
 
 import com.github.yun531.climate.dto.CoordsForecast;
 import com.github.yun531.climate.dto.GridForecast;
-import com.github.yun531.climate.entity.Weather;
+import com.github.yun531.climate.entity.DayWeather;
 import com.github.yun531.climate.repository.WeatherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,37 +24,23 @@ public class WeatherScheduler {
         this.weatherRepository = weatherRepository;
     }
 
-    @Scheduled(cron = "0 10 2,5,8,11,14 * * *")
+    @Scheduled(cron = "0 10 2/3 * * *")
     public void doShortTermGridEarly() {
-        int hour = LocalDateTime.now().getHour();
-
-        List<Weather> weathers = IntStream.range(1, 24 * 3 - hour + 1)
+        List<DayWeather> dayWeathers = IntStream.range(1, 25)
                 .mapToObj(this::requestAndGetWeathers)
                 .flatMap(List::stream)
                 .toList();
 
-        weatherRepository.saveAll(weathers);
-    }
-
-    @Scheduled(cron = "0 10 17,20,23 * * *")
-    public void doShortTermGridLate() {
-        int hour = LocalDateTime.now().getHour();
-
-        List<Weather> weathers = IntStream.range(1, 24 * 4 - hour + 1)
-                .mapToObj(this::requestAndGetWeathers)
-                .flatMap(List::stream)
-                .toList();
-
-        weatherRepository.saveAll(weathers);
+        weatherRepository.saveAll(dayWeathers);
     }
 
 
-    private List<Weather> requestAndGetWeathers(int hours) {
+    private List<DayWeather> requestAndGetWeathers(int hours) {
         GridForecast maxTempGrid = weatherApiClient.requestShortTermGridForecast(hours, ForecastCategory.MAX_TEMP);
         GridForecast minTempGrid = weatherApiClient.requestShortTermGridForecast(hours, ForecastCategory.MIN_TEMP);
         GridForecast popGrid = weatherApiClient.requestShortTermGridForecast(hours, ForecastCategory.POP);
 
-        List<Weather> weatherList = new ArrayList<>();
+        List<DayWeather> weatherList = new ArrayList<>();
         List<CoordsForecast> popCoordsForecasts = popGrid.getCoordsForecastList();
         for (CoordsForecast popCoords :  popCoordsForecasts) {
             CoordsForecast maxTemp = maxTempGrid.getCoordsForecastList().stream()
@@ -68,10 +54,10 @@ public class WeatherScheduler {
                     .get();
 
             LocalDateTime announceTime = popGrid.getAnnounceTime();
-            String coords = popCoords.getX() + "-"  + popCoords.getY();
+            String coords = popCoords.getX() + ":"  + popCoords.getY();
             LocalDateTime effectiveTime = popGrid.getEffectiveTime();
 
-            weatherList.add(new Weather(announceTime, coords, effectiveTime, popCoords.getValue(),  maxTemp.getValue(), minTemp.getValue() ));
+            weatherList.add(new DayWeather(announceTime, coords, effectiveTime, popCoords.getValue(),  maxTemp.getValue(), minTemp.getValue() ));
         }
 
         return weatherList;

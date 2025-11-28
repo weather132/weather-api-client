@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-@RedisHash(value = "weather", timeToLive = 3600 * 24)
+@RedisHash(value = "weather", timeToLive = 3600 * 2)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Weather {
+public class DayWeather {
 
     // weather:발표시간:좌표:발효시간
     @Id
@@ -25,14 +25,14 @@ public class Weather {
     private Integer maxTemp;
     private Integer minTemp;
 
-    public Weather(String announceTime, String coords, String effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
+    public DayWeather(String announceTime, String coords, String effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
         this.id = announceTime + ":" + coords + ":" + effectTime;
         this.pop = pop;
         this.maxTemp = maxTemp;
         this.minTemp = minTemp;
     }
 
-    public Weather(LocalDateTime announceTime, String coords, LocalDateTime effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
+    public DayWeather(LocalDateTime announceTime, String coords, LocalDateTime effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
         this.id = WeatherApiUtil.formatToMidTermTime(announceTime) + ":"
                 + coords + ":"
                 + WeatherApiUtil.formatToMidTermTime(effectTime);

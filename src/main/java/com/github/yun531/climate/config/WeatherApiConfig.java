@@ -15,7 +15,6 @@ public class WeatherApiConfig {
 
     @Bean
     public WeatherApiUrls weatherApiUrls(@Autowired WeatherApiUrls weatherApiUrls) {
-        System.out.println(weatherApiUrls.SHORT_GRID_FORECAST);
         return weatherApiUrls;
     }
 
