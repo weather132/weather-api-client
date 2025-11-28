@@ -25,7 +25,7 @@ public class WeatherScheduler {
     }
 
     @Scheduled(cron = "0 10 2/3 * * *")
-    public void doShortTermGridEarly() {
+    public void doShortTermGrid() {
         List<DayWeather> dayWeathers = IntStream.range(1, 25)
                 .mapToObj(this::requestAndGetWeathers)
                 .flatMap(List::stream)
