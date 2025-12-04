@@ -25,17 +25,12 @@ public class DayWeather {
     private Integer maxTemp;
     private Integer minTemp;
 
-    public DayWeather(String announceTime, String coords, String effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
-        this.id = announceTime + ":" + coords + ":" + effectTime;
-        this.pop = pop;
-        this.maxTemp = maxTemp;
-        this.minTemp = minTemp;
-    }
 
-    public DayWeather(LocalDateTime announceTime, String coords, LocalDateTime effectTime, Integer pop, Integer maxTemp, Integer minTemp) {
-        this.id = WeatherApiUtil.formatToMidTermTime(announceTime) + ":"
-                + coords + ":"
-                + WeatherApiUtil.formatToMidTermTime(effectTime);
+    public DayWeather(LocalDateTime announceTime, LocalDateTime effectTime, int x, int y, Integer pop, Integer maxTemp, Integer minTemp) {
+        this.id = WeatherApiUtil.formatToMidTermTime(announceTime)
+                + ":" + WeatherApiUtil.formatToMidTermTime(effectTime)
+                + ":" + x
+                + ":" + y;
 
         this.pop = pop;
         this.maxTemp = maxTemp;
@@ -49,6 +44,7 @@ public class DayWeather {
     public String getCoords() {
         return parseId().get(1);
     }
+
     public String getEffectTime() {
         return parseId().get(2);
     }

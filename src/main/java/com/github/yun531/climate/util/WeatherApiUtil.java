@@ -42,7 +42,7 @@ public class WeatherApiUtil {
         final int ROW_SIZE = 149;
         final int COL_SIZE = 253;
 
-        List<Integer> bodyList = Arrays.stream(responseBody.split(","))
+        List<Integer> bodyList = Arrays.stream(responseBody.replace("\n", "").replace(" ", "").split(","))
                 .map(Float::parseFloat)
                 .map(Float::intValue)
                 .toList();
