@@ -29,16 +29,7 @@ public class WeatherApiClient {
         LocalDateTime targetTime = now.plusHours(hoursToTargetTime);
         LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(now);
 
-        Map<String, String> parameters = getShortTermParameters(forecastVar, announceTime, targetTime);
-
-        String responseBody = requestGet(weatherApiUrls.SHORT_GRID_FORECAST, parameters);
-
-        return new GridForecast(
-                announceTime,
-                targetTime,
-                forecastVar,
-                WeatherApiUtil.parseGridData(responseBody)
-        );
+        return requestShortTermGridForecastWithTimes(forecastVar, announceTime, targetTime);
     }
 
     public GridForecast requestShortTermGridForecastAfterDays(int dayAfter, String forecastVar) {
@@ -46,16 +37,7 @@ public class WeatherApiClient {
         LocalDateTime targetTime = now.plusDays(dayAfter).withHour(12);
         LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(now);
 
-        Map<String, String> parameters = getShortTermParameters(forecastVar, announceTime, targetTime);
-
-        String responseBody = requestGet(weatherApiUrls.SHORT_GRID_FORECAST, parameters);
-
-        return new GridForecast(
-                announceTime,
-                targetTime,
-                forecastVar,
-                WeatherApiUtil.parseGridData(responseBody)
-        );
+        return requestShortTermGridForecastWithTimes(forecastVar, announceTime, targetTime);
     }
 
     public List<Temperature> requestMidTermTempForecast(String regionId) {
@@ -80,6 +62,19 @@ public class WeatherApiClient {
         return landForecastResponseItem.toPopList(announceTime);
     }
 
+
+    private GridForecast requestShortTermGridForecastWithTimes(String forecastVar, LocalDateTime announceTime, LocalDateTime targetTime) {
+        Map<String, String> parameters = getShortTermParameters(forecastVar, announceTime, targetTime);
+
+        String responseBody = requestGet(weatherApiUrls.SHORT_GRID_FORECAST, parameters);
+
+        return new GridForecast(
+                announceTime,
+                targetTime,
+                forecastVar,
+                WeatherApiUtil.parseGridData(responseBody)
+        );
+    }
 
     private String requestGet(String url, Map<String, String> variables) {
         return restClient.get().uri(url, variables).retrieve().body(String.class);
