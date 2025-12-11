@@ -25,9 +25,9 @@ public class WeatherApiClient {
     }
 
     public GridForecast requestShortTermGridForecast(int hoursToTargetTime, String forecastVar) {
-        LocalDateTime nowDateTime = LocalDateTime.now();
-        LocalDateTime targetTime = nowDateTime.plusHours(hoursToTargetTime).withMinute(0);
-        LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(nowDateTime);
+        LocalDateTime now = LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime targetTime = now.plusHours(hoursToTargetTime);
+        LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(now);
 
         Map<String, String> parameters = getShortTermParameters(forecastVar, announceTime, targetTime);
 
@@ -42,8 +42,8 @@ public class WeatherApiClient {
     }
 
     public GridForecast requestShortTermGridForecastAfterDays(int dayAfter, String forecastVar) {
-        LocalDateTime now =  LocalDateTime.now();
-        LocalDateTime targetTime = now.plusDays(dayAfter).withHour(12).withMinute(0);
+        LocalDateTime now =  LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime targetTime = now.plusDays(dayAfter).withHour(12);
         LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(now);
 
         Map<String, String> parameters = getShortTermParameters(forecastVar, announceTime, targetTime);
