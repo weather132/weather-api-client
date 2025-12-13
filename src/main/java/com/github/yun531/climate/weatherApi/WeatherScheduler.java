@@ -39,7 +39,7 @@ public class WeatherScheduler {
     }
 
     private void updateShortTermPop() {
-        List<ShortPop> pops = IntStream.range(1, 25)
+        List<ShortPop> pops = IntStream.range(1, 26)
                 .mapToObj(h -> weatherApiClient.requestShortTermGridForecast(h, ForecastCategory.POP))
                 .map(ShortPop::of)
                 .flatMap(Collection::stream)
