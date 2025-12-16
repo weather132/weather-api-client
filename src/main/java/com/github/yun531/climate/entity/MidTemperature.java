@@ -22,6 +22,6 @@ public class MidTemperature {
 
     private String regionCode;
 
-    private Integer maxTemperature;
-    private Integer minTemperature;
+    private Integer maxTemp;
+    private Integer minTemp;
 }
