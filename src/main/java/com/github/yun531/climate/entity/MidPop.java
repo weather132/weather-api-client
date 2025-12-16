@@ -24,4 +24,11 @@ public class MidPop {
     private String regionCode;
 
     private Integer pop;
+
+    public MidPop(LocalDateTime announceTime, LocalDateTime effectiveTime, String regionCode, Integer pop) {
+        this.announceTime = announceTime;
+        this.effectiveTime = effectiveTime;
+        this.regionCode = regionCode;
+        this.pop = pop;
+    }
 }
