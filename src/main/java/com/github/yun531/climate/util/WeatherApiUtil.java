@@ -13,7 +13,7 @@ public class WeatherApiUtil {
 
     public static LocalDateTime getShortTermLatestAnnounceTime(LocalDateTime nowDateTime) {
         int pastHours = pastHoursSinceLatestShortTermAnnouncement(nowDateTime.getHour());
-        return nowDateTime.minusHours(pastHours);
+        return nowDateTime.minusHours(pastHours).withMinute(0).withSecond(0).withNano(0);
     }
 
     public static String getShortTermLatestAnnounceTimeFormatted(LocalDateTime nowDateTime) {
@@ -23,7 +23,7 @@ public class WeatherApiUtil {
     public static LocalDateTime getMidTermLatestAnnounceTime(LocalDateTime nowDateTime) {
         int pastHours = pastHoursSinceLatestMidTermAnnouncement(nowDateTime.getHour());
 
-        return nowDateTime.minusHours(pastHours);
+        return nowDateTime.minusHours(pastHours).withMinute(0).withSecond(0).withNano(0);
     }
 
     public static String getMidTermLatestAnnounceTimeFormatted(LocalDateTime nowDateTime) {
