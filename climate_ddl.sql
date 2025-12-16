@@ -46,14 +46,3 @@ create table mid_temperature_region_code(
 	id bigint primary key auto_increment,
     region_code varchar(20) not null
 );
-
-insert into mid_pop_region_code values("11B00000");
-insert into mid_pop_region_code values("11D10000");
-insert into mid_pop_region_code values("11D20000");
-insert into mid_pop_region_code values("11C20000");
-insert into mid_pop_region_code values("11C10000");
-insert into mid_pop_region_code values("11F20000");
-insert into mid_pop_region_code values("11F10000");
-insert into mid_pop_region_code values("11H10000");
-insert into mid_pop_region_code values("11H20000");
-insert into mid_pop_region_code values("11G00000");
