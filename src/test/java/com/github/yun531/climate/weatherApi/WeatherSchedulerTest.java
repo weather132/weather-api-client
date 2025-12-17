@@ -1,25 +1,49 @@
 /*
-   단기 격자 예보 데이터를 불러오는 테스트 코드
-   한 번 실행 시 2~3 분 정도 걸림.
+   예보 데이터를 불러오는 테스트 코드
+   한 번 실행 시 최대 2~3 분 정도 걸림.
    아래 코드의 주석 처리를 지우고 실행할 것.
 */
 
-//package com.github.yun531.climate.weatherApi;
-//
-//import org.junit.jupiter.api.Test;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.context.SpringBootTest;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//
-//@SpringBootTest
-//class WeatherSchedulerTest {
-//
-//    @Autowired
-//    private WeatherScheduler scheduler;
+package com.github.yun531.climate.weatherApi;
+
+import com.github.yun531.climate.entity.MidLandRegionCode;
+import com.github.yun531.climate.repository.MidLandRegionCodeRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest
+class WeatherSchedulerTest {
+
+    @Autowired
+    private WeatherScheduler scheduler;
+
+    @Autowired
+    private MidLandRegionCodeRepository landRegionCodeRepository;
+
+//    @Test
+//    void dbCheck() {
+//        List<MidLandRegionCode> all = landRegionCodeRepository.findAll();
+//        assertFalse(all.isEmpty());
+//    }
 //
 //    @Test
 //    void doShortTermGrid() {
-//        scheduler.doShortTermGrid();
+//        scheduler.updateShortTermGrid();
 //    }
-//}
+//
+//    @Test
+//    void doMidTerm() {
+//        scheduler.updateMidTerm();
+//    }
+//
+//    @Test
+//    void doMidPop() {
+//        ReflectionTestUtils.invokeMethod(scheduler, "updateMidPop");
+//    }
+}
