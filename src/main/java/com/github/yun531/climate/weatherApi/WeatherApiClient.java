@@ -94,7 +94,7 @@ public class WeatherApiClient {
         parameters.put("pageNo", "1");
         parameters.put("numOfRows", "1");
         parameters.put("dataType", "JSON");
-        parameters.put("regid", regionId);
+        parameters.put("regId", regionId);
         parameters.put("tmFc", WeatherApiUtil.formatToMidTermTime(announceTime));
         parameters.put("authKey", apiKey);
 

@@ -1,7 +1,10 @@
 package com.github.yun531.climate.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.yun531.climate.dto.*;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -61,11 +64,19 @@ public class WeatherApiUtil {
     }
 
     public static TempForecastResponseItem parseTempForecast(String json) {
-        return JsonPath.read(json, "$.response.body.items.item[0]");
+        Configuration config = Configuration.builder()
+                .mappingProvider(new JacksonMappingProvider(new ObjectMapper()))
+                .build();
+
+        return JsonPath.using(config).parse(json).read("$.response.body.items.item[0]", TempForecastResponseItem.class);
     }
 
     public static LandForecastResponseItem parseLandForecast(String json) {
-        return JsonPath.read(json, "$.response.body.items.item[0]");
+        Configuration config = Configuration.builder()
+                .mappingProvider(new JacksonMappingProvider(new ObjectMapper()))
+                .build();
+
+        return JsonPath.using(config).parse(json).read("$.response.body.items.item[0]", LandForecastResponseItem.class);
     }
 
 
