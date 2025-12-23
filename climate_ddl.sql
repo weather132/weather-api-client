@@ -39,12 +39,12 @@ create table mid_temperature(
 
 create table mid_pop_region_code(
 	id bigint primary key auto_increment,
-    region_code varchar(20) not null
+    region_code varchar(20) not null unique
 );
 
 create table mid_city_region_code(
 	id bigint primary key auto_increment,
-    region_code varchar(20) not null,
+    region_code varchar(20) not null unique,
     x int not null,
     y int not null,
     mid_pop_region_code_id bigint,
