@@ -42,7 +42,11 @@ create table mid_pop_region_code(
     region_code varchar(20) not null
 );
 
-create table mid_temperature_region_code(
+create table mid_city_region_code(
 	id bigint primary key auto_increment,
-    region_code varchar(20) not null
+    region_code varchar(20) not null,
+    x int not null,
+    y int not null,
+    mid_pop_region_code_id bigint,
+    foreign key (mid_pop_region_code_id) references mid_pop_region_code(id) on delete set null
 );
