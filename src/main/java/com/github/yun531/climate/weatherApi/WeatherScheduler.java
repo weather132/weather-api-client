@@ -1,13 +1,7 @@
 package com.github.yun531.climate.weatherApi;
 
-import com.github.yun531.climate.dto.CoordsForecast;
-import com.github.yun531.climate.dto.GridForecast;
-import com.github.yun531.climate.dto.Pop;
-import com.github.yun531.climate.dto.Temperature;
-import com.github.yun531.climate.entity.MidLandRegionCode;
-import com.github.yun531.climate.entity.MidTempRegionCode;
-import com.github.yun531.climate.entity.ShortPop;
-import com.github.yun531.climate.entity.ShortTemperature;
+import com.github.yun531.climate.dto.*;
+import com.github.yun531.climate.entity.*;
 import com.github.yun531.climate.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,16 +18,18 @@ public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
     private final ShortPopRepository shortPopRepository;
     private final ShortTemperatureRepository shortTempRepository;
+    private final ShortLandForecastRepository shortLandForecastRepository;
     private final MidPopRepository midPopRepository;
     private final MidTemperatureRepository midTemperatureRepository;
     private final MidLandRegionCodeRepository landRegionCodeRepository;
     private final MidTempRegionCodeRepository tempRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortPopRepository shortPopRepository, ShortTemperatureRepository ShortTempRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, MidLandRegionCodeRepository landRegionCodeRepository, MidTempRegionCodeRepository tempRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortPopRepository shortPopRepository, ShortTemperatureRepository ShortTempRepository, ShortLandForecastRepository landForecastRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, MidLandRegionCodeRepository landRegionCodeRepository, MidTempRegionCodeRepository tempRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
         this.shortPopRepository = shortPopRepository;
         this.shortTempRepository = ShortTempRepository;
+        this.shortLandForecastRepository = landForecastRepository;
         this.midPopRepository = midPopRepository;
         this.midTemperatureRepository = midTemperatureRepository;
         this.landRegionCodeRepository = landRegionCodeRepository;
@@ -51,6 +47,19 @@ public class WeatherScheduler {
         updateMidTemperature();
         updateMidPop();
     }
+
+    @Scheduled(cron = "0 10 5,11,17 * * *")
+    public void updateShortTermLand() {
+        List<ShortLandForecast> shortLandForecasts = tempRegionCodeRepository.findAll().stream()
+                .map(MidTempRegionCode::getRegionCode)
+                .map(weatherApiClient::requestShortTermLandForecast)
+                .flatMap(Collection::stream)
+                .map(ShortLandForecastItem::toEntity)
+                .toList();
+
+        shortLandForecastRepository.saveAll(shortLandForecasts);
+    }
+
 
     private void updateShortPop() {
         List<ShortPop> pops = IntStream.range(1, 26)

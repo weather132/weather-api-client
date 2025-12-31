@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.yun531.climate.dto.*;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.TypeRef;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
 import java.time.LocalDateTime;
@@ -77,6 +78,15 @@ public class WeatherApiUtil {
                 .build();
 
         return JsonPath.using(config).parse(json).read("$.response.body.items.item[0]", LandForecastResponseItem.class);
+    }
+
+    public static List<ShortLandForecastItem> parseShortLandForecast(String json) {
+        Configuration config = Configuration.builder()
+                .mappingProvider(new JacksonMappingProvider(new ObjectMapper()))
+                .build();
+
+        return JsonPath.using(config).parse(json).read("$.response.body.items.item", new TypeRef<>() {
+        });
     }
 
 
