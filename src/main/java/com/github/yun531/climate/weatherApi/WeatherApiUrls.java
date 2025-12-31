@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @RequiredArgsConstructor
 public class WeatherApiUrls {
     public final String SHORT_GRID_FORECAST;
+    public final String SHORT_LAND_FORECAST;
     public final String MID_TEMPERATURE_FORECAST;
     public final String MID_LAND_FORECAST;
 }

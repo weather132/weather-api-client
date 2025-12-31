@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class WeatherApiClientTest {
 
     @Test
-    void getShortTermParameters() {
+    void getShortGridParameters() {
         // given
         WeatherApiClient client = new WeatherApiClient(null, "APIKEY");
         String fcstVar = "VAR";

@@ -40,6 +40,14 @@ public class WeatherApiClient {
         return requestShortTermGridForecastWithTimes(forecastVar, announceTime, targetTime);
     }
 
+    public List<ShortLandForecastItem> requestShortTermLandForecast(String regionId) {
+        Map<String, String> parameters = getShortLandParameters(regionId);
+
+        String json = requestGet(weatherApiUrls.SHORT_LAND_FORECAST, parameters);
+
+        return WeatherApiUtil.parseShortLandForecast(json);
+    }
+
     public List<Temperature> requestMidTermTempForecast(String regionId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime announceTime = WeatherApiUtil.getMidTermLatestAnnounceTime(now);
@@ -64,7 +72,7 @@ public class WeatherApiClient {
 
 
     private GridForecast requestShortTermGridForecastWithTimes(String forecastVar, LocalDateTime announceTime, LocalDateTime targetTime) {
-        Map<String, String> parameters = getShortTermParameters(forecastVar, announceTime, targetTime);
+        Map<String, String> parameters = getShortGridParameters(forecastVar, announceTime, targetTime);
 
         String responseBody = requestGet(weatherApiUrls.SHORT_GRID_FORECAST, parameters);
 
@@ -80,7 +88,7 @@ public class WeatherApiClient {
         return restClient.get().uri(url, variables).retrieve().body(String.class);
     }
 
-    private Map<String, String> getShortTermParameters(String forecastVar, LocalDateTime announceTime, LocalDateTime targetTime) {
+    private Map<String, String> getShortGridParameters(String forecastVar, LocalDateTime announceTime, LocalDateTime targetTime) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("tmfc", WeatherApiUtil.formatToShortTermTime(announceTime));
         parameters.put("tmef",  WeatherApiUtil.formatToShortTermTime(targetTime));
@@ -96,6 +104,17 @@ public class WeatherApiClient {
         parameters.put("dataType", "JSON");
         parameters.put("regId", regionId);
         parameters.put("tmFc", WeatherApiUtil.formatToMidTermTime(announceTime));
+        parameters.put("authKey", apiKey);
+
+        return parameters;
+    }
+
+    private Map<String, String> getShortLandParameters(String regionId) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("pageNo", "1");
+        parameters.put("numOfRows", "9");
+        parameters.put("dataType", "JSON");
+        parameters.put("regId", regionId);
         parameters.put("authKey", apiKey);
 
         return parameters;
