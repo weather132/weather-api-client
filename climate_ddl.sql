@@ -1,6 +1,21 @@
 create database if not exists climate;
 use climate;
 
+create table province_region_code
+(
+    id bigint primary key auto_increment,
+    region_code varchar(20) not null unique
+);
+
+create table city_region_code(
+                                 id bigint primary key auto_increment,
+                                 region_code varchar(20) not null unique,
+                                 x int not null,
+                                 y int not null,
+                                 province_region_code_id bigint,
+                                 foreign key (province_region_code_id) references province_region_code(id) on delete set null
+);
+
 create table short_pop(
 	id bigint primary key auto_increment,
     announce_time datetime not null,
@@ -20,33 +35,32 @@ create table short_temperature(
     min_temp int
 );
 
+create table short_land(
+  id bigint primary key auto_increment,
+  announce_time datetime not null,
+  effective_time datetime not null,
+  city_region_code_id bigint not null,
+  pop int,
+  temp int,
+  rain_type int,
+  foreign key (city_region_code_id) references city_region_code(id) on delete cascade
+);
+
 create table mid_pop(
 	id bigint primary key auto_increment,
 	announce_time datetime not null,
     effective_time datetime not null,
-    region_code varchar(20) not null,
-    pop int not null
+    province_region_code_id bigint not null,
+    pop int not null,
+    foreign key (province_region_code_id) references province_region_code(id) on delete cascade
 );
 
 create table mid_temperature(
 	id bigint primary key auto_increment,
     announce_time datetime not null,
     effective_time datetime not null,
-    region_code varchar(20) not null,
+    city_region_code_id bigint not null,
 	max_temp int,
-    min_temp int
-);
-
-create table mid_pop_region_code(
-	id bigint primary key auto_increment,
-    region_code varchar(20) not null unique
-);
-
-create table mid_city_region_code(
-	id bigint primary key auto_increment,
-    region_code varchar(20) not null unique,
-    x int not null,
-    y int not null,
-    mid_pop_region_code_id bigint,
-    foreign key (mid_pop_region_code_id) references mid_pop_region_code(id) on delete set null
+    min_temp int,
+    foreign key (city_region_code_id) references city_region_code(id) on delete cascade
 );

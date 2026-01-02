@@ -21,19 +21,19 @@ public class WeatherScheduler {
     private final ShortLandForecastRepository shortLandForecastRepository;
     private final MidPopRepository midPopRepository;
     private final MidTemperatureRepository midTemperatureRepository;
-    private final MidLandRegionCodeRepository landRegionCodeRepository;
-    private final MidTempRegionCodeRepository tempRegionCodeRepository;
+    private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
+    private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortPopRepository shortPopRepository, ShortTemperatureRepository ShortTempRepository, ShortLandForecastRepository landForecastRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, MidLandRegionCodeRepository landRegionCodeRepository, MidTempRegionCodeRepository tempRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortPopRepository shortPopRepository, ShortTemperatureRepository ShortTempRepository, ShortLandForecastRepository landForecastRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
         this.shortPopRepository = shortPopRepository;
         this.shortTempRepository = ShortTempRepository;
         this.shortLandForecastRepository = landForecastRepository;
         this.midPopRepository = midPopRepository;
         this.midTemperatureRepository = midTemperatureRepository;
-        this.landRegionCodeRepository = landRegionCodeRepository;
-        this.tempRegionCodeRepository = tempRegionCodeRepository;
+        this.provinceRegionCodeRepository = provinceRegionCodeRepository;
+        this.cityRegionCodeRepository = cityRegionCodeRepository;
     }
 
     @Scheduled(cron = "0 10 2/3 * * *")
@@ -50,14 +50,15 @@ public class WeatherScheduler {
 
     @Scheduled(cron = "0 10 5,11,17 * * *")
     public void updateShortTermLand() {
-        List<ShortLandForecast> shortLandForecasts = tempRegionCodeRepository.findAll().stream()
-                .map(MidTempRegionCode::getRegionCode)
+
+        List<ShortLand> shortLands = cityRegionCodeRepository.findAll().stream()
+                .map(CityRegionCode::getRegionCode)
                 .map(weatherApiClient::requestShortTermLandForecast)
                 .flatMap(Collection::stream)
-                .map(ShortLandForecastItem::toEntity)
+                .map(shortLand -> shortLand.toEntity(cityRegionCodeRepository.findByRegionCode(shortLand.getRegionId())))
                 .toList();
 
-        shortLandForecastRepository.saveAll(shortLandForecasts);
+        shortLandForecastRepository.saveAll(shortLands);
     }
 
 
@@ -95,24 +96,24 @@ public class WeatherScheduler {
     }
 
     private void updateMidTemperature() {
-        List<MidTempRegionCode> regionCodes = tempRegionCodeRepository.findAll();
+        List<CityRegionCode> regionCodes = cityRegionCodeRepository.findAll();
 
         regionCodes.stream()
-                .map(MidTempRegionCode::getRegionCode)
+                .map(CityRegionCode::getRegionCode)
                 .map(weatherApiClient::requestMidTermTempForecast)
                 .flatMap(Collection::stream)
-                .map(Temperature::toMidTemperatureEntity)
+                .map(temp -> temp.toMidTemperatureEntity(cityRegionCodeRepository.findByRegionCode(temp.getRegionCode())))
                 .forEach(midTemperatureRepository::save);
     }
 
     private void updateMidPop() {
-        List<MidLandRegionCode> regionCodes = landRegionCodeRepository.findAll();
+        List<ProvinceRegionCode> regionCodes = provinceRegionCodeRepository.findAll();
 
         regionCodes.stream()
-                .map(MidLandRegionCode::getRegionCode)
+                .map(ProvinceRegionCode::getRegionCode)
                 .map(weatherApiClient::requestMidTermLandForecast)
                 .flatMap(Collection::stream)
-                .map(Pop::toMidPopEntity)
+                .map(pop -> pop.toMidPopEntity(provinceRegionCodeRepository.findByRegionCode(pop.getRegionCode())))
                 .forEach(midPopRepository::save);
     }
 }

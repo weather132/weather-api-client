@@ -7,10 +7,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "mid_pop_region_code")
+@Table(name = "province_region_code")
 @Data
 @NoArgsConstructor
-public class MidLandRegionCode {
+public class ProvinceRegionCode {
 
     @Id
     private Long id;

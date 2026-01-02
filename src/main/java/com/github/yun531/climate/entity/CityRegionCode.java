@@ -5,10 +5,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "mid_city_region_code")
+@Table(name = "city_region_code")
 @Data
 @NoArgsConstructor
-public class MidTempRegionCode {
+public class CityRegionCode {
 
     @Id
     private Long id;
@@ -18,5 +18,6 @@ public class MidTempRegionCode {
     private Integer y;
 
     @ManyToOne
-    private MidLandRegionCode mid_pop_region_code_id;
+    @JoinColumn(name = "province_region_code_id")
+    private ProvinceRegionCode province_region_code;
 }

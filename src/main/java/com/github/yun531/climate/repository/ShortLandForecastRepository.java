@@ -1,7 +1,7 @@
 package com.github.yun531.climate.repository;
 
-import com.github.yun531.climate.entity.ShortLandForecast;
+import com.github.yun531.climate.entity.ShortLand;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ShortLandForecastRepository extends JpaRepository<ShortLandForecast, Long> {
+public interface ShortLandForecastRepository extends JpaRepository<ShortLand, Long> {
 }
