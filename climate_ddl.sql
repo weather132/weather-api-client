@@ -1,6 +1,21 @@
 create database if not exists climate;
 use climate;
 
+create table province_region_code
+(
+    id bigint primary key auto_increment,
+    region_code varchar(20) not null unique
+);
+
+create table city_region_code(
+                                 id bigint primary key auto_increment,
+                                 region_code varchar(20) not null unique,
+                                 x int not null,
+                                 y int not null,
+                                 province_region_code_id bigint,
+                                 foreign key (province_region_code_id) references province_region_code(id) on delete set null
+);
+
 create table short_pop(
 	id bigint primary key auto_increment,
     announce_time datetime not null,
@@ -48,19 +63,4 @@ create table mid_temperature(
 	max_temp int,
     min_temp int,
     foreign key (city_region_code_id) references city_region_code(id) on delete cascade
-);
-
-create table province_region_code
-(
-	id bigint primary key auto_increment,
-    region_code varchar(20) not null unique
-);
-
-create table city_region_code(
-	id bigint primary key auto_increment,
-    region_code varchar(20) not null unique,
-    x int not null,
-    y int not null,
-    province_region_code_id bigint,
-    foreign key (province_region_code_id) references province_region_code(id) on delete set null
 );
