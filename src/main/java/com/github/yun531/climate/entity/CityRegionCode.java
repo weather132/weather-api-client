@@ -18,5 +18,6 @@ public class CityRegionCode {
     private Integer y;
 
     @ManyToOne
-    private ProvinceRegionCode province_region_code_id;
+    @JoinColumn(name = "province_region_code_id")
+    private ProvinceRegionCode province_region_code;
 }
