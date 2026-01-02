@@ -21,12 +21,14 @@ public class MidTemperature {
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime effectiveTime;
 
-    private String regionCode;
+    @ManyToOne
+    @JoinColumn(name = "city_region_code_id")
+    private CityRegionCode regionCode;
 
     private Integer maxTemp;
     private Integer minTemp;
 
-    public MidTemperature(LocalDateTime announceTime, LocalDateTime effectiveTime, String regionCode, Integer maxTemp, Integer minTemp) {
+    public MidTemperature(LocalDateTime announceTime, LocalDateTime effectiveTime, CityRegionCode regionCode, Integer maxTemp, Integer minTemp) {
         this.announceTime = announceTime;
         this.effectiveTime = effectiveTime;
         this.regionCode = regionCode;

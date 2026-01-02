@@ -6,16 +6,9 @@
 
 package com.github.yun531.climate.weatherApi;
 
-import com.github.yun531.climate.entity.MidLandRegionCode;
-import com.github.yun531.climate.repository.MidLandRegionCodeRepository;
-import org.junit.jupiter.api.Test;
+import com.github.yun531.climate.repository.ProvinceRegionCodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class WeatherSchedulerTest {
@@ -24,7 +17,7 @@ class WeatherSchedulerTest {
     private WeatherScheduler scheduler;
 
     @Autowired
-    private MidLandRegionCodeRepository landRegionCodeRepository;
+    private ProvinceRegionCodeRepository landRegionCodeRepository;
 
 //    @Test
 //    void dbCheck() {

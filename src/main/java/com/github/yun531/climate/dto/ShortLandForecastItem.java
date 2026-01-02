@@ -1,7 +1,8 @@
 package com.github.yun531.climate.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.yun531.climate.entity.ShortLandForecast;
+import com.github.yun531.climate.entity.CityRegionCode;
+import com.github.yun531.climate.entity.ShortLand;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,7 @@ public class ShortLandForecastItem {
     @JsonProperty("rnYn")
     private Integer rainType;
 
-    public ShortLandForecast toEntity() {
+    public ShortLand toEntity(CityRegionCode regionCode) {
         LocalDateTime parsedAnnounceTime = LocalDateTime.parse(this.announceTime, DateTimeFormatter.ofPattern("yyyyMMddHH00"));
 
         LocalDateTime adjustedTime;
@@ -41,10 +42,10 @@ public class ShortLandForecastItem {
             adjustedTime = parsedAnnounceTime.plusHours(10);
         }
 
-        return new ShortLandForecast(
+        return new ShortLand(
                 parsedAnnounceTime,
                 adjustedTime.plusHours(numEf * 12),
-                regionId,
+                regionCode,
                 pop,
                 ta,
                 rainType);

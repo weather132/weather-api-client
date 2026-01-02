@@ -1,8 +1,6 @@
 package com.github.yun531.climate.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @NoArgsConstructor
-public class ShortLandForecast {
+public class ShortLand {
 
     @Id
     private Long id;
@@ -22,12 +20,14 @@ public class ShortLandForecast {
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime effectiveTime;
 
-    private String regionCode;
+    @ManyToOne
+    @JoinColumn(name = "city_region_code_id")
+    private CityRegionCode regionCode;
     private Integer pop;
     private Integer temp;
     private Integer rainType;
 
-    public ShortLandForecast(LocalDateTime announceTime, LocalDateTime effectiveTime, String regionCode, Integer pop, Integer temp, Integer rainType) {
+    public ShortLand(LocalDateTime announceTime, LocalDateTime effectiveTime, CityRegionCode regionCode, Integer pop, Integer temp, Integer rainType) {
         this.announceTime = announceTime;
         this.effectiveTime = effectiveTime;
         this.regionCode = regionCode;

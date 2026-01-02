@@ -1,6 +1,7 @@
 package com.github.yun531.climate.dto;
 
 import com.github.yun531.climate.entity.MidPop;
+import com.github.yun531.climate.entity.ProvinceRegionCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -14,7 +15,7 @@ public class Pop {
     private final LocalDateTime effectiveTime;
     private final Integer pop;
 
-    public MidPop toMidPopEntity() {
+    public MidPop toMidPopEntity(ProvinceRegionCode regionCode) {
         return new MidPop(announceTime, effectiveTime, regionCode, pop);
     }
 }
