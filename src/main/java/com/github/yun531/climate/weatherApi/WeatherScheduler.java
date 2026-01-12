@@ -96,24 +96,28 @@ public class WeatherScheduler {
     }
 
     private void updateMidTemperature() {
-        List<CityRegionCode> regionCodes = cityRegionCodeRepository.findAll();
-
-        regionCodes.stream()
-                .map(CityRegionCode::getRegionCode)
-                .map(weatherApiClient::requestMidTermTempForecast)
-                .flatMap(Collection::stream)
-                .map(temp -> temp.toMidTemperatureEntity(cityRegionCodeRepository.findByRegionCode(temp.getRegionCode())))
-                .forEach(midTemperatureRepository::save);
+        midTemperatureRepository.saveAll(getMidTemps());
     }
 
     private void updateMidPop() {
-        List<ProvinceRegionCode> regionCodes = provinceRegionCodeRepository.findAll();
+        midPopRepository.saveAll(getMidPops());
+    }
 
-        regionCodes.stream()
-                .map(ProvinceRegionCode::getRegionCode)
-                .map(weatherApiClient::requestMidTermLandForecast)
+    private List<MidTemperature> getMidTemps() {
+        return cityRegionCodeRepository.findAll().stream()
+                .map(code -> weatherApiClient.requestMidTermTempForecast(code.getRegionCode()).stream()
+                        .map(temp -> temp.toMidTemperatureEntity(code))
+                        .toList())
                 .flatMap(Collection::stream)
-                .map(pop -> pop.toMidPopEntity(provinceRegionCodeRepository.findByRegionCode(pop.getRegionCode())))
-                .forEach(midPopRepository::save);
+                .toList();
+    }
+
+    private List<MidPop> getMidPops() {
+        return provinceRegionCodeRepository.findAll().stream()
+                .map(code -> weatherApiClient.requestMidTermLandForecast(code.getRegionCode()).stream()
+                        .map(pop -> pop.toMidPopEntity(code))
+                        .toList())
+                .flatMap(Collection::stream)
+                .toList();
     }
 }
