@@ -8,16 +8,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.IntStream;
 
 @Component
 public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
-    private final ShortPopRepository shortPopRepository;
-    private final ShortTemperatureRepository shortTempRepository;
+    private final ShortGridRepository shortGridRepository;
     private final ShortLandForecastRepository shortLandForecastRepository;
     private final MidPopRepository midPopRepository;
     private final MidTemperatureRepository midTemperatureRepository;
@@ -25,10 +22,9 @@ public class WeatherScheduler {
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortPopRepository shortPopRepository, ShortTemperatureRepository ShortTempRepository, ShortLandForecastRepository landForecastRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridRepository shortGridRepository, ShortLandForecastRepository landForecastRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
-        this.shortPopRepository = shortPopRepository;
-        this.shortTempRepository = ShortTempRepository;
+        this.shortGridRepository = shortGridRepository;
         this.shortLandForecastRepository = landForecastRepository;
         this.midPopRepository = midPopRepository;
         this.midTemperatureRepository = midTemperatureRepository;
@@ -38,8 +34,7 @@ public class WeatherScheduler {
 
     @Scheduled(cron = "0 10 2/3 * * *")
     public void updateShortTermGrid() {
-        updateShortTemperature();
-        updateShortPop();
+        updateShortForecasts();
     }
 
     @Scheduled(cron = "0 10 6,18 * * *")
@@ -62,38 +57,40 @@ public class WeatherScheduler {
     }
 
 
-    private void updateShortPop() {
-        List<ShortPop> pops = IntStream.range(1, 26)
-                .mapToObj(h -> weatherApiClient.requestShortTermGridForecast(h, ForecastCategory.POP))
-                .map(ShortPop::of)
-                .flatMap(Collection::stream)
-                .toList();
+    private void updateShortForecasts() {
+        List<Coordinates> coordinates = getCoords();
 
-        shortPopRepository.saveAll(pops);
-    }
+        for (int i = 1; i < 27; i++) {
+            GridForecast popGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.POP);
+            GridForecast maxTempGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.MAX_TEMP);
+            GridForecast minTempGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.MIN_TEMP);
 
-    private void updateShortTemperature() {
-        GridForecast maxTempGrid = weatherApiClient.requestShortTermGridForecastAfterDays(1, ForecastCategory.MAX_TEMP);
-        GridForecast minTempGrid = weatherApiClient.requestShortTermGridForecastAfterDays(1, ForecastCategory.MIN_TEMP);
-        LocalDateTime tempAnnounceTime = maxTempGrid.getAnnounceTime();
-        LocalDateTime tempEffectiveTime = maxTempGrid.getEffectiveTime();
-        List<CoordsForecast> maxTempCoords = maxTempGrid.getCoordsForecastList();
-        List<CoordsForecast> minTempCoords = minTempGrid.getCoordsForecastList();
+            LocalDateTime announceTime = popGrid.getAnnounceTime();
+            LocalDateTime effectiveTime = popGrid.getEffectiveTime();
 
-        List<ShortTemperature> temps = new ArrayList<>();
-        for (CoordsForecast maxTemp : maxTempCoords) {
-            int x = maxTemp.getX();
-            int y = maxTemp.getY();
-            CoordsForecast minTemp = minTempCoords.stream()
-                    .filter(coords -> coords.getX() == x && coords.getY() == y)
-                    .findFirst()
-                    .get();
+            List<ShortGrid> shortGrids = coordinates.stream()
+                    .map(coords -> new ShortGrid(
+                            null,
+                            announceTime,
+                            effectiveTime,
+                            coords.x(),
+                            coords.y(),
+                            popGrid.getForecastValue(coords.x(), coords.y()),
+                            maxTempGrid.getForecastValue(coords.x(), coords.y()),
+                            minTempGrid.getForecastValue(coords.x(), coords.y())))
+                    .toList();
 
-            temps.add(new ShortTemperature(tempAnnounceTime, tempEffectiveTime, x, y, maxTemp.getValue(), minTemp.getValue()));
+            shortGridRepository.saveAll(shortGrids);
         }
-
-        shortTempRepository.saveAll(temps);
     }
+
+    private List<Coordinates> getCoords() {
+        return cityRegionCodeRepository.findAll().stream()
+                .map(regionCode -> new Coordinates(regionCode.getX(), regionCode.getY()))
+                .distinct()
+                .toList();
+    }
+
 
     private void updateMidTemperature() {
         midTemperatureRepository.saveAll(getMidTemps());

@@ -9,9 +9,10 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+// TODO : 기상청 DB에 데이터가 없는 이유로 jsonPath 에러가 나는 경우 예외처리
 
 public class WeatherApiUtil {
 
@@ -20,18 +21,10 @@ public class WeatherApiUtil {
         return nowDateTime.minusHours(pastHours).withMinute(0).withSecond(0).withNano(0);
     }
 
-    public static String getShortTermLatestAnnounceTimeFormatted(LocalDateTime nowDateTime) {
-        return formatToShortTermTime(getMidTermLatestAnnounceTime(nowDateTime));
-    }
-
     public static LocalDateTime getMidTermLatestAnnounceTime(LocalDateTime nowDateTime) {
         int pastHours = pastHoursSinceLatestMidTermAnnouncement(nowDateTime.getHour());
 
         return nowDateTime.minusHours(pastHours).withMinute(0).withSecond(0).withNano(0);
-    }
-
-    public static String getMidTermLatestAnnounceTimeFormatted(LocalDateTime nowDateTime) {
-        return formatToMidTermTime(getMidTermLatestAnnounceTime(nowDateTime));
     }
 
     public static String formatToShortTermTime(LocalDateTime localDateTime) {
@@ -42,26 +35,11 @@ public class WeatherApiUtil {
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
     }
 
-    public static List<CoordsForecast> parseGridData(String responseBody) {
-        final int ROW_SIZE = 149;
-        final int COL_SIZE = 253;
-
-        List<Integer> bodyList = Arrays.stream(responseBody.replace("\n", "").replace(" ", "").split(","))
+    public static List<Integer> parseGridData(String responseBody) {
+        return Arrays.stream(responseBody.replace("\n", "").replace(" ", "").split(","))
                 .map(Float::parseFloat)
                 .map(Float::intValue)
                 .toList();
-
-        List<CoordsForecast> coordsForecastList = new ArrayList<>();
-        for (int i = 0; i < bodyList.size(); i++) {
-            int value = bodyList.get(i);
-            if (isCoordsEmpty(value)) {
-                continue;
-            }
-
-            coordsForecastList.add(new CoordsForecast(i % ROW_SIZE, i / ROW_SIZE, value));
-        }
-
-        return coordsForecastList;
     }
 
     public static TempForecastResponseItem parseTempForecast(String json) {
@@ -98,9 +76,5 @@ public class WeatherApiUtil {
     // 중기예보 발표시간 : 6, 18시 (12시간 간격)
     private static int pastHoursSinceLatestMidTermAnnouncement(int nowHour) {
         return (nowHour + 6) % 12;
-    }
-
-    private static boolean isCoordsEmpty(int value) {
-        return value == -99 || value == -999;
     }
 }

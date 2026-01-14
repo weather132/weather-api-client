@@ -12,5 +12,22 @@ public class GridForecast {
     private final LocalDateTime announceTime;
     private final LocalDateTime effectiveTime;
     private final String forecastCategory;
-    private final List<CoordsForecast> coordsForecastList;
+    private final List<Integer> gridData;
+
+    public Integer getForecastValue(int x, int y) {
+        int value = gridData.get(coordsToIndex(x, y));
+
+        return isValueEmpty(value) ? null : value;
+    }
+
+    private int coordsToIndex(int x, int y) {
+        final int ROW_SIZE = 149;
+//      COL_SIZE = 253;
+
+        return ROW_SIZE * y + x;
+    }
+
+    private boolean isValueEmpty(int value) {
+        return value == -99;
+    }
 }
