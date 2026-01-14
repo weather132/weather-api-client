@@ -6,9 +6,16 @@
 
 package com.github.yun531.climate.weatherApi;
 
+import com.github.yun531.climate.entity.ProvinceRegionCode;
 import com.github.yun531.climate.repository.ProvinceRegionCodeRepository;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @SpringBootTest
 class WeatherSchedulerTest {
@@ -17,26 +24,26 @@ class WeatherSchedulerTest {
     private WeatherScheduler scheduler;
 
     @Autowired
-    private ProvinceRegionCodeRepository landRegionCodeRepository;
+    private ProvinceRegionCodeRepository provinceRegionCodeRepository;
 
-//    @Test
-//    void dbCheck() {
-//        List<MidLandRegionCode> all = landRegionCodeRepository.findAll();
-//        assertFalse(all.isEmpty());
-//    }
-//
-//    @Test
-//    void doShortTermGrid() {
-//        scheduler.updateShortTermGrid();
-//    }
-//
-//    @Test
-//    void doMidTerm() {
-//        scheduler.updateMidTerm();
-//    }
-//
-//    @Test
-//    void doMidPop() {
-//        ReflectionTestUtils.invokeMethod(scheduler, "updateMidPop");
-//    }
+    @Test
+    void dbCheck() {
+        List<ProvinceRegionCode> all = provinceRegionCodeRepository.findAll();
+        assertFalse(all.isEmpty());
+    }
+
+    @Test
+    void doShortTermGrid() {
+        scheduler.updateShortTermGrid();
+    }
+
+    @Test
+    void doMidTerm() {
+        scheduler.updateMidTerm();
+    }
+
+    @Test
+    void doMidPop() {
+        ReflectionTestUtils.invokeMethod(scheduler, "updateMidPop");
+    }
 }
