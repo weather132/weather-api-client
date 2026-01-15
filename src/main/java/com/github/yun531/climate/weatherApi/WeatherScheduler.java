@@ -62,8 +62,7 @@ public class WeatherScheduler {
 
         for (int i = 1; i < 27; i++) {
             GridForecast popGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.POP);
-            GridForecast maxTempGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.MAX_TEMP);
-            GridForecast minTempGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.MIN_TEMP);
+            GridForecast tempGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.TEMP);
 
             LocalDateTime announceTime = popGrid.getAnnounceTime();
             LocalDateTime effectiveTime = popGrid.getEffectiveTime();
@@ -76,8 +75,7 @@ public class WeatherScheduler {
                             coords.x(),
                             coords.y(),
                             popGrid.getForecastValue(coords.x(), coords.y()),
-                            maxTempGrid.getForecastValue(coords.x(), coords.y()),
-                            minTempGrid.getForecastValue(coords.x(), coords.y())))
+                            tempGrid.getForecastValue(coords.x(), coords.y())))
                     .toList();
 
             shortGridRepository.saveAll(shortGrids);

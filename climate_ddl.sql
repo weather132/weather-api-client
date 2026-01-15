@@ -23,8 +23,7 @@ create table short_grid(
     x int not null,
     y int not null,
     pop int,
-    max_temp int,
-    min_temp int,
+    temp int,
     unique key unique_set(announce_time, effective_time, x, y)
 );
 

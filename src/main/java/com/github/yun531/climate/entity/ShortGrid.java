@@ -26,6 +26,5 @@ public class ShortGrid {
     Integer y;
 
     Integer pop;
-    Integer maxTemp;
-    Integer minTemp;
+    Integer temp;
 }
