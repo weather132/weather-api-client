@@ -3,6 +3,7 @@ package com.github.yun531.climate.weatherApi;
 import com.github.yun531.climate.dto.*;
 import com.github.yun531.climate.entity.*;
 import com.github.yun531.climate.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,36 +15,39 @@ import java.util.List;
 @Component
 public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
-    private final ShortGridRepository shortGridRepository;
-    private final ShortLandForecastRepository shortLandForecastRepository;
-    private final MidPopRepository midPopRepository;
-    private final MidTemperatureRepository midTemperatureRepository;
+    private final ShortGridBatchRepository shortGridBatchRepository;
+    private final ShortLandBatchRepository shortLandBatchRepository;
+    private final MidPopBatchRepository midPopBatchRepository;
+    private final MidTemperatureBatchRepository midTemperatureBatchRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridRepository shortGridRepository, ShortLandForecastRepository landForecastRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopBatchRepository midPopBatchRepository, MidTemperatureBatchRepository midTemperatureBatchRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
-        this.shortGridRepository = shortGridRepository;
-        this.shortLandForecastRepository = landForecastRepository;
-        this.midPopRepository = midPopRepository;
-        this.midTemperatureRepository = midTemperatureRepository;
+        this.shortGridBatchRepository = shortGridBatchRepository;
+        this.shortLandBatchRepository = shortLandBatchRepository;
+        this.midPopBatchRepository = midPopBatchRepository;
+        this.midTemperatureBatchRepository = midTemperatureBatchRepository;
         this.provinceRegionCodeRepository = provinceRegionCodeRepository;
         this.cityRegionCodeRepository = cityRegionCodeRepository;
     }
 
     @Scheduled(cron = "0 10 2/3 * * *")
+    @Transactional
     public void updateShortTermGrid() {
         updateShortForecasts();
     }
 
     @Scheduled(cron = "0 10 6,18 * * *")
+    @Transactional
     public void updateMidTerm() {
         updateMidTemperature();
         updateMidPop();
     }
 
     @Scheduled(cron = "0 10 5,11,17 * * *")
+    @Transactional
     public void updateShortTermLand() {
 
         List<ShortLand> shortLands = cityRegionCodeRepository.findAll().stream()
@@ -53,7 +57,7 @@ public class WeatherScheduler {
                 .map(shortLand -> shortLand.toEntity(cityRegionCodeRepository.findByRegionCode(shortLand.getRegionId())))
                 .toList();
 
-        shortLandForecastRepository.saveAll(shortLands);
+        shortLandBatchRepository.saveAll(shortLands);
     }
 
 
@@ -78,7 +82,7 @@ public class WeatherScheduler {
                             tempGrid.getForecastValue(coords.x(), coords.y())))
                     .toList();
 
-            shortGridRepository.saveAll(shortGrids);
+            shortGridBatchRepository.saveAll(shortGrids);
         }
     }
 
@@ -91,11 +95,11 @@ public class WeatherScheduler {
 
 
     private void updateMidTemperature() {
-        midTemperatureRepository.saveAll(getMidTemps());
+        midTemperatureBatchRepository.saveAll(getMidTemps());
     }
 
     private void updateMidPop() {
-        midPopRepository.saveAll(getMidPops());
+        midPopBatchRepository.saveAll(getMidPops());
     }
 
     private List<MidTemperature> getMidTemps() {
