@@ -25,8 +25,8 @@ public class ShortLandForecastItem {
     @JsonProperty("rnSt")
     private Integer pop;
 
-    @JsonProperty("temp")
-    private Integer ta;
+    @JsonProperty("ta")
+    private Integer temp;
 
     @JsonProperty("rnYn")
     private Integer rainType;
@@ -47,7 +47,7 @@ public class ShortLandForecastItem {
                 adjustedTime.plusHours(numEf * 12),
                 regionCode,
                 pop,
-                ta,
+                temp,
                 rainType);
     }
 }
