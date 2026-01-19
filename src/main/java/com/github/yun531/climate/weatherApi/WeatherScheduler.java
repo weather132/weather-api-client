@@ -17,17 +17,17 @@ public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
     private final ShortGridBatchRepository shortGridBatchRepository;
     private final ShortLandBatchRepository shortLandBatchRepository;
-    private final MidPopRepository midPopRepository;
+    private final MidPopBatchRepository midPopBatchRepository;
     private final MidTemperatureRepository midTemperatureRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopBatchRepository midPopBatchRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
         this.shortGridBatchRepository = shortGridBatchRepository;
         this.shortLandBatchRepository = shortLandBatchRepository;
-        this.midPopRepository = midPopRepository;
+        this.midPopBatchRepository = midPopBatchRepository;
         this.midTemperatureRepository = midTemperatureRepository;
         this.provinceRegionCodeRepository = provinceRegionCodeRepository;
         this.cityRegionCodeRepository = cityRegionCodeRepository;
@@ -99,7 +99,7 @@ public class WeatherScheduler {
     }
 
     private void updateMidPop() {
-        midPopRepository.saveAll(getMidPops());
+        midPopBatchRepository.saveAll(getMidPops());
     }
 
     private List<MidTemperature> getMidTemps() {
