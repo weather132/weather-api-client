@@ -3,6 +3,7 @@ package com.github.yun531.climate.weatherApi;
 import com.github.yun531.climate.dto.*;
 import com.github.yun531.climate.entity.*;
 import com.github.yun531.climate.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -33,17 +34,20 @@ public class WeatherScheduler {
     }
 
     @Scheduled(cron = "0 10 2/3 * * *")
+    @Transactional
     public void updateShortTermGrid() {
         updateShortForecasts();
     }
 
     @Scheduled(cron = "0 10 6,18 * * *")
+    @Transactional
     public void updateMidTerm() {
         updateMidTemperature();
         updateMidPop();
     }
 
     @Scheduled(cron = "0 10 5,11,17 * * *")
+    @Transactional
     public void updateShortTermLand() {
 
         List<ShortLand> shortLands = cityRegionCodeRepository.findAll().stream()
