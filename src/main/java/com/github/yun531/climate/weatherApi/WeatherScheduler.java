@@ -18,17 +18,17 @@ public class WeatherScheduler {
     private final ShortGridBatchRepository shortGridBatchRepository;
     private final ShortLandBatchRepository shortLandBatchRepository;
     private final MidPopBatchRepository midPopBatchRepository;
-    private final MidTemperatureRepository midTemperatureRepository;
+    private final MidTemperatureBatchRepository midTemperatureBatchRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopBatchRepository midPopBatchRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopBatchRepository midPopBatchRepository, MidTemperatureBatchRepository midTemperatureBatchRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
         this.shortGridBatchRepository = shortGridBatchRepository;
         this.shortLandBatchRepository = shortLandBatchRepository;
         this.midPopBatchRepository = midPopBatchRepository;
-        this.midTemperatureRepository = midTemperatureRepository;
+        this.midTemperatureBatchRepository = midTemperatureBatchRepository;
         this.provinceRegionCodeRepository = provinceRegionCodeRepository;
         this.cityRegionCodeRepository = cityRegionCodeRepository;
     }
@@ -95,7 +95,7 @@ public class WeatherScheduler {
 
 
     private void updateMidTemperature() {
-        midTemperatureRepository.saveAll(getMidTemps());
+        midTemperatureBatchRepository.saveAll(getMidTemps());
     }
 
     private void updateMidPop() {
