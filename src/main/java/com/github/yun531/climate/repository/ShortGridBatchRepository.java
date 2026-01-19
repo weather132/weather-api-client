@@ -8,10 +8,10 @@ import java.sql.Types;
 import java.util.List;
 
 @Repository
-public class ShortGridBulkRepository {
+public class ShortGridBatchRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    public ShortGridBulkRepository(JdbcTemplate jdbcTemplate) {
+    public ShortGridBatchRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 

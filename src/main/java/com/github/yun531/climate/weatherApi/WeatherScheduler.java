@@ -14,7 +14,7 @@ import java.util.List;
 @Component
 public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
-    private final ShortGridBulkRepository shortGridBulkRepository;
+    private final ShortGridBatchRepository shortGridBatchRepository;
     private final ShortLandBatchRepository shortLandBatchRepository;
     private final MidPopRepository midPopRepository;
     private final MidTemperatureRepository midTemperatureRepository;
@@ -22,9 +22,9 @@ public class WeatherScheduler {
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBulkRepository shortGridBulkRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
-        this.shortGridBulkRepository = shortGridBulkRepository;
+        this.shortGridBatchRepository = shortGridBatchRepository;
         this.shortLandBatchRepository = shortLandBatchRepository;
         this.midPopRepository = midPopRepository;
         this.midTemperatureRepository = midTemperatureRepository;
@@ -78,7 +78,7 @@ public class WeatherScheduler {
                             tempGrid.getForecastValue(coords.x(), coords.y())))
                     .toList();
 
-            shortGridBulkRepository.saveAll(shortGrids);
+            shortGridBatchRepository.saveAll(shortGrids);
         }
     }
 
