@@ -15,17 +15,17 @@ import java.util.List;
 public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
     private final ShortGridBulkRepository shortGridBulkRepository;
-    private final ShortLandForecastRepository shortLandForecastRepository;
+    private final ShortLandBatchRepository shortLandBatchRepository;
     private final MidPopRepository midPopRepository;
     private final MidTemperatureRepository midTemperatureRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBulkRepository shortGridBulkRepository, ShortLandForecastRepository landForecastRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBulkRepository shortGridBulkRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopRepository midPopRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
         this.shortGridBulkRepository = shortGridBulkRepository;
-        this.shortLandForecastRepository = landForecastRepository;
+        this.shortLandBatchRepository = shortLandBatchRepository;
         this.midPopRepository = midPopRepository;
         this.midTemperatureRepository = midTemperatureRepository;
         this.provinceRegionCodeRepository = provinceRegionCodeRepository;
@@ -53,7 +53,7 @@ public class WeatherScheduler {
                 .map(shortLand -> shortLand.toEntity(cityRegionCodeRepository.findByRegionCode(shortLand.getRegionId())))
                 .toList();
 
-        shortLandForecastRepository.saveAll(shortLands);
+        shortLandBatchRepository.saveAll(shortLands);
     }
 
 
