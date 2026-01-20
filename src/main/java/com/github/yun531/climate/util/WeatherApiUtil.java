@@ -12,8 +12,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-// TODO : 기상청 DB에 데이터가 없는 이유로 jsonPath 에러가 나는 경우 예외처리
-
 public class WeatherApiUtil {
 
     public static LocalDateTime getShortTermLatestAnnounceTime(LocalDateTime nowDateTime) {
