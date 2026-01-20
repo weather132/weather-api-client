@@ -1,5 +1,6 @@
 package com.github.yun531.climate.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.yun531.climate.entity.CityRegionCode;
 import com.github.yun531.climate.entity.ShortLand;
@@ -13,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ShortLandForecastItem {
     private String announceTime;
 
@@ -32,7 +34,7 @@ public class ShortLandForecastItem {
     private Integer rainType;
 
     public ShortLand toEntity(CityRegionCode regionCode) {
-        LocalDateTime parsedAnnounceTime = LocalDateTime.parse(this.announceTime, DateTimeFormatter.ofPattern("yyyyMMddHH00"));
+        LocalDateTime parsedAnnounceTime = LocalDateTime.parse(this.announceTime, DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
 
         LocalDateTime adjustedTime;
         int hour = parsedAnnounceTime.getHour();
