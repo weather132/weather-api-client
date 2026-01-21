@@ -51,10 +51,13 @@ public class WeatherScheduler {
     public void updateShortTermLand() {
 
         List<ShortLand> shortLands = cityRegionCodeRepository.findAll().stream()
-                .map(CityRegionCode::getRegionCode)
-                .map(weatherApiClient::requestShortTermLandForecast)
+                .map(cityRegionCode -> {
+                    String regionCode = cityRegionCode.getRegionCode();
+                    List<ShortLandForecastItem> shortLandForecastItems = weatherApiClient.requestShortTermLandForecast(regionCode);
+                    return shortLandForecastItems.stream()
+                            .map(shortLandForecastItem -> shortLandForecastItem.toEntity(cityRegionCode))
+                            .toList();})
                 .flatMap(Collection::stream)
-                .map(shortLand -> shortLand.toEntity(cityRegionCodeRepository.findByRegionCode(shortLand.getRegionId())))
                 .toList();
 
         shortLandBatchRepository.saveAll(shortLands);
