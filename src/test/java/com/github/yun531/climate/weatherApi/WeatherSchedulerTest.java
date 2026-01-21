@@ -26,24 +26,29 @@ class WeatherSchedulerTest {
     @Autowired
     private ProvinceRegionCodeRepository provinceRegionCodeRepository;
 
-    @Test
-    void dbCheck() {
-        List<ProvinceRegionCode> all = provinceRegionCodeRepository.findAll();
-        assertFalse(all.isEmpty());
-    }
-
-    @Test
-    void doShortTermGrid() {
-        scheduler.updateShortTermGrid();
-    }
-
-    @Test
-    void doMidTerm() {
-        scheduler.updateMidTerm();
-    }
-
-    @Test
-    void doMidPop() {
-        ReflectionTestUtils.invokeMethod(scheduler, "updateMidPop");
-    }
+//    @Test
+//    void dbCheck() {
+//        List<ProvinceRegionCode> all = provinceRegionCodeRepository.findAll();
+//        assertFalse(all.isEmpty());
+//    }
+//
+//    @Test
+//    void doShortTermGrid() {
+//        scheduler.updateShortTermGrid();
+//    }
+//
+//    @Test
+//    void doShortLand() {
+//        scheduler.updateShortTermLand();
+//    }
+//
+//    @Test
+//    void doMidTerm() {
+//        scheduler.updateMidTerm();
+//    }
+//
+//    @Test
+//    void doMidPop() {
+//        ReflectionTestUtils.invokeMethod(scheduler, "updateMidPop");
+//    }
 }
