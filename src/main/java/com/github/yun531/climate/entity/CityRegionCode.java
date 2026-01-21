@@ -17,7 +17,7 @@ public class CityRegionCode {
     private Integer x;
     private Integer y;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "province_region_code_id")
     private ProvinceRegionCode province_region_code;
 }
