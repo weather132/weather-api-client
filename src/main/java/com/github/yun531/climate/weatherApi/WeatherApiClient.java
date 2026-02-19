@@ -40,13 +40,6 @@ public class WeatherApiClient {
         return requestShortTermGridForecastWithTimes(forecastVar, announceTime, targetTime);
     }
 
-    public List<ShortLandForecastItem> requestShortTermLandForecast(String regionId) {
-        Map<String, String> parameters = getShortLandParameters(regionId);
-
-        String json = requestGet(weatherApiUrls.SHORT_LAND_FORECAST, parameters);
-
-        return WeatherApiUtil.parseShortLandForecast(json);
-    }
 
     public List<Temperature> requestMidTermTempForecast(String regionId) {
         LocalDateTime now = LocalDateTime.now();
@@ -104,17 +97,6 @@ public class WeatherApiClient {
         parameters.put("dataType", "JSON");
         parameters.put("regId", regionId);
         parameters.put("tmFc", WeatherApiUtil.formatToMidTermTime(announceTime));
-        parameters.put("authKey", apiKey);
-
-        return parameters;
-    }
-
-    private Map<String, String> getShortLandParameters(String regionId) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("pageNo", "1");
-        parameters.put("numOfRows", "9");
-        parameters.put("dataType", "JSON");
-        parameters.put("regId", regionId);
         parameters.put("authKey", apiKey);
 
         return parameters;

@@ -1,5 +1,6 @@
 package com.github.yun531.climate.weatherApi;
 
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.dto.*;
 import com.github.yun531.climate.entity.*;
 import com.github.yun531.climate.repository.*;
@@ -16,17 +17,15 @@ import java.util.List;
 public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
     private final ShortGridBatchRepository shortGridBatchRepository;
-    private final ShortLandBatchRepository shortLandBatchRepository;
     private final MidPopBatchRepository midPopBatchRepository;
     private final MidTemperatureBatchRepository midTemperatureBatchRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, ShortLandBatchRepository shortLandBatchRepository, MidPopBatchRepository midPopBatchRepository, MidTemperatureBatchRepository midTemperatureBatchRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, MidPopBatchRepository midPopBatchRepository, MidTemperatureBatchRepository midTemperatureBatchRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
         this.shortGridBatchRepository = shortGridBatchRepository;
-        this.shortLandBatchRepository = shortLandBatchRepository;
         this.midPopBatchRepository = midPopBatchRepository;
         this.midTemperatureBatchRepository = midTemperatureBatchRepository;
         this.provinceRegionCodeRepository = provinceRegionCodeRepository;
@@ -44,23 +43,6 @@ public class WeatherScheduler {
     public void updateMidTerm() {
         updateMidTemperature();
         updateMidPop();
-    }
-
-    @Scheduled(cron = "0 10 5,11,17 * * *")
-    @Transactional
-    public void updateShortTermLand() {
-
-        List<ShortLand> shortLands = cityRegionCodeRepository.findAll().stream()
-                .map(cityRegionCode -> {
-                    String regionCode = cityRegionCode.getRegionCode();
-                    List<ShortLandForecastItem> shortLandForecastItems = weatherApiClient.requestShortTermLandForecast(regionCode);
-                    return shortLandForecastItems.stream()
-                            .map(shortLandForecastItem -> shortLandForecastItem.toEntity(cityRegionCode))
-                            .toList();})
-                .flatMap(Collection::stream)
-                .toList();
-
-        shortLandBatchRepository.saveAll(shortLands);
     }
 
 

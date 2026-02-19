@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+@Table(name = "MidPop")
 @Entity
 @Data
 @NoArgsConstructor

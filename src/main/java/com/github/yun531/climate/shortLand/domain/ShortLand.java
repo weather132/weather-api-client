@@ -1,14 +1,14 @@
-package com.github.yun531.climate.entity;
+package com.github.yun531.climate.shortLand.domain;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
-@NoArgsConstructor
+@Table(name = "short_land")
+@Access(AccessType.FIELD)
+@Getter
 public class ShortLand {
 
     @Id
@@ -20,19 +20,19 @@ public class ShortLand {
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime effectiveTime;
 
-    @ManyToOne
-    @JoinColumn(name = "city_region_code_id")
-    private CityRegionCode regionCode;
+    private Long cityRegionCodeId;
     private Integer pop;
     private Integer temp;
     private Integer rainType;
 
-    public ShortLand(LocalDateTime announceTime, LocalDateTime effectiveTime, CityRegionCode regionCode, Integer pop, Integer temp, Integer rainType) {
+    public ShortLand(LocalDateTime announceTime, LocalDateTime effectiveTime, Long cityRegionCodeId, Integer pop, Integer temp, Integer rainType) {
         this.announceTime = announceTime;
         this.effectiveTime = effectiveTime;
-        this.regionCode = regionCode;
+        this.cityRegionCodeId = cityRegionCodeId;
         this.pop = pop;
         this.temp = temp;
         this.rainType = rainType;
     }
+
+    protected ShortLand() {}
 }

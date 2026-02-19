@@ -6,16 +6,10 @@
 
 package com.github.yun531.climate.weatherApi;
 
-import com.github.yun531.climate.entity.ProvinceRegionCode;
 import com.github.yun531.climate.repository.ProvinceRegionCodeRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @SpringBootTest
 class WeatherSchedulerTest {
@@ -32,16 +26,16 @@ class WeatherSchedulerTest {
 //        assertFalse(all.isEmpty());
 //    }
 //
-//    @Test
-//    void doShortTermGrid() {
-//        scheduler.updateShortTermGrid();
-//    }
-//
+    @Test
+    void doShortTermGrid() {
+        scheduler.updateShortTermGrid();
+    }
+
 //    @Test
 //    void doShortLand() {
 //        scheduler.updateShortTermLand();
 //    }
-//
+
 //    @Test
 //    void doMidTerm() {
 //        scheduler.updateMidTerm();

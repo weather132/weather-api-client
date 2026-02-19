@@ -1,5 +1,6 @@
 package com.github.yun531.climate.entity;
 
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;

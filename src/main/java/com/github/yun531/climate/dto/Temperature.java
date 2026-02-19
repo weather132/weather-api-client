@@ -1,6 +1,6 @@
 package com.github.yun531.climate.dto;
 
-import com.github.yun531.climate.entity.CityRegionCode;
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.entity.MidTemperature;
 import lombok.AllArgsConstructor;
 import lombok.Data;
