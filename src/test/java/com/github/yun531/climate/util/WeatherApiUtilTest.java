@@ -10,18 +10,6 @@ class WeatherApiUtilTest {
 
     @ParameterizedTest
     @CsvSource({
-            "2, 0",
-            "1, 2",
-            "0, 1"
-    })
-    void pastHoursSinceLatestShortTermAnnouncement(int nowHour, int expected) {
-        WeatherApiUtil util = new WeatherApiUtil();
-        int actual = ReflectionTestUtils.invokeMethod(util, "pastHoursSinceLatestShortTermAnnouncement", nowHour);
-        assertEquals(expected, actual);
-    }
-
-    @ParameterizedTest
-    @CsvSource({
             "6, 0",
             "18, 0",
             "0, 6",

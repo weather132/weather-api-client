@@ -24,23 +24,6 @@ public class WeatherApiClient {
         this.restClient = RestClient.create();
     }
 
-    public GridForecast requestShortTermGridForecast(int hoursToTargetTime, String forecastVar) {
-        LocalDateTime now = LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
-        LocalDateTime targetTime = now.plusHours(hoursToTargetTime);
-        LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(now);
-
-        return requestShortTermGridForecastWithTimes(forecastVar, announceTime, targetTime);
-    }
-
-    public GridForecast requestShortTermGridForecastAfterDays(int dayAfter, String forecastVar) {
-        LocalDateTime now =  LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
-        LocalDateTime targetTime = now.plusDays(dayAfter).withHour(12);
-        LocalDateTime announceTime = WeatherApiUtil.getShortTermLatestAnnounceTime(now);
-
-        return requestShortTermGridForecastWithTimes(forecastVar, announceTime, targetTime);
-    }
-
-
     public List<Temperature> requestMidTermTempForecast(String regionId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime announceTime = WeatherApiUtil.getMidTermLatestAnnounceTime(now);
@@ -64,30 +47,8 @@ public class WeatherApiClient {
     }
 
 
-    private GridForecast requestShortTermGridForecastWithTimes(String forecastVar, LocalDateTime announceTime, LocalDateTime targetTime) {
-        Map<String, String> parameters = getShortGridParameters(forecastVar, announceTime, targetTime);
-
-        String responseBody = requestGet(weatherApiUrls.SHORT_GRID_FORECAST, parameters);
-
-        return new GridForecast(
-                announceTime,
-                targetTime,
-                forecastVar,
-                WeatherApiUtil.parseGridData(responseBody)
-        );
-    }
-
     private String requestGet(String url, Map<String, String> variables) {
         return restClient.get().uri(url, variables).retrieve().body(String.class);
-    }
-
-    private Map<String, String> getShortGridParameters(String forecastVar, LocalDateTime announceTime, LocalDateTime targetTime) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("tmfc", WeatherApiUtil.formatToShortTermTime(announceTime));
-        parameters.put("tmef",  WeatherApiUtil.formatToShortTermTime(targetTime));
-        parameters.put("vars", forecastVar);
-        parameters.put("authKey", apiKey);
-        return parameters;
     }
 
     private Map<String, String> getMidTermParameters(String regionId, LocalDateTime announceTime) {

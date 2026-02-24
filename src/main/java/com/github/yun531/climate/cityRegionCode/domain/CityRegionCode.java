@@ -13,8 +13,9 @@ public class CityRegionCode {
     private Long id;
 
     private String regionCode;
-    private Integer x;
-    private Integer y;
+
+    @Embedded
+    private Coordinates coordinates;
     private Long provinceRegionCodeId;
 
     protected CityRegionCode() {}

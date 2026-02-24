@@ -9,73 +9,32 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
 @Component
 public class WeatherScheduler {
     private final WeatherApiClient weatherApiClient;
-    private final ShortGridBatchRepository shortGridBatchRepository;
     private final MidPopBatchRepository midPopBatchRepository;
     private final MidTemperatureBatchRepository midTemperatureBatchRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
     private final CityRegionCodeRepository cityRegionCodeRepository;
 
     @Autowired
-    public WeatherScheduler(WeatherApiClient weatherApiClient, ShortGridBatchRepository shortGridBatchRepository, MidPopBatchRepository midPopBatchRepository, MidTemperatureBatchRepository midTemperatureBatchRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
+    public WeatherScheduler(WeatherApiClient weatherApiClient, MidPopBatchRepository midPopBatchRepository, MidTemperatureBatchRepository midTemperatureBatchRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository, CityRegionCodeRepository cityRegionCodeRepository) {
         this.weatherApiClient = weatherApiClient;
-        this.shortGridBatchRepository = shortGridBatchRepository;
         this.midPopBatchRepository = midPopBatchRepository;
         this.midTemperatureBatchRepository = midTemperatureBatchRepository;
         this.provinceRegionCodeRepository = provinceRegionCodeRepository;
         this.cityRegionCodeRepository = cityRegionCodeRepository;
     }
 
-    @Scheduled(cron = "0 10 2/3 * * *")
-    @Transactional
-    public void updateShortTermGrid() {
-        updateShortForecasts();
-    }
 
     @Scheduled(cron = "0 10 6,18 * * *")
     @Transactional
     public void updateMidTerm() {
         updateMidTemperature();
         updateMidPop();
-    }
-
-
-    private void updateShortForecasts() {
-        List<Coordinates> coordinates = getCoords();
-
-        for (int i = 1; i < 27; i++) {
-            GridForecast popGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.POP);
-            GridForecast tempGrid = weatherApiClient.requestShortTermGridForecast(i, ForecastCategory.TEMP);
-
-            LocalDateTime announceTime = popGrid.getAnnounceTime();
-            LocalDateTime effectiveTime = popGrid.getEffectiveTime();
-
-            List<ShortGrid> shortGrids = coordinates.stream()
-                    .map(coords -> new ShortGrid(
-                            null,
-                            announceTime,
-                            effectiveTime,
-                            coords.x(),
-                            coords.y(),
-                            popGrid.getForecastValue(coords.x(), coords.y()),
-                            tempGrid.getForecastValue(coords.x(), coords.y())))
-                    .toList();
-
-            shortGridBatchRepository.saveAll(shortGrids);
-        }
-    }
-
-    private List<Coordinates> getCoords() {
-        return cityRegionCodeRepository.findAll().stream()
-                .map(regionCode -> new Coordinates(regionCode.getX(), regionCode.getY()))
-                .distinct()
-                .toList();
     }
 
 
