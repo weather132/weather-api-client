@@ -17,6 +17,8 @@ public class ShortGrid {
 
     @Embedded
     private AnnounceTime announceTime;
+
+    @Column(columnDefinition = "DATETIME")
     private LocalDateTime effectiveTime;
     private Integer x;
     private Integer y;

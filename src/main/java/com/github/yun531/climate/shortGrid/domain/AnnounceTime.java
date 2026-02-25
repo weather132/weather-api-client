@@ -1,5 +1,6 @@
 package com.github.yun531.climate.shortGrid.domain;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 @Embeddable
 public class AnnounceTime {
     @Getter
+    @Column(columnDefinition = "DATETIME")
     private LocalDateTime announceTime;
 
     public AnnounceTime(LocalDateTime nowTime) {
