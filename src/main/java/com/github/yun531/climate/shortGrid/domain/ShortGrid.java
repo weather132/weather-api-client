@@ -5,7 +5,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Table(name = "short_land")
+@Table(name = "short_grid")
 @Entity
 @Access(AccessType.FIELD)
 @Getter
