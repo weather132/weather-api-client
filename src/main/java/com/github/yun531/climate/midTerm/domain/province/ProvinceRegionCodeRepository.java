@@ -1,4 +1,4 @@
-package com.github.yun531.climate.provinceRegionCode.domain;
+package com.github.yun531.climate.midTerm.domain.province;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

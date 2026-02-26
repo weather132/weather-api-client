@@ -1,15 +1,15 @@
-package com.github.yun531.climate.entity;
+package com.github.yun531.climate.midTerm.domain.temperature;
 
-import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
+import com.github.yun531.climate.cityRegionCode.reference.CityRegionCode;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
-@NoArgsConstructor
+@Table(name = "mid_temperature")
+@Getter
+@Access(AccessType.FIELD)
 public class MidTemperature {
 
     @Id
@@ -22,18 +22,24 @@ public class MidTemperature {
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime effectiveTime;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "city_region_code_id")
     private CityRegionCode regionCode;
 
     private Integer maxTemp;
     private Integer minTemp;
 
-    public MidTemperature(LocalDateTime announceTime, LocalDateTime effectiveTime, CityRegionCode regionCode, Integer maxTemp, Integer minTemp) {
+    public MidTemperature(LocalDateTime announceTime,
+                          LocalDateTime effectiveTime,
+                          CityRegionCode regionCode,
+                          Integer maxTemp,
+                          Integer minTemp) {
         this.announceTime = announceTime;
         this.effectiveTime = effectiveTime;
         this.regionCode = regionCode;
         this.maxTemp = maxTemp;
         this.minTemp = minTemp;
     }
+
+    protected MidTemperature() {}
 }

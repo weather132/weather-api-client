@@ -1,15 +1,15 @@
-package com.github.yun531.climate.entity;
+package com.github.yun531.climate.midTerm.domain.pop;
 
+import com.github.yun531.climate.midTerm.domain.province.ProvinceRegionCode;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Table(name = "MidPop")
 @Entity
-@Data
-@NoArgsConstructor
+@Table(name = "mid_pop")
+@Getter
+@Access(AccessType.FIELD)
 public class MidPop {
 
     @Id
@@ -22,16 +22,21 @@ public class MidPop {
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime effectiveTime;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "province_region_code_id")
     private ProvinceRegionCode regionCode;
 
     private Integer pop;
 
-    public MidPop(LocalDateTime announceTime, LocalDateTime effectiveTime, ProvinceRegionCode regionCode, Integer pop) {
+    public MidPop(LocalDateTime announceTime,
+                  LocalDateTime effectiveTime,
+                  ProvinceRegionCode regionCode,
+                  Integer pop) {
         this.announceTime = announceTime;
         this.effectiveTime = effectiveTime;
         this.regionCode = regionCode;
         this.pop = pop;
     }
+
+    protected MidPop() {}
 }
