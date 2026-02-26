@@ -1,7 +1,6 @@
-package com.github.yun531.climate.cityRegionCode.domain;
+package com.github.yun531.climate.cityRegionCode.reference;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CityRegionCodeRepository extends JpaRepository<CityRegionCode, Long> {
-    CityRegionCode findByRegionCode(String code);
 }

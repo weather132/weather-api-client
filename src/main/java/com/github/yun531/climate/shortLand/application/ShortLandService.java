@@ -1,6 +1,6 @@
 package com.github.yun531.climate.shortLand.application;
 
-import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
+import com.github.yun531.climate.cityRegionCode.reference.CityRegionCodeRepository;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandClient;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;

@@ -1,6 +1,6 @@
 package com.github.yun531.climate.shortLand.domain;
 
-import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
+import com.github.yun531.climate.cityRegionCode.reference.CityRegionCode;
 
 import java.util.List;
 

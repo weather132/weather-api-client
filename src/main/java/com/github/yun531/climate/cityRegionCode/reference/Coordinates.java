@@ -1,4 +1,4 @@
-package com.github.yun531.climate.cityRegionCode.domain;
+package com.github.yun531.climate.cityRegionCode.reference;
 
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
