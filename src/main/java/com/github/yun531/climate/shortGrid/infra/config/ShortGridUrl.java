@@ -2,7 +2,7 @@ package com.github.yun531.climate.shortGrid.infra.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "url.short")
+@ConfigurationProperties(prefix = "url.short.grid")
 public class ShortGridUrl {
     private final String grid;
 

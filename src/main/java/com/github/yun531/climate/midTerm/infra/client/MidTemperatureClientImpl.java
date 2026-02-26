@@ -34,7 +34,7 @@ public class MidTemperatureClientImpl implements MidTemperatureClient {
 
     @Override
     public List<MidTemperatureDraft> requestMidTemperatureDrafts(String regId, MidAnnounceTime announceTime) {
-        String json = client.requestGet(urls.MID_TEMPERATURE_FORECAST, makeParams(regId, announceTime));
+        String json = client.requestGet(urls.temperature, makeParams(regId, announceTime));
 
         TempForecastResponseItem item = JsonPath.using(parseConfig.getConfiguration())
                 .parse(json)

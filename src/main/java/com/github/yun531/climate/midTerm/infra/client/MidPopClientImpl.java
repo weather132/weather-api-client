@@ -34,7 +34,7 @@ public class MidPopClientImpl implements MidPopClient {
 
     @Override
     public List<MidPopDraft> requestMidPopDrafts(String regId, MidAnnounceTime announceTime) {
-        String json = client.requestGet(urls.MID_LAND_FORECAST, makeParams(regId, announceTime));
+        String json = client.requestGet(urls.land, makeParams(regId, announceTime));
 
         LandForecastResponseItem item = JsonPath.using(parseConfig.getConfiguration())
                 .parse(json)

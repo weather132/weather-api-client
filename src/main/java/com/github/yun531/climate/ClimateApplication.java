@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
 @SpringBootApplication
-@ConfigurationPropertiesScan
 public class ClimateApplication {
 
     public static void main(String[] args) {
