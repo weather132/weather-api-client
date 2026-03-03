@@ -5,12 +5,10 @@ import com.github.yun531.climate.cityRegionCode.reference.CityRegionCodeReposito
 import com.github.yun531.climate.common.MidAnnounceTime;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
 import com.github.yun531.climate.midTemperature.domain.MidTemperatureClient;
-import com.github.yun531.climate.midTemperature.domain.MidTemperatureDraft;
 import com.github.yun531.climate.midTemperature.domain.MidTemperatureRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -29,23 +27,10 @@ public class MidTemperatureService {
     }
 
     public void updateMidTemperature() {
-        MidAnnounceTime announceTime = new MidAnnounceTime(LocalDateTime.now());
-
-        List<MidTemperature> entities = cityRegionCodeRepository.findAll().stream()
-                .map(city -> draftsToEntities(city, announceTime,
-                        client.requestMidTemperatureDrafts(city.getRegionCode(), announceTime)))
-                .flatMap(Collection::stream)
-                .toList();
-
-        repository.saveAll(entities);
+        List<CityRegionCode> cityRegionCodes = cityRegionCodeRepository.findAll();
+        List<MidTemperature> midTemperatures = client.requestMidTemperatures(new MidAnnounceTime(LocalDateTime.now()), cityRegionCodes);
+        repository.saveAll(midTemperatures);
     }
 
-    private List<MidTemperature> draftsToEntities(CityRegionCode city,
-                                                  MidAnnounceTime announceTime,
-                                                  List<MidTemperatureDraft> drafts) {
-        LocalDateTime at = announceTime.getTime();
-        return drafts.stream()
-                .map(d -> new MidTemperature(at, d.effectiveTime(), city, d.maxTemp(), d.minTemp()))
-                .toList();
-    }
+
 }

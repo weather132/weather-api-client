@@ -29,7 +29,7 @@ public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
                     ps.setNull(1, Types.BIGINT);
                     ps.setObject(2, midTemp.getAnnounceTime());
                     ps.setObject(3, midTemp.getEffectiveTime());
-                    ps.setLong(4, midTemp.getRegionCode().getId());
+                    ps.setLong(4, midTemp.getId());
 
                     if (midTemp.getMaxTemp() == null) {
                         ps.setNull(5, Types.INTEGER);
