@@ -1,4 +1,4 @@
-package com.github.yun531.climate.cityRegionCode.reference;
+package com.github.yun531.climate.cityRegionCode.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,6 +1,6 @@
 package com.github.yun531.climate.shortLand.infra;
 
-import com.github.yun531.climate.cityRegionCode.reference.CityRegionCode;
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.common.apiKey.ApiKey;
 import com.github.yun531.climate.common.client.WeatherClient;
 import com.github.yun531.climate.common.parseConfig.ParseConfig;

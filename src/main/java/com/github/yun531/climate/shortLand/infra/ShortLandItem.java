@@ -2,7 +2,7 @@ package com.github.yun531.climate.shortLand.infra;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.github.yun531.climate.cityRegionCode.reference.CityRegionCode;
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 
 import java.time.LocalDateTime;

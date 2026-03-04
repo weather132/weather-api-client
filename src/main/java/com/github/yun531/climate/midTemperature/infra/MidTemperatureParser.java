@@ -1,6 +1,6 @@
 package com.github.yun531.climate.midTemperature.infra;
 
-import com.github.yun531.climate.cityRegionCode.reference.CityRegionCodeRepository;
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.common.MidAnnounceTime;
 import com.github.yun531.climate.common.parseConfig.ParseConfig;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
