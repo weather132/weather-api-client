@@ -11,9 +11,11 @@ import java.util.List;
 @Repository
 public class MidLandRepositoryImpl implements MidLandRepository {
     private final JdbcTemplate  jdbcTemplate;
+    private final JpaMidLandRepository jpaMidLandRepository;
 
-    public MidLandRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public MidLandRepositoryImpl(JdbcTemplate jdbcTemplate, JpaMidLandRepository jpaMidLandRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.jpaMidLandRepository = jpaMidLandRepository;
     }
 
     @Override
@@ -32,5 +34,15 @@ public class MidLandRepositoryImpl implements MidLandRepository {
                     ps.setInt(5, midPop.getPop());
                 }
         );
+    }
+
+    @Override
+    public MidLand findById(Long id) {
+        return jpaMidLandRepository.findById(id).orElseThrow();
+    }
+
+    @Override
+    public List<MidLand> findAll() {
+        return jpaMidLandRepository.findAll();
     }
 }

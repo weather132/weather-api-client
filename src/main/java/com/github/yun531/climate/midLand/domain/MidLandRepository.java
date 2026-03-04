@@ -4,4 +4,6 @@ import java.util.List;
 
 public interface MidLandRepository {
     void saveAll(List<MidLand> midLands);
+    MidLand findById(Long id);
+    List<MidLand> findAll();
 }
