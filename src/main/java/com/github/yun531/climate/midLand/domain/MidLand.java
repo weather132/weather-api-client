@@ -6,7 +6,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Table(name = "MidPop")
+@Table(name = "mid_pop")
 @Entity
 @Access(AccessType.FIELD)
 @Getter
