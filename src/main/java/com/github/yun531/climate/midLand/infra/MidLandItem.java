@@ -25,20 +25,6 @@ public class MidLandItem {
     private Integer rnSt9;
     private Integer rnSt10;
 
-    public MidLandItem(String regId, Integer rnSt4Am, Integer rnSt4Pm, Integer rnSt5Am, Integer rnSt5Pm, Integer rnSt6Am, Integer rnSt6Pm, Integer rnSt7Am, Integer rnSt7Pm, Integer rnSt8, Integer rnSt9, Integer rnSt10) {
-        this.regId = regId;
-        this.rnSt4Am = rnSt4Am;
-        this.rnSt4Pm = rnSt4Pm;
-        this.rnSt5Am = rnSt5Am;
-        this.rnSt5Pm = rnSt5Pm;
-        this.rnSt6Am = rnSt6Am;
-        this.rnSt6Pm = rnSt6Pm;
-        this.rnSt7Am = rnSt7Am;
-        this.rnSt7Pm = rnSt7Pm;
-        this.rnSt8 = rnSt8;
-        this.rnSt9 = rnSt9;
-        this.rnSt10 = rnSt10;
-    }
 
     public List<MidLand> toMidLands(MidAnnounceTime announceTime, Long regionCodeId) {
         List<MidLand> midLands = new ArrayList<>();
@@ -55,7 +41,7 @@ public class MidLandItem {
             midLands.add(new MidLand(announceTime, time.plusDays(4).withHour(PM), regionCodeId, rnSt4Pm));
         }
 
-        midLands.add(new MidLand(announceTime,  time.plusDays(5).withHour(AM), regionCodeId, rnSt5Am));
+        midLands.add(new MidLand(announceTime, time.plusDays(5).withHour(AM), regionCodeId, rnSt5Am));
         midLands.add(new MidLand(announceTime, time.plusDays(5).withHour(PM), regionCodeId, rnSt5Pm));
         midLands.add(new MidLand(announceTime, time.plusDays(6).withHour(AM), regionCodeId, rnSt6Am));
         midLands.add(new MidLand(announceTime, time.plusDays(6).withHour(PM), regionCodeId, rnSt6Pm));
@@ -67,4 +53,7 @@ public class MidLandItem {
 
         return midLands;
     }
+
+
+    protected MidLandItem() {}
 }
