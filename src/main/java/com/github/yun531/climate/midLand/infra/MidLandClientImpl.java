@@ -32,8 +32,7 @@ public class MidLandClientImpl implements MidLandClient {
     @Override
     public List<MidLand> requestMidLands(MidAnnounceTime midAnnounceTime, List<ProvinceRegionCode> regionCodes) {
         return regionCodes.stream()
-                .map(code -> weatherClient.requestGet(url.getUrl(), makeParams(midAnnounceTime, code)))
-                .map(raw -> parser.parse(raw, midAnnounceTime))
+                .map(code -> requestAndParse(midAnnounceTime, code))
                 .flatMap(List::stream)
                 .toList();
     }
@@ -53,4 +52,11 @@ public class MidLandClientImpl implements MidLandClient {
     private String format(LocalDateTime time) {
         return time.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
     }
+
+    private List<MidLand> requestAndParse(MidAnnounceTime announceTime, ProvinceRegionCode regionCode) {
+        String raw = weatherClient.requestGet(url.getUrl(), makeParams(announceTime, regionCode));
+        return parser.parse(raw, announceTime, regionCode);
+    }
+
+
 }
