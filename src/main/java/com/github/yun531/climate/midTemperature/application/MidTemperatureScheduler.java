@@ -5,11 +5,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MidTermScheduler {
+public class MidTemperatureScheduler {
 
     private final MidTemperatureService midTemperatureService;
 
-    public MidTermScheduler(MidTemperatureService midTemperatureService) {
+    public MidTemperatureScheduler(MidTemperatureService midTemperatureService) {
         this.midTemperatureService = midTemperatureService;
     }
 
