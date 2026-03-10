@@ -33,20 +33,19 @@ public class MidTemperatureClientImpl implements MidTemperatureClient {
     @Override
     public List<MidTemperature> requestMidTemperatures(MidAnnounceTime announceTime, List<CityRegionCode> regionCodes) {
         return regionCodes.stream()
-                .map(CityRegionCode::getRegionCode)
-                .map(regionCode -> client.requestGet(urls.getMidTemperatureUrl(), makeParams(regionCode, announceTime)))
+                .map(regionCode -> client.requestGet(urls.getMidTemperatureUrl(), makeParams(announceTime, regionCode)))
                 .map(raw -> parser.parse(raw, announceTime))
                 .flatMap(Collection::stream)
                 .toList();
     }
 
 
-    private Map<String, String> makeParams(String regId, MidAnnounceTime announceTime) {
+    private Map<String, String> makeParams(MidAnnounceTime announceTime, CityRegionCode cityRegionCode) {
         Map<String, String> p = new HashMap<>();
         p.put("pageNo", "1");
         p.put("numOfRows", "1");
         p.put("dataType", "JSON");
-        p.put("regId", regId);
+        p.put("regId", cityRegionCode.getRegionCode());
         p.put("tmFc", formatToMidTermTime(announceTime.getTime()));
         p.put("authKey", apiKey.getApiKey());
         return p;
