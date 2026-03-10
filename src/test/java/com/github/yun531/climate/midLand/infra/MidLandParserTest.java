@@ -61,48 +61,49 @@ class MidLandParserTest {
 
 
     String getJsonTestCase() {
-        return "{\n" +
-                "  \"response\": {\n" +
-                "    \"header\": {\n" +
-                "      \"resultCode\": \"00\",\n" +
-                "      \"resultMsg\": \"NORMAL_SERVICE\"\n" +
-                "    },\n" +
-                "    \"body\": {\n" +
-                "      \"dataType\": \"JSON\",\n" +
-                "      \"items\": {\n" +
-                "        \"item\": [\n" +
-                "          {\n" +
-                "            \"regId\": \"11B00000\",\n" +
-                "            \"rnSt4Am\": 10,\n" +
-                "            \"rnSt4Pm\": 20,\n" +
-                "            \"rnSt5Am\": 10,\n" +
-                "            \"rnSt5Pm\": 10,\n" +
-                "            \"rnSt6Am\": 10,\n" +
-                "            \"rnSt6Pm\": 10,\n" +
-                "            \"rnSt7Am\": 10,\n" +
-                "            \"rnSt7Pm\": 20,\n" +
-                "            \"rnSt8\": 30,\n" +
-                "            \"rnSt9\": 30,\n" +
-                "            \"rnSt10\": 30,\n" +
-                "            \"wf4Am\": \"맑음\",\n" +
-                "            \"wf4Pm\": \"맑음\",\n" +
-                "            \"wf5Am\": \"맑음\",\n" +
-                "            \"wf5Pm\": \"맑음\",\n" +
-                "            \"wf6Am\": \"맑음\",\n" +
-                "            \"wf6Pm\": \"맑음\",\n" +
-                "            \"wf7Am\": \"맑음\",\n" +
-                "            \"wf7Pm\": \"맑음\",\n" +
-                "            \"wf8\": \"구름많음\",\n" +
-                "            \"wf9\": \"구름많음\",\n" +
-                "            \"wf10\": \"구름많음\"\n" +
-                "          }\n" +
-                "        ]\n" +
-                "      },\n" +
-                "      \"pageNo\": 1,\n" +
-                "      \"numOfRows\": 1,\n" +
-                "      \"totalCount\": 1\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        return """
+                {
+                  "response": {
+                    "header": {
+                      "resultCode": "00",
+                      "resultMsg": "NORMAL_SERVICE"
+                    },
+                    "body": {
+                      "dataType": "JSON",
+                      "items": {
+                        "item": [
+                          {
+                            "regId": "11B00000",
+                            "rnSt4Am": 10,
+                            "rnSt4Pm": 20,
+                            "rnSt5Am": 10,
+                            "rnSt5Pm": 10,
+                            "rnSt6Am": 10,
+                            "rnSt6Pm": 10,
+                            "rnSt7Am": 10,
+                            "rnSt7Pm": 20,
+                            "rnSt8": 30,
+                            "rnSt9": 30,
+                            "rnSt10": 30,
+                            "wf4Am": "맑음",
+                            "wf4Pm": "맑음",
+                            "wf5Am": "맑음",
+                            "wf5Pm": "맑음",
+                            "wf6Am": "맑음",
+                            "wf6Pm": "맑음",
+                            "wf7Am": "맑음",
+                            "wf7Pm": "맑음",
+                            "wf8": "구름많음",
+                            "wf9": "구름많음",
+                            "wf10": "구름많음"
+                          }
+                        ]
+                      },
+                      "pageNo": 1,
+                      "numOfRows": 1,
+                      "totalCount": 1
+                    }
+                  }
+                }""";
     }
 }
