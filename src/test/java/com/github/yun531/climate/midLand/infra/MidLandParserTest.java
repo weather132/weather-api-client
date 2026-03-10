@@ -6,7 +6,6 @@ import com.github.yun531.climate.midLand.domain.MidLand;
 import com.github.yun531.climate.provinceRegionCode.ProvinceRegionCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
