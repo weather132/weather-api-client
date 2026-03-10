@@ -10,7 +10,7 @@ public class MidTemperatureUrl {
         this.temperature = temperature;
     }
 
-    public String getMidTemperatureUrl() {
+    public String getUrl() {
         return temperature;
     }
 }

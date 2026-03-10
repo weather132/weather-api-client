@@ -33,25 +33,29 @@ public class MidTemperatureClientImpl implements MidTemperatureClient {
     @Override
     public List<MidTemperature> requestMidTemperatures(MidAnnounceTime announceTime, List<CityRegionCode> regionCodes) {
         return regionCodes.stream()
-                .map(regionCode -> client.requestGet(urls.getMidTemperatureUrl(), makeParams(announceTime, regionCode)))
-                .map(raw -> parser.parse(raw, announceTime))
+                .map(regionCode -> requestAndParse(announceTime, regionCode))
                 .flatMap(Collection::stream)
                 .toList();
     }
 
 
     private Map<String, String> makeParams(MidAnnounceTime announceTime, CityRegionCode cityRegionCode) {
-        Map<String, String> p = new HashMap<>();
-        p.put("pageNo", "1");
-        p.put("numOfRows", "1");
-        p.put("dataType", "JSON");
-        p.put("regId", cityRegionCode.getRegionCode());
-        p.put("tmFc", format(announceTime.getTime()));
-        p.put("authKey", apiKey.getApiKey());
-        return p;
+        Map<String, String> params = new HashMap<>();
+        params.put("pageNo", "1");
+        params.put("numOfRows", "1");
+        params.put("dataType", "JSON");
+        params.put("regId", cityRegionCode.getRegionCode());
+        params.put("tmFc", format(announceTime.getTime()));
+        params.put("authKey", apiKey.getApiKey());
+        return params;
     }
 
     private String format(LocalDateTime time) {
         return time.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
+    }
+
+    private List<MidTemperature> requestAndParse(MidAnnounceTime announceTime, CityRegionCode regionCode) {
+        String rawJson = client.requestGet(urls.getUrl(), makeParams(announceTime, regionCode));
+        return parser.parse(rawJson, announceTime, regionCode);
     }
 }
