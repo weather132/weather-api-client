@@ -46,12 +46,12 @@ public class MidTemperatureClientImpl implements MidTemperatureClient {
         p.put("numOfRows", "1");
         p.put("dataType", "JSON");
         p.put("regId", cityRegionCode.getRegionCode());
-        p.put("tmFc", formatToMidTermTime(announceTime.getTime()));
+        p.put("tmFc", format(announceTime.getTime()));
         p.put("authKey", apiKey.getApiKey());
         return p;
     }
 
-    private String formatToMidTermTime(LocalDateTime t) {
-        return t.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
+    private String format(LocalDateTime time) {
+        return time.format(DateTimeFormatter.ofPattern("yyyyMMddHH00"));
     }
 }
