@@ -28,7 +28,7 @@ class MidLandParserTest {
     ProvinceRegionCode mockRegionCode;
 
     @Test
-    void 정상_JSON_파싱() throws IOException {
+    void 정상_JSON_파싱() {
         // given
         String rawJson = getJsonTestCase();
         when(mockRegionCode.getId()).thenReturn(1L);
