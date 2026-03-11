@@ -29,10 +29,8 @@ public class ShortLandItem {
     private Integer rainType;
 
     public ShortLand toShortLand(CityRegionCode regionCode) {
-        LocalDateTime parsedAnnounceTime = timeStringToLocalDateTime();
-
-        int hour = parsedAnnounceTime.getHour();
-        LocalDateTime effectiveTime = getAdjustedTime(hour, parsedAnnounceTime);
+        LocalDateTime parsedAnnounceTime = parseTimeString(this.announceTime);
+        LocalDateTime effectiveTime = calculateEffectiveTime(parsedAnnounceTime, this.numEf);
 
         return new ShortLand(
                 parsedAnnounceTime,
@@ -44,20 +42,17 @@ public class ShortLandItem {
         );
     }
 
-    private LocalDateTime getAdjustedTime(int hour, LocalDateTime parsedAnnounceTime) {
-        LocalDateTime adjustedTime;
-        if (hour == 17 || hour == 5) {
-            adjustedTime = parsedAnnounceTime.plusHours(4);
-        } else {
-            adjustedTime = parsedAnnounceTime.plusHours(10);
-        }
+    private LocalDateTime calculateEffectiveTime(LocalDateTime announceTime, int numEf) {
+        int announceHour = announceTime.getHour();
 
-        return adjustedTime;
+        if (announceHour == 17 || announceHour == 5) {
+            return announceTime.plusHours(4 + 12 * numEf);
+        } else {
+            return announceTime.plusHours(10 + 12 * numEf);
+        }
     }
 
-    private LocalDateTime timeStringToLocalDateTime() {
-        return LocalDateTime.parse(this.announceTime, DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+    private LocalDateTime parseTimeString(String time) {
+        return LocalDateTime.parse(time, DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
     }
 }
-
-// TODO : numEf 값을 사용하지 않는 것으로 보아 발효시간 계산에 오류가 있어 보임.
