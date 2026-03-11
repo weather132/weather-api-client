@@ -1,7 +1,6 @@
 package com.github.yun531.climate.midTemperature.infra;
 
 import com.github.yun531.climate.common.MidAnnounceTime;
-import com.github.yun531.climate.midLand.domain.MidLand;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
