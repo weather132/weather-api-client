@@ -12,9 +12,11 @@ import java.util.List;
 public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final JpaMidTemperatureRepository jpaMidTemperatureRepository;
 
-    public MidTemperatureRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public MidTemperatureRepositoryImpl(JdbcTemplate jdbcTemplate, JpaMidTemperatureRepository jpaMidTemperatureRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.jpaMidTemperatureRepository = jpaMidTemperatureRepository;
     }
 
     @Override
@@ -45,5 +47,9 @@ public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
                         ps.setInt(6, midTemp.getMinTemp());
                     }
                 });
+    }
+
+    List<MidTemperature> findAll() {
+        return jpaMidTemperatureRepository.findAll();
     }
 }
