@@ -34,7 +34,7 @@ public class ShortLandItem {
         int hour = parsedAnnounceTime.getHour();
         LocalDateTime effectiveTime = getAdjustedTime(hour, parsedAnnounceTime);
 
-        return new com.github.yun531.climate.shortLand.domain.ShortLand(
+        return new ShortLand(
                 parsedAnnounceTime,
                 effectiveTime,
                 regionCode.getId(),

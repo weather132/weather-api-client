@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Import(MidLandRepositoryImpl.class)
 class MidLandRepositoryImplTest {
     @Autowired
-    private MidLandRepositoryImpl midLandRepositoryImpl;
+    MidLandRepositoryImpl midLandRepositoryImpl;
 
     @Container
     static MySQLContainer<?> mysql =
