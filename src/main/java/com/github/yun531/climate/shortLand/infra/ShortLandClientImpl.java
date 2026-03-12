@@ -35,18 +35,18 @@ public class ShortLandClientImpl implements ShortLandClient {
 
     @Override
     public List<ShortLand> requestShortLand(CityRegionCode cityRegionCode) {
-        Map<String, String> params = makeParams(cityRegionCode.getRegionCode());
+        Map<String, String> params = makeParams(cityRegionCode);
         String json = weatherClient.requestGet(url.getLand(), params);
 
         return parse(json, cityRegionCode);
     }
 
-    private Map<String, String> makeParams(String regionId) {
+    private Map<String, String> makeParams(CityRegionCode regionCode) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("pageNo", "1");
         parameters.put("numOfRows", "9");
         parameters.put("dataType", "JSON");
-        parameters.put("regId", regionId);
+        parameters.put("regId", regionCode.getRegionCode());
         parameters.put("authKey", apiKey.getApiKey());
 
         return parameters;
