@@ -23,22 +23,19 @@ class ShortLandClientImplTest {
         ApiKey apiKey = Mockito.mock(ApiKey.class);
         Mockito.when(apiKey.getApiKey()).thenReturn("abcde");
 
-        LocalDateTime announceTime = LocalDateTime.of(2026, 3, 9, 12, 0);
-
         CityRegionCode code = Mockito.mock(CityRegionCode.class);
         Mockito.when(code.getRegionCode()).thenReturn("11B10101");
 
         ShortLandClientImpl shortLandClient = new ShortLandClientImpl(apiKey, null, null, null);
 
         // when
-        Map<String, String> actual = ReflectionTestUtils.invokeMethod(shortLandClient, "makeParams", announceTime, code);
+        Map<String, String> actual = ReflectionTestUtils.invokeMethod(shortLandClient, "makeParams", code);
 
         // then
         assertThat(actual.get("pageNo")).isEqualTo("1");
-        assertThat(actual.get("numOfRows")).isEqualTo("1");
+        assertThat(actual.get("numOfRows")).isEqualTo("9");
         assertThat(actual.get("dataType")).isEqualTo("JSON");
         assertThat(actual.get("regId")).isEqualTo("11B10101");
-        assertThat(actual.get("tmFc")).isEqualTo("202603090600");
         assertThat(actual.get("authKey")).isEqualTo("abcde");
     }
 
