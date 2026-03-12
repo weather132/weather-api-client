@@ -57,14 +57,14 @@ public class ShortGridClientImpl implements ShortGridClient {
 
     private Map<String, String> makeParams(AnnounceTime announceTime, LocalDateTime effectiveTime, String fcstVar) {
         Map<String, String> parameters = new HashMap<>();
-        parameters.put("tmfc", formatTime(announceTime.getAnnounceTime()));
-        parameters.put("tmef",  formatTime(effectiveTime));
+        parameters.put("tmfc", format(announceTime.getAnnounceTime()));
+        parameters.put("tmef",  format(effectiveTime));
         parameters.put("vars", fcstVar);
         parameters.put("authKey", apiKey.getApiKey());
         return parameters;
     }
 
-    private String formatTime(LocalDateTime localDateTime) {
+    private String format(LocalDateTime localDateTime) {
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
     }
 
