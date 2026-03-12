@@ -8,10 +8,12 @@ import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandClient;
 import com.github.yun531.climate.shortLand.infra.config.ShortLandUrl;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import com.jayway.jsonpath.TypeRef;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,15 +35,13 @@ public class ShortLandClientImpl implements ShortLandClient {
 
     @Override
     public List<ShortLand> requestShortLand(CityRegionCode cityRegionCode) {
-        Map<String, String> params = makeParameters(cityRegionCode.getRegionCode());
+        Map<String, String> params = makeParams(cityRegionCode.getRegionCode());
         String json = weatherClient.requestGet(url.getLand(), params);
 
-        return parse(json).stream()
-                .map(item -> item.toShortLand(cityRegionCode))
-                .toList();
+        return parse(json, cityRegionCode);
     }
 
-    private Map<String, String> makeParameters(String regionId) {
+    private Map<String, String> makeParams(String regionId) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("pageNo", "1");
         parameters.put("numOfRows", "9");
@@ -52,7 +52,19 @@ public class ShortLandClientImpl implements ShortLandClient {
         return parameters;
     }
 
-    private List<ShortLandItem> parse(String json) {
-        return JsonPath.using(config.getConfiguration()).parse(json).read("$.response.body.items.item", new TypeRef<>() {});
+    private List<ShortLand> parse(String rawJson, CityRegionCode regionCode) {
+        try {
+            return _parse(rawJson, regionCode);
+
+        } catch (PathNotFoundException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private List<ShortLand> _parse(String rawJson, CityRegionCode regionCode) {
+        List<ShortLandItem> items = JsonPath.using(config.getConfiguration()).parse(rawJson).read("$.response.body.items.item", new TypeRef<>() {});
+        return items.stream()
+                .map(item -> item.toShortLand(regionCode))
+                .toList();
     }
 }
