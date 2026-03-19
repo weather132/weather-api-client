@@ -5,6 +5,7 @@ import jakarta.persistence.Embeddable;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Embeddable
 public class MidAnnounceTime {
@@ -14,6 +15,10 @@ public class MidAnnounceTime {
 
     public MidAnnounceTime(LocalDateTime nowTime) {
         this.time = nowTime.minusHours(calculatePastHour(nowTime.getHour())).withMinute(0).withSecond(0).withNano(0);
+    }
+
+    public String formatIso() {
+        return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     protected MidAnnounceTime() {}

@@ -1,5 +1,6 @@
 package com.github.yun531.climate.shortLand.infra;
 
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -60,5 +62,10 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
                 }
 
         );
+    }
+
+    @Override
+    public ShortLand findRecent(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        return jpaShortLandRepository.findByCityRegionCodeIdAndEffectiveTime(regionCode.getId(), effectiveTime);
     }
 }
