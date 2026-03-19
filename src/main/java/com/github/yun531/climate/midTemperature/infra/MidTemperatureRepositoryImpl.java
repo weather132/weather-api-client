@@ -1,11 +1,13 @@
 package com.github.yun531.climate.midTemperature.infra;
 
+import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
 import com.github.yun531.climate.midTemperature.domain.MidTemperatureRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -49,7 +51,21 @@ public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
                 });
     }
 
-    List<MidTemperature> findAll() {
+    @Override
+    public MidTemperature findRecent(CityRegionCode cityRegionCode, LocalDateTime effectiveTime) {
+        return jpaMidTemperatureRepository.findByCityRegionCodeIdAndEffectiveTime(cityRegionCode.getId(), effectiveTime)
+                .stream()
+                .reduce((midTemp1, midTemp2) -> isAnnouncedAfter(midTemp1, midTemp2) ? midTemp1 : midTemp2)
+                .orElse(new MidTemperature(null, null, null, null, null));
+    }
+
+    @Override
+    public List<MidTemperature> findAll() {
         return jpaMidTemperatureRepository.findAll();
+    }
+
+
+    private boolean isAnnouncedAfter(MidTemperature midTemp1, MidTemperature midTemp2) {
+        return midTemp1.getAnnounceTime().getTime().isAfter(midTemp2.getAnnounceTime().getTime());
     }
 }

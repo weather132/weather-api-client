@@ -2,10 +2,12 @@ package com.github.yun531.climate.midLand.infra;
 
 import com.github.yun531.climate.midLand.domain.MidLand;
 import com.github.yun531.climate.midLand.domain.MidLandRepository;
+import com.github.yun531.climate.provinceRegionCode.ProvinceRegionCode;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -44,5 +46,18 @@ public class MidLandRepositoryImpl implements MidLandRepository {
     @Override
     public List<MidLand> findAll() {
         return jpaMidLandRepository.findAll();
+    }
+
+    @Override
+    public MidLand findRecent(ProvinceRegionCode regionCode, LocalDateTime effectiveTime) {
+        return jpaMidLandRepository.findByProvinceRegionCodeIdAndEffectiveTime(regionCode.getId(), effectiveTime)
+                .stream()
+                .reduce((midLand1, midLand2) -> isAnnouncedAfter(midLand1, midLand2) ? midLand1 : midLand2)
+                .orElse(new MidLand(null, null, null, null));
+    }
+
+
+    private boolean isAnnouncedAfter(MidLand midLand1, MidLand midLand2) {
+        return midLand1.getAnnounceTime().getTime().isAfter(midLand2.getAnnounceTime().getTime());
     }
 }

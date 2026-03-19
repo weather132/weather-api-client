@@ -1,5 +1,6 @@
 package com.github.yun531.climate.shortGrid.infra;
 
+import com.github.yun531.climate.shortGrid.domain.AnnounceTime;
 import com.github.yun531.climate.shortGrid.domain.ShortGrid;
 import com.github.yun531.climate.shortGrid.domain.ShortGridRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,9 +12,11 @@ import java.util.List;
 @Repository
 public class ShortGridRepositoryImpl implements ShortGridRepository {
     private final JdbcTemplate jdbcTemplate;
+    private final JpaShortGridRepository jpaShortGridRepository;
 
-    public ShortGridRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public ShortGridRepositoryImpl(JdbcTemplate jdbcTemplate, JpaShortGridRepository jpaShortGridRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.jpaShortGridRepository = jpaShortGridRepository;
     }
 
     @Override
@@ -43,5 +46,10 @@ public class ShortGridRepositoryImpl implements ShortGridRepository {
                         ps.setInt(7, grid.getTemp());
                     }
                 });
+    }
+
+    @Override
+    public List<ShortGrid> findByAnnounceTimeAndXAndY(AnnounceTime announceTime, int x, int y) {
+        return jpaShortGridRepository.findByAnnounceTimeAndXAndY(announceTime, x, y);
     }
 }
