@@ -1,4 +1,4 @@
-package com.github.yun531.climate.snapshot.domain;
+package com.github.yun531.climate.snapshot.domain.policy;
 
 import com.github.yun531.climate.snapshot.domain.model.SnapKind;
 import org.springframework.stereotype.Component;
@@ -20,12 +20,6 @@ public class PublishSchedulePolicy {
 
     public PublishSchedulePolicy(int availableDelayMinutes) {
         this.availableDelayMinutes = availableDelayMinutes;
-    }
-
-    public boolean isAccessible(LocalDateTime now, LocalDateTime announceTime) {
-        return now != null
-                && announceTime != null
-                && !now.isBefore(announceTime.plusMinutes(availableDelayMinutes));
     }
 
     public LocalDateTime announceTimeFor(LocalDateTime now, SnapKind kind) {

@@ -1,4 +1,4 @@
-package com.github.yun531.climate.snapshot.domain;
+package com.github.yun531.climate.snapshot.domain.compose;
 
 import com.github.yun531.climate.snapshot.contract.DailyPoint;
 import com.github.yun531.climate.snapshot.contract.HourlyPoint;

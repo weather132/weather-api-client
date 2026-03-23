@@ -1,4 +1,4 @@
-package com.github.yun531.climate.snapshot.application;
+package com.github.yun531.climate.snapshot.domain.compose;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.Coordinates;
