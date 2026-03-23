@@ -1,4 +1,4 @@
-package com.github.yun531.climate.snapshot.domain.policy;
+package com.github.yun531.climate.snapshot.domain;
 
 import com.github.yun531.climate.snapshot.domain.model.SnapKind;
 import org.springframework.stereotype.Component;

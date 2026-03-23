@@ -2,8 +2,8 @@ package com.github.yun531.climate.snapshot.infra.reader;
 
 import com.github.yun531.climate.common.cache.CacheEntry;
 import com.github.yun531.climate.snapshot.contract.WeatherSnapshot;
-import com.github.yun531.climate.snapshot.domain.compose.SnapshotComposeService;
-import com.github.yun531.climate.snapshot.domain.policy.PublishSchedulePolicy;
+import com.github.yun531.climate.snapshot.application.SnapshotComposeService;
+import com.github.yun531.climate.snapshot.domain.PublishSchedulePolicy;
 import com.github.yun531.climate.snapshot.infra.config.SnapshotCacheProperties;
 import org.springframework.stereotype.Component;
 

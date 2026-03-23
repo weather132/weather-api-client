@@ -6,7 +6,7 @@ import com.github.yun531.climate.common.time.TimeUtil;
 import com.github.yun531.climate.snapshot.contract.SnapshotReader;
 import com.github.yun531.climate.snapshot.contract.WeatherSnapshot;
 import com.github.yun531.climate.snapshot.domain.model.SnapKind;
-import com.github.yun531.climate.snapshot.domain.policy.PublishSchedulePolicy;
+import com.github.yun531.climate.snapshot.domain.PublishSchedulePolicy;
 import com.github.yun531.climate.snapshot.infra.config.SnapshotCacheProperties;
 import org.springframework.lang.Nullable;
 

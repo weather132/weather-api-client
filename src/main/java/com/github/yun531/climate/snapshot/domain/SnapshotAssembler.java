@@ -1,4 +1,4 @@
-package com.github.yun531.climate.snapshot.domain.compose;
+package com.github.yun531.climate.snapshot.domain;
 
 import com.github.yun531.climate.snapshot.contract.DailyPoint;
 import com.github.yun531.climate.snapshot.contract.HourlyPoint;
@@ -57,7 +57,7 @@ public class SnapshotAssembler {
     }
 
     // =====================================================================
-    //  Daily: DailyForecastItem -> DailyPoint 7개 (dayOffset 0~6)
+    //  Daily: DailyForecastItem -> DailyPoint 7개 (daysAhead 0~6)
     // =====================================================================
 
     private List<DailyPoint> toDailyPoints(
@@ -67,18 +67,18 @@ public class SnapshotAssembler {
             return emptyDailyPoints();
         }
 
-        Map<Integer, List<DailyForecastItem>> grouped = groupByDayOffset(baseDate, items);
+        Map<Integer, List<DailyForecastItem>> grouped = groupByDaysAhead(baseDate, items);
 
         DailyPoint[] points = new DailyPoint[DAILY_RANGE];
-        for (int dayOffset = 0; dayOffset < DAILY_RANGE; dayOffset++) {
-            List<DailyForecastItem> dayItems = grouped.getOrDefault(dayOffset, List.of());
-            points[dayOffset] = aggregateDay(dayOffset, dayItems);
+        for (int daysAhead = 0; daysAhead < DAILY_RANGE; daysAhead++) {
+            List<DailyForecastItem> dayItems = grouped.getOrDefault(daysAhead, List.of());
+            points[daysAhead] = aggregateDay(daysAhead, dayItems);
         }
 
         return List.of(points);
     }
 
-    private Map<Integer, List<DailyForecastItem>> groupByDayOffset(
+    private Map<Integer, List<DailyForecastItem>> groupByDaysAhead(
             LocalDate baseDate, List<DailyForecastItem> items
     ) {
         Map<Integer, List<DailyForecastItem>> grouped = new HashMap<>();
@@ -86,17 +86,17 @@ public class SnapshotAssembler {
         for (DailyForecastItem item : items) {
             if (item == null || item.getEffectiveTime() == null) continue;
 
-            int dayOffset = (int) ChronoUnit.DAYS.between(
+            int daysAhead = (int) ChronoUnit.DAYS.between(
                     baseDate, item.getEffectiveTime().toLocalDate());
-            if (dayOffset < 0 || dayOffset >= DAILY_RANGE) continue;
+            if (daysAhead < 0 || daysAhead >= DAILY_RANGE) continue;
 
-            grouped.computeIfAbsent(dayOffset, k -> new ArrayList<>()).add(item);
+            grouped.computeIfAbsent(daysAhead, k -> new ArrayList<>()).add(item);
         }
 
         return grouped;
     }
 
-    private DailyPoint aggregateDay(int dayOffset, List<DailyForecastItem> items) {
+    private DailyPoint aggregateDay(int daysAhead, List<DailyForecastItem> items) {
         Integer minTemp = null, maxTemp = null;
         Integer amPop = null, pmPop = null;
 
@@ -117,7 +117,7 @@ public class SnapshotAssembler {
             }
         }
 
-        return new DailyPoint(dayOffset, minTemp, maxTemp, amPop, pmPop);
+        return new DailyPoint(daysAhead, minTemp, maxTemp, amPop, pmPop);
     }
 
     private List<DailyPoint> emptyDailyPoints() {

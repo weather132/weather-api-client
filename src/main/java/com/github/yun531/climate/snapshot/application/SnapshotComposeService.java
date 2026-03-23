@@ -1,8 +1,9 @@
-package com.github.yun531.climate.snapshot.domain.compose;
+package com.github.yun531.climate.snapshot.application;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.snapshot.contract.WeatherSnapshot;
+import com.github.yun531.climate.snapshot.domain.SnapshotAssembler;
 import com.github.yun531.climate.snapshot.domain.model.DailyForecastItem;
 import com.github.yun531.climate.snapshot.domain.model.HourlyForecastItem;
 import org.springframework.lang.Nullable;
