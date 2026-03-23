@@ -1,6 +1,6 @@
-package com.github.yun531.climate.snapshot.contract;
+package com.github.yun531.climate.forecast.domain.readmodel;
 
-public record DailyPoint(
+public record ForecastDailyPoint(
         int daysAhead,
         Integer minTemp,
         Integer maxTemp,
