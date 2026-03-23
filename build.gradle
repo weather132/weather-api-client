@@ -1,3 +1,4 @@
+// ------ Plugins ------
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.7'
@@ -5,59 +6,112 @@ plugins {
     id 'jacoco'
 }
 
+// ------ Project Info ------
 group = 'com.github.yun531'
 version = '0.0.1-SNAPSHOT'
 description = 'climate'
 
+// ------ Java Configuration ------
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
+// ------ Gradle Configurations ------
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
 }
 
+// ------ Repositories ------
 repositories {
     mavenCentral()
 }
 
+// ------ Dependencies ------
 dependencies {
+
+    // --- Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    // https://mvnrepository.com/artifact/com.jayway.jsonpath/json-path
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
     implementation 'com.jayway.jsonpath:json-path:2.10.0'
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+
+    implementation 'com.google.firebase:firebase-admin:9.4.2'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    runtimeOnly 'com.mysql:mysql-connector-j'
 
+    // --- Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
-    testImplementation 'org.testcontainers:mysql:1.21.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation 'org.testcontainers:junit-jupiter:1.20.1'
+    testImplementation 'org.testcontainers:mysql:1.21.4'
+
+    testImplementation 'org.wiremock:wiremock-standalone:3.12.1'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// ------ Test Task------
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
 }
 
+// ------ JaCoCo Configuration ------
+jacoco {
+    toolVersion = '0.8.14'
+}
+
 jacocoTestReport {
     dependsOn test
-
     reports {
-        xml.required = false
-        csv.required = false
+        xml.required = true
         html.required = true
+        csv.required = false
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/config/**',
+                    '**/ClimateApplication.class',
+                    '**/entity/**',
+                    '**/dto/**',
+                    '**/fcm/infra/firebase/**',
+                    '**/fcm/infra/config/**',
+                    '**/presentation/TriggerTestController.class'
+            ])
+        }))
     }
 }
 
-jacoco {
-    toolVersion = "0.8.14"
-    reportsDirectory = layout.buildDirectory.dir("reports/jacoco")
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.70
+            }
+        }
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(jacocoTestReport.classDirectories)
+    }
+}
+
+tasks.named('check') {
+    dependsOn jacocoTestCoverageVerification
 }
