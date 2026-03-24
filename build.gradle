@@ -82,10 +82,10 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
-                    '**/config/**',
+                    '**/*Config*',
                     '**/ClimateApplication.class',
-                    '**/entity/**',
-                    '**/dto/**',
+                    '**/*Entity*',
+                    '**/*Dto*',
                     '**/fcm/infra/firebase/**',
                     '**/fcm/infra/config/**',
                     '**/presentation/TriggerTestController.class'

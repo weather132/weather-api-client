@@ -24,11 +24,17 @@ public class FcmTriggerPushSender implements TriggerPushSender {
 
     private static final DateTimeFormatter ISO_LOCAL = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
+    /**
+     * @param dryRun true 이면 FCM 서버 검증만 수행하고 실제 전송하지 않음
+     */
     @Override
     public String sendHourly(LocalDateTime firedAt, int hour, boolean dryRun) {
         return send(props.hourlyTopic(), "HOURLY_TRIGGER", firedAt, hour, dryRun);
     }
 
+    /**
+     * @param dryRun true 이면 FCM 서버 검증만 수행하고 실제 전송하지 않음
+     */
     @Override
     public String sendDaily(LocalDateTime firedAt, int hour, boolean dryRun) {
         if (hour < 0 || hour > 23) throw new IllegalArgumentException("hour must be 0..23");
