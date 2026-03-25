@@ -66,4 +66,8 @@ public class WarningEvent {
         this.announceTime = announceTime;
         this.effectiveTime = effectiveTime;
     }
+
+    public boolean isActive() {
+        return eventType != WarningEventType.LIFTED;
+    }
 }

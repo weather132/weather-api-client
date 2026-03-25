@@ -47,4 +47,8 @@ public class WarningCurrent {
         this.tmFc = tmFc;
         this.tmEf = tmEf;
     }
+
+    public WarningEvent toEvent(WarningLevel prevLevel, WarningEventType eventType) {
+        return new WarningEvent(warningRegionCode, kind, level, prevLevel, eventType, tmFc, tmEf);
+    }
 }
