@@ -1,14 +1,12 @@
 package com.github.yun531.climate.notification.domain.payload;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record RainForecastPayload(
-        AlertTypeEnum type,
         List<RainInterval> hourlyParts,
         List<DailyRainFlags> dayParts
 ) implements AlertPayload {
@@ -29,7 +27,6 @@ public record RainForecastPayload(
     /** 일별 오전/오후 비 플래그 */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DailyRainFlags(boolean rainAm, boolean rainPm) {}
-
 
     public RainForecastPayload {
         hourlyParts = (hourlyParts == null) ? List.of() : List.copyOf(hourlyParts);

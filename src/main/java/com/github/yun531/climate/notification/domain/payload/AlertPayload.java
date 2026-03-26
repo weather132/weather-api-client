@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 /**
  * REST 에서도 payload를 "타입" 그대로 내보내기 위한 다형성 payload 루트.
  * JSON 예시:
- *  "payload": { "payloadType":"RAIN_ONSET", "source":"...", ... }
+ *  "payload": { "payloadType":"RAIN_ONSET", ... }
  */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -17,10 +17,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = RainOnsetPayload.class, name = "RAIN_ONSET"),
-        @JsonSubTypes.Type(value = RainForecastPayload.class, name = "RAIN_FORECAST")
+        @JsonSubTypes.Type(value = RainForecastPayload.class, name = "RAIN_FORECAST"),
+        @JsonSubTypes.Type(value = WarningIssuedPayload.class, name = "WARNING_ISSUED")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public sealed interface AlertPayload
-        permits RainOnsetPayload, RainForecastPayload {
+        permits RainOnsetPayload, RainForecastPayload, WarningIssuedPayload {
 }

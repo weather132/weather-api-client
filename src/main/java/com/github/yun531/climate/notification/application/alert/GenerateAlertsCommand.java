@@ -1,5 +1,6 @@
 package com.github.yun531.climate.notification.application.alert;
 
+import com.github.yun531.climate.warning.domain.model.WarningKind;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import org.springframework.lang.Nullable;
 
@@ -9,14 +10,18 @@ import java.util.Set;
 
 public record GenerateAlertsCommand(
         List<String> regionIds,
-        @Nullable Integer sinceHours,
         Set<AlertTypeEnum> enabledTypes,
+        @Nullable Set<WarningKind> warningKinds,
         @Nullable Integer withinHours
 ) {
     public GenerateAlertsCommand {
         enabledTypes = (enabledTypes == null || enabledTypes.isEmpty())
                 ? EnumSet.noneOf(AlertTypeEnum.class)
                 : EnumSet.copyOf(enabledTypes);
+
+        warningKinds = (warningKinds != null && !warningKinds.isEmpty())
+                ? EnumSet.copyOf(warningKinds)
+                : null;
     }
 
     public boolean hasNoTypes() {
