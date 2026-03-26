@@ -66,6 +66,9 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
 
     @Override
     public ShortLand findRecent(CityRegionCode regionCode, LocalDateTime effectiveTime) {
-        return jpaShortLandRepository.findByCityRegionCodeIdAndEffectiveTime(regionCode.getId(), effectiveTime);
+        return jpaShortLandRepository.findByCityRegionCodeIdAndEffectiveTime(regionCode.getId(), effectiveTime)
+                .stream()
+                .reduce((sLand1, sLand2) -> sLand1.getAnnounceTime().isAfter(sLand2.getAnnounceTime()) ? sLand1 : sLand2)
+                .get();
     }
 }
