@@ -58,17 +58,17 @@ create table mid_temperature(
 );
 
 
-insert into province_region_code values(null, "11B00000");
-insert into province_region_code values(null, "11D10000");
-insert into province_region_code values(null, "11D20000");
-insert into province_region_code values(null, "11C20000");
-insert into province_region_code values(null, "11C10000");
+insert into province_region_code values(null, '11B00000');
+insert into province_region_code values(null, '11D10000');
+insert into province_region_code values(null, '11D20000');
+insert into province_region_code values(null, '11C20000');
+insert into province_region_code values(null, '11C10000');
 
-insert into city_region_code values(null, "11B10101", 60, 127, null);
-insert into city_region_code values(null, "11B20201", 55, 124, null);
-insert into city_region_code values(null, "11B20601", 60, 121, null);
-insert into city_region_code values(null, "11B20605", 63, 124, null);
-insert into city_region_code values(null, "11B20602", 59, 123, null);
-insert into city_region_code values(null, "11B10103", 58, 125, null);
-insert into city_region_code values(null, "11B10102", 60, 124, null);
-insert into city_region_code values(null, "11B20606", 62, 114, null);
+insert into city_region_code values(null, '11B10101', 60, 127, null);
+insert into city_region_code values(null, '11B20201', 55, 124, null);
+insert into city_region_code values(null, '11B20601', 60, 121, null);
+insert into city_region_code values(null, '11B20605', 63, 124, null);
+insert into city_region_code values(null, '11B20602', 59, 123, null);
+insert into city_region_code values(null, '11B10103', 58, 125, null);
+insert into city_region_code values(null, '11B10102', 60, 124, null);
+insert into city_region_code values(null, '11B20606', 62, 114, null);
