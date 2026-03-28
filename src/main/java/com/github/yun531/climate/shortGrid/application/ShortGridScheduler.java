@@ -1,10 +1,12 @@
 package com.github.yun531.climate.shortGrid.application;
 
 import jakarta.transaction.Transactional;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 public class ShortGridScheduler {
     private final ShortGridService shortGridService;
 

@@ -1,10 +1,12 @@
 package com.github.yun531.climate.shortLand.application;
 
 import jakarta.transaction.Transactional;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 public class ShortLandScheduler {
     private final ShortLandService shortLandService;
 
