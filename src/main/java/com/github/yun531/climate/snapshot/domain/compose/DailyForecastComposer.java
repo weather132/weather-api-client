@@ -77,7 +77,7 @@ public class DailyForecastComposer {
         MidTemperature midTemp = midTemperatureRepository
                 .findRecent(regionCode, effectiveTime);
         Integer temp = isMorning(effectiveTime)
-                ? midTemp.getMaxTemp() : midTemp.getMinTemp();
+                ? midTemp.getMinTemp() : midTemp.getMaxTemp();
 
         ProvinceRegionCode provinceRegionCode = provinceRegionCodeRepository
                 .findById(regionCode.getProvinceRegionCodeId()).get();
