@@ -47,11 +47,17 @@ public class DailyForecastComposer {
     }
 
     private List<LocalDateTime> getEffectiveTimes(LocalDateTime now) {
-        LocalDateTime standardTime = now
+        // 00시 ~ 05시 59분 사이라면 "전날" 데이터 기준으로 계산하기 위해 기준일을 하루 뺌
+        LocalDateTime baseDate = now;
+        if (now.getHour() < 6) {
+            baseDate = now.minusDays(1);
+        }
+
+        LocalDateTime standardTime = baseDate
                 .withHour(9).withMinute(0).withSecond(0).withNano(0);
 
         List<LocalDateTime> effectiveTimes = new ArrayList<>();
-        for (int day = 1; day <= 7; day++) {
+        for (int day = 0; day <= 6; day++) {
             effectiveTimes.add(standardTime.plusDays(day).withHour(9));
             effectiveTimes.add(standardTime.plusDays(day).withHour(21));
         }

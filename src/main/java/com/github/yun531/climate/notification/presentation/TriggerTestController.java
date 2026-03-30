@@ -5,6 +5,7 @@ import com.github.yun531.climate.notification.application.trigger.TriggerPushSen
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
+@Profile("!test")
 @RequiredArgsConstructor
 @RequestMapping("/internal/trigger")
 @ConditionalOnProperty(prefix = "notification.internal-api", name = "enabled", havingValue = "true")
