@@ -270,79 +270,49 @@ delimiter ;
 delimiter $$
 create procedure insert_mid_land(now datetime)
 begin
-    declare announce_time datetime default get_mid_announceTime(now);
-    declare first_ef_time datetime default cast(date_format(date_add(announce_time, interval 3 day), '%Y-%m-%d 09:00:00') as datetime);
-    declare province_done int default false;
-    declare i int default 0;
-    declare province_id bigint;
+    declare a_time datetime default get_mid_announceTime(now);
+    declare f_time datetime default cast(
+            date_format(date_add(a_time, interval 3 day), '%Y-%m-%d 09:00:00') as datetime
+                                    );
 
-    declare province_cursor cursor for select id from climate.province_region_code;
-    declare continue handler for not found set province_done = true;
-
-
-    open province_cursor;
-    province_loop : loop
-        fetch province_cursor into province_id;
-
-        if province_done then
-            leave province_loop;
-        end if;
-
-        set i = 0;
-        ef_time_loop : loop
-            if i >= 12 then
-                leave ef_time_loop;
-            end if;
-
-            insert into mid_pop values (null, announce_time,
-                                        date_add(first_ef_time, interval i * 12 hour),
-                                        province_id,
-                                        i * 10);
-            set i = i + 1;
-        end loop;
-    end loop;
-
-    close province_cursor;
+    INSERT INTO mid_pop (id, announce_time, effective_time, province_region_code_id, pop)
+    WITH RECURSIVE seq AS (
+        SELECT 0 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 11
+    )
+    SELECT null,
+           a_time,
+           DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
+           p.id,
+           s.i * 10
+    FROM province_region_code p
+             CROSS JOIN seq s;
 end $$
 delimiter ;
 
 delimiter $$
 create procedure insert_mid_temp(now datetime)
 begin
-    declare announce_time datetime default get_mid_announceTime(now);
-    declare first_ef_time datetime default cast(date_format(date_add(announce_time, interval 3 day), '%Y-%m-%d 09:00:00') as datetime);
-    declare i int default 0;
-    declare city_done int default false;
-    declare city_id bigint;
+    declare a_time datetime default get_mid_announceTime(now);
+    declare f_time datetime default cast(
+            date_format(date_add(a_time, interval 3 day), '%Y-%m-%d 09:00:00') as datetime
+                                    );
 
-    declare city_cursor cursor for select id from city_region_code;
-    declare continue handler for not found set city_done = true;
-
-    open city_cursor;
-    city_loop : loop
-        fetch city_cursor into city_id;
-
-        if city_done then
-            leave city_loop;
-        end if;
-
-        set i = 0;
-        ef_time_loop : loop
-            if i >= 12 then
-                leave ef_time_loop;
-            end if;
-
-            insert into mid_temperature values (null,
-                                                announce_time,
-                                                date_add(first_ef_time, interval i * 12 hour),
-                                                city_id,
-                                                i,
-                                                i);
-            set i = i + 1;
-        end loop;
-    end loop;
-
-    close city_cursor;
+    INSERT INTO mid_temperature (id, announce_time, effective_time, city_region_code_id, max_temp, min_temp)
+    WITH RECURSIVE seq AS (
+        SELECT 0 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 11
+    )
+    SELECT null,
+           a_time,
+           DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
+           c.id,
+           s.i,
+           s.i
+    FROM city_region_code c
+             CROSS JOIN seq s;
 end $$
 delimiter ;
 
@@ -366,49 +336,31 @@ delimiter ;
 delimiter $$
 create procedure insert_short_land(now datetime)
 begin
-    declare announce_time datetime default get_short_land_announce_time(now);
-    declare announce_hour int default hour(announce_time);
-    declare first_ef_time datetime;
-    declare city_id bigint;
-    declare city_done int default false;
-    declare i int default 0;
+    declare a_time datetime default get_short_land_announce_time(now);
+    declare a_hour int default hour(a_time);
+    declare f_time datetime;
 
-    declare city_cursor cursor for select id from city_region_code;
-    declare continue handler for not found set city_done = true;
-
-    if announce_hour = 5 or announce_hour = 17 then
-        set first_ef_time = date_add(announce_time, interval 4 hour);
+    if a_hour = 5 or a_hour = 17 then
+        set f_time = date_add(a_time, interval 4 hour);
     else
-        set first_ef_time = date_add(announce_time, interval 10 hour);
+        set f_time = date_add(a_time, interval 10 hour);
     end if;
 
-    open city_cursor;
-    city_loop : loop
-        fetch city_cursor into city_id;
-
-        if city_done then
-            leave city_loop;
-        end if;
-
-        set i = -1;
-        ef_time_loop : loop
-            if i >= 9 then
-                leave ef_time_loop;
-            end if;
-
-            insert into climate.short_land values (
-                                                      null,
-                                                      announce_time,
-                                                      date_add(first_ef_time, interval 12 * i hour),
-                                                      city_id,
-                                                      i * 10,
-                                                      i,
-                                                      0);
-            set i = i + 1;
-        end loop;
-    end loop;
-
-    close city_cursor;
+    INSERT INTO short_land (id, announce_time, effective_time, city_region_code_id, pop, temp, rain_type)
+    WITH RECURSIVE seq AS (
+        SELECT -1 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 8
+    )
+    SELECT null,
+           a_time,
+           DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
+           c.id,
+           s.i * 10,
+           s.i,
+           0
+    FROM city_region_code c
+             CROSS JOIN seq s;
 end $$
 delimiter ;
 
@@ -424,52 +376,45 @@ delimiter ;
 delimiter $$
 create procedure insert_short_grid(now datetime)
 begin
-    declare latest_announce_time datetime default get_short_grid_announce_time(now);
-    declare past_announce_time datetime default date_sub(latest_announce_time, interval 3 hour);
-    declare i int default 1;
-    declare num_of_ef_times int default 26;
-    declare city_x int;
-    declare city_y int;
-    declare city_done int default false;
+    declare latest_at datetime default get_short_grid_announce_time(now);
+    declare past_at datetime default date_sub(latest_at, interval 3 hour);
 
-    declare city_cursor cursor for select distinct x, y from city_region_code;
-    declare continue handler for not found set city_done = true;
-
-    open city_cursor;
-    city_loop : loop
-        fetch city_cursor into city_x, city_y;
-        if city_done then
-            leave city_loop;
-        end if;
-
-        set i = 1;
-        ef_time_loop : loop
-            if i > num_of_ef_times then
-                leave ef_time_loop;
-            end if;
-
-            insert into short_grid values (
-                                              null,
-                                              past_announce_time,
-                                              date_add(past_announce_time, interval i hour),
-                                              city_x,
-                                              city_y,
-                                              ELT(i, 0,0,30,70,80,70,30,0,0,0,0,0,70,80,70,0,0,60,70,80,60,0,0,0,0,0),
-                                              i);
-            insert into short_grid values (
-                                              null,
-                                              latest_announce_time,
-                                              date_add(latest_announce_time, interval i hour),
-                                              city_x,
-                                              city_y,
-                                              ELT(i, 0,0,30,70,80,70,30,0,0,0,0,0,70,80,70,0,0,60,70,80,60,0,0,0,0,0),
-                                              i);
-
-            set i = i + 1;
-        end loop;
-    end loop;
-
-    close city_cursor;
+    INSERT INTO short_grid (id, announce_time, effective_time, x, y, pop, temp)
+    WITH RECURSIVE seq AS (
+        SELECT 1 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 26
+    ),
+                   latest_pop(i, pop) AS (
+                       SELECT  1, 0 UNION ALL SELECT  2, 0 UNION ALL SELECT  3,30
+                       UNION ALL SELECT  4,70 UNION ALL SELECT  5,80 UNION ALL SELECT  6,70
+                       UNION ALL SELECT  7,30 UNION ALL SELECT  8, 0 UNION ALL SELECT  9, 0
+                       UNION ALL SELECT 10, 0 UNION ALL SELECT 11, 0 UNION ALL SELECT 12, 0
+                       UNION ALL SELECT 13,70 UNION ALL SELECT 14,80 UNION ALL SELECT 15,70
+                       UNION ALL SELECT 16, 0 UNION ALL SELECT 17, 0 UNION ALL SELECT 18,60
+                       UNION ALL SELECT 19,70 UNION ALL SELECT 20,80 UNION ALL SELECT 21,60
+                       UNION ALL SELECT 22, 0 UNION ALL SELECT 23, 0 UNION ALL SELECT 24, 0
+                       UNION ALL SELECT 25, 0 UNION ALL SELECT 26, 0
+                   ),
+                   past_pop(i, pop) AS (
+                       SELECT  1, 0 UNION ALL SELECT  2, 0 UNION ALL SELECT  3, 0
+                       UNION ALL SELECT  4,20 UNION ALL SELECT  5,70 UNION ALL SELECT  6,80
+                       UNION ALL SELECT  7,70 UNION ALL SELECT  8,30 UNION ALL SELECT  9, 0
+                       UNION ALL SELECT 10, 0 UNION ALL SELECT 11,60 UNION ALL SELECT 12,70
+                       UNION ALL SELECT 13,80 UNION ALL SELECT 14,70 UNION ALL SELECT 15,60
+                       UNION ALL SELECT 16, 0 UNION ALL SELECT 17, 0 UNION ALL SELECT 18, 0
+                       UNION ALL SELECT 19, 0 UNION ALL SELECT 20,30 UNION ALL SELECT 21,50
+                       UNION ALL SELECT 22,70 UNION ALL SELECT 23,80 UNION ALL SELECT 24,70
+                       UNION ALL SELECT 25,30 UNION ALL SELECT 26, 0
+                   ),
+                   cities AS (
+                       SELECT DISTINCT x, y FROM city_region_code
+                   )
+    SELECT null, latest_at, DATE_ADD(latest_at, INTERVAL lp.i HOUR), c.x, c.y, lp.pop, lp.i
+    FROM cities c CROSS JOIN latest_pop lp
+    UNION ALL
+    SELECT null, past_at, DATE_ADD(past_at, INTERVAL pp.i HOUR), c.x, c.y, pp.pop, pp.i
+    FROM cities c CROSS JOIN past_pop pp;
 end $$
 delimiter ;
 
