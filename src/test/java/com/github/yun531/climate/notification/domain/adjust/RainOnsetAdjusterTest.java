@@ -129,6 +129,6 @@ class RainOnsetAdjusterTest {
     private AlertEvent makeEvent(LocalDateTime effectiveTime) {
         return new AlertEvent(
                 AlertTypeEnum.RAIN_ONSET, "R1", NOW,
-                new RainOnsetPayload(AlertTypeEnum.RAIN_ONSET, effectiveTime, 80));
+                new RainOnsetPayload(effectiveTime, 80));
     }
 }

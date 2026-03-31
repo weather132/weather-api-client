@@ -1,7 +1,6 @@
 package com.github.yun531.climate.notification.domain.payload;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 
 import java.time.LocalDateTime;
 
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record RainOnsetPayload(
-        AlertTypeEnum type,
         LocalDateTime effectiveTime,
         int pop
 ) implements AlertPayload {}

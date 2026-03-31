@@ -5,8 +5,8 @@ import com.github.yun531.climate.notification.application.alert.GenerateAlertsSe
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import com.github.yun531.climate.notification.domain.payload.RainOnsetPayload;
+import com.github.yun531.climate.warning.domain.model.WarningKind;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -34,93 +34,107 @@ class AlertControllerTest {
     private static final String BASE_PATH = "/notification/alerts";
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 1, 22, 5, 15);
 
+    // --- rain-onset ---
 
-    @Nested
-    @DisplayName("GET /rain-onset")
-    class RainOnset {
+    @Test
+    @DisplayName("GET /rain-onset -> RAIN_ONSET Command 조립, 결과 직렬화 반환")
+    void rainOnset_assemblesCorrectCommand() throws Exception {
+        AlertEvent event = new AlertEvent(
+                AlertTypeEnum.RAIN_ONSET, "R1", NOW,
+                new RainOnsetPayload(NOW.plusHours(3), 80));
+        when(service.generate(cmdCaptor.capture())).thenReturn(List.of(event));
 
-        @Test
-        @DisplayName("Command 조립 + 결과 직렬화")
-        void assemblesCommand() throws Exception {
-            AlertEvent event = new AlertEvent(
-                    AlertTypeEnum.RAIN_ONSET, "R1", NOW,
-                    new RainOnsetPayload(AlertTypeEnum.RAIN_ONSET, NOW.plusHours(3), 80));
-            when(service.generate(cmdCaptor.capture())).thenReturn(List.of(event));
+        mvc.perform(get(BASE_PATH + "/rain-onset")
+                        .param("regionIds", "R1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].type").value("RAIN_ONSET"))
+                .andExpect(jsonPath("$[0].regionId").value("R1"));
 
-            mvc.perform(get(BASE_PATH + "/rain-onset")
-                            .param("regionIds", "R1"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].type").value("RAIN_ONSET"))
-                    .andExpect(jsonPath("$[0].regionId").value("R1"));
-
-            GenerateAlertsCommand cmd = cmdCaptor.getValue();
-            assertThat(cmd.enabledTypes()).containsExactly(AlertTypeEnum.RAIN_ONSET);
-            assertThat(cmd.regionIds()).containsExactly("R1");
-            assertThat(cmd.withinHours()).isNull();
-        }
-
-        @Test
-        @DisplayName("withinHours 범위 초과 -> 24로 보정")
-        void withinHours_clamped() throws Exception {
-            when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
-
-            mvc.perform(get(BASE_PATH + "/rain-onset")
-                            .param("regionIds", "R1")
-                            .param("withinHours", "99"))
-                    .andExpect(status().isOk());
-
-            assertThat(cmdCaptor.getValue().withinHours()).isEqualTo(24);
-        }
-
-        @Test
-        @DisplayName("regionIds 누락 -> 400")
-        void missingRegionIds() throws Exception {
-            mvc.perform(get(BASE_PATH + "/rain-onset"))
-                    .andExpect(status().isBadRequest());
-        }
+        GenerateAlertsCommand cmd = cmdCaptor.getValue();
+        assertThat(cmd.enabledTypes()).containsExactly(AlertTypeEnum.RAIN_ONSET);
+        assertThat(cmd.regionIds()).containsExactly("R1");
+        assertThat(cmd.withinHours()).isNull();
     }
 
+    @Test
+    @DisplayName("GET /rain-onset withinHours 범위 초과 -> 24로 보정")
+    void rainOnset_invalidWithinHours_clampedTo24() throws Exception {
+        when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
 
-    @Nested
-    @DisplayName("GET /rain-forecast")
-    class RainForecast {
+        mvc.perform(get(BASE_PATH + "/rain-onset")
+                        .param("regionIds", "R1")
+                        .param("withinHours", "99"))
+                .andExpect(status().isOk());
 
-        @Test
-        @DisplayName("Command 조립 — enabledTypes = RAIN_FORECAST")
-        void assemblesCommand() throws Exception {
-            when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
-
-            mvc.perform(get(BASE_PATH + "/rain-forecast")
-                            .param("regionIds", "R1"))
-                    .andExpect(status().isOk());
-
-            GenerateAlertsCommand cmd = cmdCaptor.getValue();
-            assertThat(cmd.enabledTypes()).containsExactly(AlertTypeEnum.RAIN_FORECAST);
-            assertThat(cmd.regionIds()).containsExactly("R1");
-        }
+        assertThat(cmdCaptor.getValue().withinHours()).isEqualTo(24);
     }
 
+    @Test
+    @DisplayName("regionIds 누락 -> 400 Bad Request")
+    void missingRegionIds_returns400() throws Exception {
+        mvc.perform(get(BASE_PATH + "/rain-onset"))
+                .andExpect(status().isBadRequest());
+    }
 
-    @Nested
-    @DisplayName("GET /summary")
-    class Summary {
+    // --- rain-forecast ---
 
-        @Test
-        @DisplayName("Command 조립 — RAIN_ONSET + WARNING_ISSUED 통합")
-        void assemblesCommand() throws Exception {
-            when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
+    @Test
+    @DisplayName("GET /rain-forecast -> RAIN_FORECAST Command 조립")
+    void rainForecast_assemblesCorrectCommand() throws Exception {
+        when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
 
-            mvc.perform(get(BASE_PATH + "/summary")
-                            .param("regionIds", "R1", "R2")
-                            .param("withinHours", "12"))
-                    .andExpect(status().isOk());
+        mvc.perform(get(BASE_PATH + "/rain-forecast")
+                        .param("regionIds", "R1"))
+                .andExpect(status().isOk());
 
-            GenerateAlertsCommand cmd = cmdCaptor.getValue();
-            assertThat(cmd.enabledTypes())
-                    .containsExactlyInAnyOrder(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED);
-            assertThat(cmd.regionIds()).containsExactly("R1", "R2");
-            assertThat(cmd.withinHours()).isEqualTo(12);
-        }
+        GenerateAlertsCommand cmd = cmdCaptor.getValue();
+        assertThat(cmd.enabledTypes()).containsExactly(AlertTypeEnum.RAIN_FORECAST);
+        assertThat(cmd.regionIds()).containsExactly("R1");
+    }
+
+    // --- warning-issued ---
+
+    @Test
+    @DisplayName("GET /warning-issued -> WARNING_ISSUED Command 조립, warningKinds 전달")
+    void warningIssued_assemblesCorrectCommand() throws Exception {
+        when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
+
+        mvc.perform(get(BASE_PATH + "/warning-issued")
+                        .param("regionIds", "R1")
+                        .param("warningKinds", "RAIN", "HEAT"))
+                .andExpect(status().isOk());
+
+        GenerateAlertsCommand cmd = cmdCaptor.getValue();
+        assertThat(cmd.enabledTypes()).containsExactly(AlertTypeEnum.WARNING_ISSUED);
+        assertThat(cmd.warningKinds()).containsExactlyInAnyOrder(WarningKind.RAIN, WarningKind.HEAT);
+    }
+
+    @Test
+    @DisplayName("warningKinds에 잘못된 enum 값 -> 400 Bad Request")
+    void invalidWarningKind_returns400() throws Exception {
+        mvc.perform(get(BASE_PATH + "/warning-issued")
+                        .param("regionIds", "R1")
+                        .param("warningKinds", "INVALID_KIND"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // --- summary ---
+
+    @Test
+    @DisplayName("GET /summary -> RAIN_ONSET + WARNING_ISSUED 통합 Command 조립")
+    void summary_assemblesCorrectCommand() throws Exception {
+        when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
+
+        mvc.perform(get(BASE_PATH + "/summary")
+                        .param("regionIds", "R1", "R2")
+                        .param("withinHours", "12"))
+                .andExpect(status().isOk());
+
+        GenerateAlertsCommand cmd = cmdCaptor.getValue();
+        assertThat(cmd.enabledTypes())
+                .containsExactlyInAnyOrder(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED);
+        assertThat(cmd.regionIds()).containsExactly("R1", "R2");
+        assertThat(cmd.withinHours()).isEqualTo(12);
     }
 }

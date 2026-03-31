@@ -7,7 +7,7 @@ import com.github.yun531.climate.notification.domain.readmodel.PopViewReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** 스냅샷 로드 + PopView 변환 담당 */
+/** snapshot contract 호출 + PopView 변환 담당 */
 @Component
 @RequiredArgsConstructor
 public class SnapshotPopViewReader implements PopViewReader {

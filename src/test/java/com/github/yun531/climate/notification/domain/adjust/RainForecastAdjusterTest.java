@@ -165,7 +165,7 @@ class RainForecastAdjusterTest {
     }
 
     private AlertEvent makeAlertEvent(List<RainInterval> hourly, List<DailyRainFlags> days) {
-        RainForecastPayload payload = new RainForecastPayload(AlertTypeEnum.RAIN_FORECAST, hourly, days);
+        RainForecastPayload payload = new RainForecastPayload(hourly, days);
         return new AlertEvent(AlertTypeEnum.RAIN_FORECAST, "R1", ANNOUNCE_TIME, payload);
     }
 }

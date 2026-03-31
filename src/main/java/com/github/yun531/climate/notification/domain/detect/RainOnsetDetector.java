@@ -54,7 +54,7 @@ public class RainOnsetDetector {
             // 이전 예보의 같은 effectiveTime 시각 POP과 비교(예보 업데이트 전후 변화 감지)
             if (isOnset(curPop, prevPopMap.get(pop.effectiveTime()))) {
                 rainOnsetAlerts.add(new AlertEvent(AlertTypeEnum.RAIN_ONSET, regionId, computedAt,
-                        new RainOnsetPayload(AlertTypeEnum.RAIN_ONSET, pop.effectiveTime(), curPop)));
+                        new RainOnsetPayload(pop.effectiveTime(), curPop)));
             }
             seen++;
         }
