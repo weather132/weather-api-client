@@ -6,6 +6,7 @@ import com.github.yun531.climate.fcm.domain.TopicPushSender;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
  * 소비자가 Firebase SDK에 의존하지 않게 한다.
  */
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class FirebaseTopicPushSender implements TopicPushSender {
 

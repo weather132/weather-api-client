@@ -4,6 +4,7 @@ import com.github.yun531.climate.fcm.domain.TopicPushMessage;
 import com.github.yun531.climate.fcm.domain.TopicPushSender;
 import com.github.yun531.climate.notification.application.trigger.TriggerPushSender;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.util.Map;
  * - topic 이름, 데이터 구조, TTL 등 전송 세부사항을 여기서 조립
  */
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class FcmTriggerPushSender implements TriggerPushSender {
 
