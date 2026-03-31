@@ -33,22 +33,24 @@ public class WarningCurrent {
     @Column(name = "level", nullable = false, length = 12)
     private WarningLevel level;
 
-    @Column(name = "tm_fc", nullable = false)
-    private LocalDateTime tmFc;
+    @Column(name = "announce_time", nullable = false)
+    private LocalDateTime announceTime;
 
-    @Column(name = "tm_ef", nullable = false)
-    private LocalDateTime tmEf;
+    @Column(name = "effective_time", nullable = false)
+    private LocalDateTime effectiveTime;
 
     public WarningCurrent(String warningRegionCode, WarningKind kind,
-                          WarningLevel level, LocalDateTime tmFc, LocalDateTime tmEf) {
+                          WarningLevel level, LocalDateTime announceTime,
+                          LocalDateTime effectiveTime) {
         this.warningRegionCode = warningRegionCode;
         this.kind = kind;
         this.level = level;
-        this.tmFc = tmFc;
-        this.tmEf = tmEf;
+        this.announceTime = announceTime;
+        this.effectiveTime = effectiveTime;
     }
 
     public WarningEvent toEvent(WarningLevel prevLevel, WarningEventType eventType) {
-        return new WarningEvent(warningRegionCode, kind, level, prevLevel, eventType, tmFc, tmEf);
+        return new WarningEvent(warningRegionCode, kind, level, prevLevel,
+                eventType, announceTime, effectiveTime);
     }
 }

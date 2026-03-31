@@ -27,14 +27,14 @@ public class WarningCurrentRepositoryImpl implements WarningCurrentRepository {
 
         if (currents.isEmpty()) return;
 
-        String sql = "INSERT INTO warning_current (warning_region_code, kind, level, tm_fc, tm_ef) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO warning_current (warning_region_code, kind, level, announce_time, effective_time) VALUES (?, ?, ?, ?, ?)";
 
         jdbcTemplate.batchUpdate(sql, currents, currents.size(), (ps, c) -> {
             ps.setString(1, c.getWarningRegionCode());
             ps.setString(2, c.getKind().name());
             ps.setString(3, c.getLevel().name());
-            ps.setObject(4, c.getTmFc());
-            ps.setObject(5, c.getTmEf());
+            ps.setObject(4, c.getAnnounceTime());
+            ps.setObject(5, c.getEffectiveTime());
         });
     }
 

@@ -84,9 +84,9 @@ public class WarningParser {
             return null;
         }
 
-        LocalDateTime tmFc = LocalDateTime.parse(fields[4], TM_FORMAT);
-        LocalDateTime tmEf = LocalDateTime.parse(fields[5], TM_FORMAT);
+        LocalDateTime announceTime  = LocalDateTime.parse(fields[4], TM_FORMAT);
+        LocalDateTime effectiveTime = LocalDateTime.parse(fields[5], TM_FORMAT);
 
-        return new WarningCurrent(regId, kind, level, tmFc, tmEf);
+        return new WarningCurrent(regId, kind, level, announceTime, effectiveTime);
     }
 }

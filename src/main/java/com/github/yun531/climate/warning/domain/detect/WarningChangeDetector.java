@@ -47,7 +47,7 @@ public class WarningChangeDetector {
             warningEvents.add(current.toEvent(previous.getLevel(), WarningEventType.UPGRADED));
         } else if (levelDiff < 0) {
             warningEvents.add(current.toEvent(previous.getLevel(), WarningEventType.DOWNGRADED));
-        } else if (!current.getTmFc().equals(previous.getTmFc())) {
+        } else if (!current.getAnnounceTime().equals(previous.getAnnounceTime())) {
             warningEvents.add(current.toEvent(null, WarningEventType.EXTENDED));
         }
     }

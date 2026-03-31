@@ -33,17 +33,17 @@ public class WarningCollectService {
 
     @Transactional
     public void collect(LocalDateTime tm) {
-        List<WarningCurrent> newSnapshot = warningClient.requestCurrentWarnings(tm);
-        List<WarningCurrent> oldSnapshot = currentRepository.findAll();
+        List<WarningCurrent> currentWarnings  = warningClient.requestCurrentWarnings(tm);
+        List<WarningCurrent> previousWarnings = currentRepository.findAll();
 
-        List<WarningEvent> events = changeDetector.detect(oldSnapshot, newSnapshot);
+        List<WarningEvent> warningEvents = changeDetector.detect(previousWarnings, currentWarnings);
 
-        currentRepository.replaceAll(newSnapshot);
+        currentRepository.replaceAll(currentWarnings);
 
-        if (!events.isEmpty()) {
-            eventRepository.saveAll(events);
-            log.info("[WarningCollect] {} 건 이벤트 감지: {}", events.size(),
-                    events.stream().map(e -> e.getEventType().name()).toList());
+        if (!warningEvents.isEmpty()) {
+            eventRepository.saveAll(warningEvents);
+            log.info("[WarningCollect] {} 건 이벤트 감지: {}", warningEvents.size(),
+                    warningEvents.stream().map(e -> e.getEventType().name()).toList());
         }
     }
 }
