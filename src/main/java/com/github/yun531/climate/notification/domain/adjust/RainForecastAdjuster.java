@@ -29,8 +29,8 @@ public class RainForecastAdjuster {
     private final int startOffsetHours;
 
     public RainForecastAdjuster(int maxShiftHours, int windowHours, int startOffsetHours) {
-        this.maxShiftHours = Math.max(0, maxShiftHours);
-        this.windowHours = Math.max(1, windowHours);
+        this.maxShiftHours    = Math.max(0, maxShiftHours);
+        this.windowHours      = Math.max(1, windowHours);
         this.startOffsetHours = Math.max(0, startOffsetHours);
     }
 
@@ -55,7 +55,7 @@ public class RainForecastAdjuster {
 
         List<DailyRainFlags> newDays = shiftDayParts(payload.dayParts(), shift.dayShift());
 
-        RainForecastPayload newPayload = new RainForecastPayload(payload.type(), clamped, newDays);
+        RainForecastPayload newPayload = new RainForecastPayload(clamped, newDays);
         return withShiftedTime(event, shift.shiftedBaseTime(), newPayload);
     }
 

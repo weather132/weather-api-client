@@ -4,16 +4,15 @@ import com.github.yun531.climate.notification.application.alert.GenerateAlertsCo
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsService;
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
+import com.github.yun531.climate.warning.domain.model.WarningKind;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,7 +33,7 @@ public class AlertController {
         if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
 
         var cmd = new GenerateAlertsCommand(
-                regionIds, null, EnumSet.of(AlertTypeEnum.RAIN_ONSET), withinHours
+                regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours
         );
         return ResponseEntity.ok(service.generate(cmd));
     }
@@ -48,7 +47,7 @@ public class AlertController {
             @RequestParam List<String> regionIds
     ) {
         var cmd = new GenerateAlertsCommand(
-                regionIds, null, EnumSet.of(AlertTypeEnum.RAIN_FORECAST), null
+                regionIds, EnumSet.of(AlertTypeEnum.RAIN_FORECAST), null, null
         );
         return ResponseEntity.ok(service.generate(cmd));
     }
@@ -56,15 +55,14 @@ public class AlertController {
     @GetMapping("/warning-issued")
     @Operation(
             summary = "기상특보 변동사항 알림",
-            description = "1시간마다 발표되는 기상특보의 변동사항에 대한 알림. sinceHours: 최근 N시간 이내 발령 특보만 조회 (기본값 서버 설정)"
+            description = "1시간마다 발표되는 기상특보의 변동사항에 대한 알림"
     )
     public ResponseEntity<List<AlertEvent>> getWarning(
             @RequestParam List<String> regionIds,
-            @RequestParam(value = "sinceHours", required = false) Integer sinceHours,
-            @RequestParam(value = "warningKinds", required = false) List<String> warningKinds
+            @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds
     ) {
         var cmd = new GenerateAlertsCommand(
-                regionIds, sinceHours, EnumSet.of(AlertTypeEnum.WARNING_ISSUED), null
+                regionIds, EnumSet.of(AlertTypeEnum.WARNING_ISSUED), warningKinds, null
         );
         return ResponseEntity.ok(service.generate(cmd));
     }
@@ -77,14 +75,14 @@ public class AlertController {
     public ResponseEntity<List<AlertEvent>> getSummary(
             @RequestParam List<String> regionIds,
             @RequestParam(value = "withinHours", required = false) Integer withinHours,
-            @RequestParam(value = "sinceHours", required = false) Integer sinceHours,
-            @RequestParam(value = "warningKinds", required = false) List<String> warningKinds
+            @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds
     ) {
         if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
 
         var cmd = new GenerateAlertsCommand(
-                regionIds, sinceHours,
-                EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED), withinHours
+                regionIds,
+                EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED),
+                warningKinds, withinHours
         );
         return ResponseEntity.ok(service.generate(cmd));
     }

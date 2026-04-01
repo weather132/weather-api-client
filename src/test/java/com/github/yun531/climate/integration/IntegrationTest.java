@@ -11,13 +11,25 @@ import com.github.yun531.climate.notification.domain.model.AlertEvent;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import com.github.yun531.climate.notification.domain.payload.RainForecastPayload;
 import com.github.yun531.climate.notification.domain.payload.RainOnsetPayload;
+import com.github.yun531.climate.notification.domain.payload.WarningIssuedPayload;
 import com.github.yun531.climate.snapshot.contract.HourlyPoint;
 import com.github.yun531.climate.snapshot.contract.SnapshotReader;
 import com.github.yun531.climate.snapshot.contract.WeatherSnapshot;
+import com.github.yun531.climate.warning.application.WarningCollectService;
+import com.github.yun531.climate.warning.domain.WarningClient;
+import com.github.yun531.climate.warning.domain.model.WarningCurrent;
+import com.github.yun531.climate.warning.domain.model.WarningEventType;
+import com.github.yun531.climate.warning.domain.model.WarningKind;
+import com.github.yun531.climate.warning.domain.model.WarningLevel;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.sql.DataSource;
@@ -35,6 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(IntegrationTest.WarningClientStubConfig.class)
 class IntegrationTest {
 
     private static final String REGION_ID              = "11B10101";
@@ -46,6 +59,183 @@ class IntegrationTest {
     @Autowired ForecastService forecastService;
     @Autowired GenerateAlertsService generateAlertsService;
     @Autowired DataSource dataSource;
+    @Autowired JdbcTemplate jdbcTemplate;
+
+    // =====================================================================
+    //  StubWarningClient: 기상청 API 대체 (WritePathTest 전용)
+    // =====================================================================
+    @TestConfiguration
+    static class WarningClientStubConfig {
+
+        @Bean
+        @Primary
+        public WarningClient warningClient() {
+            return new StubWarningClient();
+        }
+    }
+
+    static class StubWarningClient implements WarningClient {
+        private List<WarningCurrent> response = List.of();
+
+        void setResponse(List<WarningCurrent> response) {
+            this.response = response;
+        }
+
+        @Override
+        public List<WarningCurrent> requestCurrentWarnings(LocalDateTime tm) {
+            return response;
+        }
+    }
+
+    @Nested
+    @DisplayName("쓰기 경로 통합 테스트")
+    @TestInstance(Lifecycle.PER_CLASS)
+    class WritePathTest {
+
+        @Autowired WarningCollectService warningCollectService;
+        @Autowired WarningClient warningClient;
+
+        private static final LocalDateTime FIRST_ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 30, 12, 0);
+        private static final LocalDateTime FIRST_EFFECTIVE_TIME = LocalDateTime.of(2026, 3, 30, 14, 0);
+        private static final LocalDateTime SECOND_ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 30, 15, 0);
+        private static final LocalDateTime SECOND_EFFECTIVE_TIME = LocalDateTime.of(2026, 3, 30, 18, 0);
+
+        private StubWarningClient stub() {
+            return (StubWarningClient) warningClient;
+        }
+
+        @BeforeEach
+        void cleanWarningTables() throws Exception {
+            try (Connection conn = dataSource.getConnection();
+                 Statement stmt = conn.createStatement()) {
+                stmt.execute("SET FOREIGN_KEY_CHECKS = 0");
+                stmt.execute("TRUNCATE TABLE warning_current");
+                stmt.execute("TRUNCATE TABLE warning_event");
+                stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
+            }
+        }
+
+        @Nested
+        @DisplayName("경로: Warning 수집")
+        class WarningCollectPath {
+
+            @Test
+            @DisplayName("첫 수집: warning_current 저장 및 NEW 이벤트 생성")
+            void firstCollectCreatesNewEvents() {
+                stub().setResponse(List.of(
+                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
+                ));
+
+                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+
+                Integer currentCount = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM warning_current", Integer.class);
+                assertThat(currentCount)
+                        .as("warning_current 건수")
+                        .isEqualTo(1);
+
+                List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                        "SELECT * FROM warning_event ORDER BY id");
+                assertThat(events)
+                        .as("warning_event 건수")
+                        .hasSize(1);
+
+                Map<String, Object> event = events.get(0);
+                assertThat(event.get("warning_region_code")).isEqualTo("L1100100");
+                assertThat(event.get("kind")).isEqualTo("WIND");
+                assertThat(event.get("level")).isEqualTo("ADVISORY");
+                assertThat(event.get("prev_level")).isNull();
+                assertThat(event.get("event_type")).isEqualTo("NEW");
+            }
+
+            @Test
+            @DisplayName("동일 데이터 재수집: 추가 이벤트 없음")
+            void identicalCollectProducesNoNewEvents() {
+                List<WarningCurrent> data = List.of(
+                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
+                );
+                stub().setResponse(data);
+
+                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+
+                Integer eventCount = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM warning_event", Integer.class);
+                assertThat(eventCount)
+                        .as("동일 데이터 재수집 후 이벤트 건수")
+                        .isEqualTo(1);
+            }
+
+            @Test
+            @DisplayName("변화 수집: UPGRADED 이벤트 생성")
+            void changedCollectCreatesUpgradedEvent() {
+                stub().setResponse(List.of(
+                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
+                ));
+                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+
+                stub().setResponse(List.of(
+                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.WARNING,
+                                SECOND_ANNOUNCE_TIME, SECOND_EFFECTIVE_TIME)
+                ));
+                warningCollectService.collect(SECOND_ANNOUNCE_TIME);
+
+                String currentLevel = jdbcTemplate.queryForObject(
+                        "SELECT level FROM warning_current WHERE warning_region_code = 'L1100100'",
+                        String.class);
+                assertThat(currentLevel)
+                        .as("warning_current level")
+                        .isEqualTo("WARNING");
+
+                List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                        "SELECT * FROM warning_event ORDER BY id");
+                assertThat(events)
+                        .as("warning_event 건수")
+                        .hasSize(2);
+
+                Map<String, Object> newEvent = events.get(0);
+                assertThat(newEvent.get("event_type")).isEqualTo("NEW");
+                assertThat(newEvent.get("level")).isEqualTo("ADVISORY");
+
+                Map<String, Object> upgradedEvent = events.get(1);
+                assertThat(upgradedEvent.get("event_type")).isEqualTo("UPGRADED");
+                assertThat(upgradedEvent.get("level")).isEqualTo("WARNING");
+                assertThat(upgradedEvent.get("prev_level")).isEqualTo("ADVISORY");
+            }
+
+            @Test
+            @DisplayName("특보 해제: LIFTED 이벤트 생성")
+            void liftedCollectCreatesLiftedEvent() {
+                stub().setResponse(List.of(
+                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
+                ));
+                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+
+                stub().setResponse(List.of());
+                warningCollectService.collect(SECOND_ANNOUNCE_TIME);
+
+                Integer currentCount = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM warning_current", Integer.class);
+                assertThat(currentCount)
+                        .as("해제 후 warning_current 건수")
+                        .isEqualTo(0);
+
+                List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                        "SELECT * FROM warning_event ORDER BY id");
+                assertThat(events)
+                        .as("warning_event 건수")
+                        .hasSize(2);
+
+                assertThat(events.get(0).get("event_type")).isEqualTo("NEW");
+                assertThat(events.get(1).get("event_type")).isEqualTo("LIFTED");
+            }
+        }
+    }
+
 
     @Nested
     @DisplayName("읽기 경로 통합 테스트")
@@ -75,6 +265,8 @@ class IntegrationTest {
                 stmt.execute("TRUNCATE TABLE short_land");
                 stmt.execute("TRUNCATE TABLE mid_pop");
                 stmt.execute("TRUNCATE TABLE mid_temperature");
+                stmt.execute("TRUNCATE TABLE warning_current");
+                stmt.execute("TRUNCATE TABLE warning_event");
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
                 stmt.execute("CALL insert_all()");
             }
@@ -142,6 +334,7 @@ class IntegrationTest {
                             .isEqualTo(LATEST_POPS[i]);
                 }
             }
+
             @Test
             @DisplayName("previous snapshot의 시간별 POP이 시나리오와 일치")
             void previousSnapshotHourlyPopMatchesScenario() {
@@ -259,9 +452,9 @@ class IntegrationTest {
                 LocalDateTime announceTime = loadAnnounceTime();
                 var cmd = new GenerateAlertsCommand(
                         List.of(REGION_ID),
-                        null, /* sinceHours */
                         EnumSet.of(AlertTypeEnum.RAIN_ONSET),
-                        null  /* withinHours */
+                        null,
+                        null
                 );
                 List<AlertEvent> events = generateAlertsService.generate(cmd, announceTime);
 
@@ -294,9 +487,9 @@ class IntegrationTest {
                 LocalDateTime announceTime = loadAnnounceTime();
                 var cmd = new GenerateAlertsCommand(
                         List.of(REGION_ID),
-                        null, /* sinceHours */
                         EnumSet.of(AlertTypeEnum.RAIN_ONSET),
-                        null  /* withinHours */
+                        null,
+                        null
                 );
                 List<AlertEvent> events = generateAlertsService.generate(cmd, announceTime);
 
@@ -322,9 +515,9 @@ class IntegrationTest {
                 LocalDateTime announceTime = loadAnnounceTime();
                 var cmd = new GenerateAlertsCommand(
                         List.of(REGION_ID),
-                        null, /* sinceHours */
                         EnumSet.of(AlertTypeEnum.RAIN_FORECAST),
-                        null  /* withinHours */
+                        null,
+                        null
                 );
                 List<AlertEvent> events = generateAlertsService.generate(cmd, announceTime);
 
@@ -373,9 +566,9 @@ class IntegrationTest {
                 LocalDateTime announceTime = loadAnnounceTime();
                 var cmd = new GenerateAlertsCommand(
                         List.of(REGION_ID),
-                        null, /* sinceHours */
                         EnumSet.of(AlertTypeEnum.RAIN_FORECAST),
-                        null  /* withinHours */
+                        null,
+                        null
                 );
                 List<AlertEvent> events = generateAlertsService.generate(cmd, announceTime);
 
@@ -387,13 +580,57 @@ class IntegrationTest {
             }
 
             @Test
+            @DisplayName("WARNING_ISSUED: active 이벤트만 AlertEvent로 변환")
+            void detectsWarningIssuedForActiveEvents() {
+                var cmd = new GenerateAlertsCommand(
+                        List.of(REGION_ID),
+                        EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
+                        null,
+                        null
+                );
+
+                List<AlertEvent> events = generateAlertsService.generate(cmd);
+
+                List<AlertEvent> warningEvents = events.stream()
+                        .filter(e -> e.type() == AlertTypeEnum.WARNING_ISSUED)
+                        .toList();
+
+                assertThat(warningEvents)
+                        .as("WARNING_ISSUED 이벤트 건수")
+                        .hasSize(1);
+
+                WarningIssuedPayload payload = (WarningIssuedPayload) warningEvents.get(0).payload();
+                assertThat(payload.kind()).isEqualTo(WarningKind.RAIN);
+                assertThat(payload.level()).isEqualTo(WarningLevel.WARNING);
+                assertThat(payload.prevLevel()).isEqualTo(WarningLevel.ADVISORY);
+                assertThat(payload.eventType()).isEqualTo(WarningEventType.UPGRADED);
+            }
+
+            @Test
+            @DisplayName("WARNING_ISSUED: warningKinds 필터로 HEAT만 요청 시 빈 결과")
+            void warningIssuedRespectsKindFilter() {
+                var cmd = new GenerateAlertsCommand(
+                        List.of(REGION_ID),
+                        EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
+                        EnumSet.of(WarningKind.HEAT),
+                        null
+                );
+
+                List<AlertEvent> events = generateAlertsService.generate(cmd);
+
+                assertThat(events)
+                        .as("HEAT 필터 시 WARNING_ISSUED 이벤트")
+                        .isEmpty();
+            }
+
+            @Test
             @DisplayName("미존재 regionId -> 빈 리스트")
             void returnsEmptyForUnknownRegion() {
                 var cmd = new GenerateAlertsCommand(
                         List.of(NON_EXISTENT_REGION_ID),
-                        null, /* sinceHours */
-                        EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.RAIN_FORECAST),
-                        null  /* withinHours */
+                        EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.RAIN_FORECAST, AlertTypeEnum.WARNING_ISSUED),
+                        null,
+                        null
                 );
 
                 List<AlertEvent> events = generateAlertsService.generate(cmd);

@@ -48,8 +48,7 @@ public class RainForecastDetector {
         LocalDateTime occurredAt = TimeUtil.truncateToMinutes(
                 view.announceTime() != null ? view.announceTime() : now);
 
-        RainForecastPayload payload = new RainForecastPayload(
-                AlertTypeEnum.RAIN_FORECAST, hourlyRanges, dayFlags);
+        RainForecastPayload payload = new RainForecastPayload(hourlyRanges, dayFlags);
         return new AlertEvent(AlertTypeEnum.RAIN_FORECAST, regionId, occurredAt, payload);
     }
 
