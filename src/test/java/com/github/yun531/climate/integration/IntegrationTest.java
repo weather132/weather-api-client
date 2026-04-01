@@ -458,6 +458,7 @@ class IntegrationTest {
                 );
                 List<AlertEvent> events = generateAlertsService.generate(cmd, announceTime);
 
+                // onset 이벤트만 필터
                 List<AlertEvent> onsetEvents = events.stream()
                         .filter(e -> e.type() == AlertTypeEnum.RAIN_ONSET)
                         .toList();
@@ -466,6 +467,7 @@ class IntegrationTest {
                         .as("RAIN_ONSET 이벤트 건수")
                         .hasSize(EXPECTED_ONSET_HOURS.length);
 
+                // 각 onset의 effectiveTime 검증
                 List<LocalDateTime> expectedTimes = IntStream.of(EXPECTED_ONSET_HOURS)
                         .mapToObj(announceTime::plusHours)
                         .toList();
@@ -500,7 +502,7 @@ class IntegrationTest {
 
                 for (int hour : EXPECTED_ONSET_HOURS) {
                     LocalDateTime et = announceTime.plusHours(hour);
-                    int expectedPop = LATEST_POPS[hour - 1];
+                    int expectedPop = LATEST_POPS[hour - 1];  // LATEST_POPS는 0-based 이므로 -1
                     assertThat(popByTime.get(et))
                             .as("onset +%dh POP", hour)
                             .isEqualTo(expectedPop);
@@ -533,6 +535,7 @@ class IntegrationTest {
                         .as("비 구간 개수 (i=4~6, 13~15, 18~21)")
                         .hasSize(3);
 
+                // 구간 1: latest_at+4h ~ latest_at+6h
                 assertThat(intervals.get(0).start())
                         .as("구간1 시작")
                         .isEqualTo(announceTime.plusHours(4));
@@ -540,6 +543,7 @@ class IntegrationTest {
                         .as("구간1 종료")
                         .isEqualTo(announceTime.plusHours(6));
 
+                // 구간 2: latest_at+13h ~ latest_at+15h
                 assertThat(intervals.get(1).start())
                         .as("구간2 시작")
                         .isEqualTo(announceTime.plusHours(13));
@@ -547,6 +551,7 @@ class IntegrationTest {
                         .as("구간2 종료")
                         .isEqualTo(announceTime.plusHours(15));
 
+                // 구간 3: latest_at+18h ~ latest_at+21h
                 assertThat(intervals.get(2).start())
                         .as("구간3 시작")
                         .isEqualTo(announceTime.plusHours(18));

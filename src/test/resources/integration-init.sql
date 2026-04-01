@@ -495,10 +495,10 @@ update city_region_code as c
 set c.province_region_code_id = (select id
                                  from province_region_code as p
                                  where SUBSTRING(p.region_code, 3, 1) = 'B'
-    limit 1)
+                                 limit 1)
 where substring(c.region_code, 3, 1) = 'B';
 update city_region_code as c join province_region_code as p on substring(c.region_code, 3, 2) = substring(p.region_code, 3, 2)
-    set c.province_region_code_id = p.id
+set c.province_region_code_id = p.id
 where substring(c.region_code, 3, 2) = substring(p.region_code, 3, 2);
 set SQL_SAFE_UPDATES = 1;
 
@@ -511,9 +511,9 @@ begin
         return cast(date_format(now, '%Y-%m-%d 18:00:00') as datetime);
     elseif now_hour >= 0 and now_hour < 6 then
         return cast(date_format(date_sub(now, interval 1 day), '%Y-%m-%d 18:00:00') as datetime);
-else
+    else
         return cast(date_format(now, '%Y-%m-%d 06:00:00') as datetime);
-end if;
+    end if;
 end $$
 delimiter ;
 
@@ -525,19 +525,19 @@ begin
             date_format(date_add(a_time, interval 3 day), '%Y-%m-%d 09:00:00') as datetime
                                     );
 
-INSERT INTO mid_pop (id, announce_time, effective_time, province_region_code_id, pop)
-WITH RECURSIVE seq AS (
-    SELECT 0 AS i
-    UNION ALL
-    SELECT i + 1 FROM seq WHERE i < 11
-)
-SELECT null,
-       a_time,
-       DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
-       p.id,
-       s.i * 10
-FROM province_region_code p
-         CROSS JOIN seq s;
+    INSERT INTO mid_pop (id, announce_time, effective_time, province_region_code_id, pop)
+    WITH RECURSIVE seq AS (
+        SELECT 0 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 11
+    )
+    SELECT null,
+           a_time,
+           DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
+           p.id,
+           s.i * 10
+    FROM province_region_code p
+             CROSS JOIN seq s;
 end $$
 delimiter ;
 
@@ -549,20 +549,20 @@ begin
             date_format(date_add(a_time, interval 3 day), '%Y-%m-%d 09:00:00') as datetime
                                     );
 
-INSERT INTO mid_temperature (id, announce_time, effective_time, city_region_code_id, max_temp, min_temp)
-WITH RECURSIVE seq AS (
-    SELECT 0 AS i
-    UNION ALL
-    SELECT i + 1 FROM seq WHERE i < 11
-)
-SELECT null,
-       a_time,
-       DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
-       c.id,
-       s.i,
-       s.i
-FROM city_region_code c
-         CROSS JOIN seq s;
+    INSERT INTO mid_temperature (id, announce_time, effective_time, city_region_code_id, max_temp, min_temp)
+    WITH RECURSIVE seq AS (
+        SELECT 0 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 11
+    )
+    SELECT null,
+           a_time,
+           DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
+           c.id,
+           s.i,
+           s.i
+    FROM city_region_code c
+             CROSS JOIN seq s;
 end $$
 delimiter ;
 
@@ -577,9 +577,9 @@ begin
         return cast(date_format(date_sub(now, interval 1 day), '%Y-%m-%d 17:00:00') as datetime);
     elseif now_hour >= 5 and now_hour < 11 then
         return cast(date_format(now, '%Y-%m-%d 05:00:00') as datetime);
-else
+    else
         return cast(date_format(now, '%Y-%m-%d 11:00:00') as datetime);
-end if;
+    end if;
 end $$
 delimiter ;
 
@@ -592,25 +592,25 @@ begin
 
     if a_hour = 5 or a_hour = 17 then
         set f_time = date_add(a_time, interval 4 hour);
-else
+    else
         set f_time = date_add(a_time, interval 10 hour);
-end if;
+    end if;
 
-INSERT INTO short_land (id, announce_time, effective_time, city_region_code_id, pop, temp, rain_type)
-WITH RECURSIVE seq AS (
-    SELECT -1 AS i
-    UNION ALL
-    SELECT i + 1 FROM seq WHERE i < 8
-)
-SELECT null,
-       a_time,
-       DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
-       c.id,
-       s.i * 10,
-       s.i,
-       0
-FROM city_region_code c
-         CROSS JOIN seq s;
+    INSERT INTO short_land (id, announce_time, effective_time, city_region_code_id, pop, temp, rain_type)
+    WITH RECURSIVE seq AS (
+        SELECT -1 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 8
+    )
+    SELECT null,
+           a_time,
+           DATE_ADD(f_time, INTERVAL s.i * 12 HOUR),
+           c.id,
+           s.i * 10,
+           s.i,
+           0
+    FROM city_region_code c
+             CROSS JOIN seq s;
 end $$
 delimiter ;
 
@@ -619,7 +619,7 @@ delimiter $$
 create function get_short_grid_announce_time(now datetime) returns datetime deterministic
 begin
     declare now_hour int default hour(now);
-return cast(date_format(date_sub(now, interval (now_hour + 1) mod 3 hour), '%Y-%m-%d %H:00:00') as datetime);
+    return cast(date_format(date_sub(now, interval (now_hour + 1) mod 3 hour), '%Y-%m-%d %H:00:00') as datetime);
 end $$
 delimiter ;
 
@@ -629,42 +629,42 @@ begin
     declare latest_at datetime default get_short_grid_announce_time(now);
     declare past_at datetime default date_sub(latest_at, interval 3 hour);
 
-INSERT INTO short_grid (id, announce_time, effective_time, x, y, pop, temp)
-WITH RECURSIVE seq AS (
-    SELECT 1 AS i
+    INSERT INTO short_grid (id, announce_time, effective_time, x, y, pop, temp)
+    WITH RECURSIVE seq AS (
+        SELECT 1 AS i
+        UNION ALL
+        SELECT i + 1 FROM seq WHERE i < 26
+    ),
+                   latest_pop(i, pop) AS (
+                       SELECT  1, 0 UNION ALL SELECT  2, 0 UNION ALL SELECT  3,30
+                       UNION ALL SELECT  4,70 UNION ALL SELECT  5,80 UNION ALL SELECT  6,70
+                       UNION ALL SELECT  7,30 UNION ALL SELECT  8, 0 UNION ALL SELECT  9, 0
+                       UNION ALL SELECT 10, 0 UNION ALL SELECT 11, 0 UNION ALL SELECT 12, 0
+                       UNION ALL SELECT 13,70 UNION ALL SELECT 14,80 UNION ALL SELECT 15,70
+                       UNION ALL SELECT 16, 0 UNION ALL SELECT 17, 0 UNION ALL SELECT 18,60
+                       UNION ALL SELECT 19,70 UNION ALL SELECT 20,80 UNION ALL SELECT 21,60
+                       UNION ALL SELECT 22, 0 UNION ALL SELECT 23, 0 UNION ALL SELECT 24, 0
+                       UNION ALL SELECT 25, 0 UNION ALL SELECT 26, 0
+                   ),
+                   past_pop(i, pop) AS (
+                       SELECT  1, 0 UNION ALL SELECT  2, 0 UNION ALL SELECT  3, 0
+                       UNION ALL SELECT  4,20 UNION ALL SELECT  5,70 UNION ALL SELECT  6,80
+                       UNION ALL SELECT  7,70 UNION ALL SELECT  8,30 UNION ALL SELECT  9, 0
+                       UNION ALL SELECT 10, 0 UNION ALL SELECT 11,60 UNION ALL SELECT 12,70
+                       UNION ALL SELECT 13,80 UNION ALL SELECT 14,70 UNION ALL SELECT 15,60
+                       UNION ALL SELECT 16, 0 UNION ALL SELECT 17, 0 UNION ALL SELECT 18, 0
+                       UNION ALL SELECT 19, 0 UNION ALL SELECT 20,30 UNION ALL SELECT 21,50
+                       UNION ALL SELECT 22,70 UNION ALL SELECT 23,80 UNION ALL SELECT 24,70
+                       UNION ALL SELECT 25,30 UNION ALL SELECT 26, 0
+                   ),
+                   cities AS (
+                       SELECT DISTINCT x, y FROM city_region_code
+                   )
+    SELECT null, latest_at, DATE_ADD(latest_at, INTERVAL lp.i HOUR), c.x, c.y, lp.pop, lp.i
+    FROM cities c CROSS JOIN latest_pop lp
     UNION ALL
-    SELECT i + 1 FROM seq WHERE i < 26
-),
-               latest_pop(i, pop) AS (
-                   SELECT  1, 0 UNION ALL SELECT  2, 0 UNION ALL SELECT  3,30
-                   UNION ALL SELECT  4,70 UNION ALL SELECT  5,80 UNION ALL SELECT  6,70
-                   UNION ALL SELECT  7,30 UNION ALL SELECT  8, 0 UNION ALL SELECT  9, 0
-                   UNION ALL SELECT 10, 0 UNION ALL SELECT 11, 0 UNION ALL SELECT 12, 0
-                   UNION ALL SELECT 13,70 UNION ALL SELECT 14,80 UNION ALL SELECT 15,70
-                   UNION ALL SELECT 16, 0 UNION ALL SELECT 17, 0 UNION ALL SELECT 18,60
-                   UNION ALL SELECT 19,70 UNION ALL SELECT 20,80 UNION ALL SELECT 21,60
-                   UNION ALL SELECT 22, 0 UNION ALL SELECT 23, 0 UNION ALL SELECT 24, 0
-                   UNION ALL SELECT 25, 0 UNION ALL SELECT 26, 0
-               ),
-               past_pop(i, pop) AS (
-                   SELECT  1, 0 UNION ALL SELECT  2, 0 UNION ALL SELECT  3, 0
-                   UNION ALL SELECT  4,20 UNION ALL SELECT  5,70 UNION ALL SELECT  6,80
-                   UNION ALL SELECT  7,70 UNION ALL SELECT  8,30 UNION ALL SELECT  9, 0
-                   UNION ALL SELECT 10, 0 UNION ALL SELECT 11,60 UNION ALL SELECT 12,70
-                   UNION ALL SELECT 13,80 UNION ALL SELECT 14,70 UNION ALL SELECT 15,60
-                   UNION ALL SELECT 16, 0 UNION ALL SELECT 17, 0 UNION ALL SELECT 18, 0
-                   UNION ALL SELECT 19, 0 UNION ALL SELECT 20,30 UNION ALL SELECT 21,50
-                   UNION ALL SELECT 22,70 UNION ALL SELECT 23,80 UNION ALL SELECT 24,70
-                   UNION ALL SELECT 25,30 UNION ALL SELECT 26, 0
-               ),
-               cities AS (
-                   SELECT DISTINCT x, y FROM city_region_code
-               )
-SELECT null, latest_at, DATE_ADD(latest_at, INTERVAL lp.i HOUR), c.x, c.y, lp.pop, lp.i
-FROM cities c CROSS JOIN latest_pop lp
-UNION ALL
-SELECT null, past_at, DATE_ADD(past_at, INTERVAL pp.i HOUR), c.x, c.y, pp.pop, pp.i
-FROM cities c CROSS JOIN past_pop pp;
+    SELECT null, past_at, DATE_ADD(past_at, INTERVAL pp.i HOUR), c.x, c.y, pp.pop, pp.i
+    FROM cities c CROSS JOIN past_pop pp;
 end $$
 delimiter ;
 
