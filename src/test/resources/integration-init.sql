@@ -197,7 +197,7 @@ delimiter ;
 delimiter $$
 create procedure insert_all()
 begin
-    declare now datetime default now();
+    declare now datetime default date_sub(now(), interval 10 minute);
 call insert_short_grid(now);
 call insert_short_land(now);
 call insert_mid_land(now);
