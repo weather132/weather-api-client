@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:10.178.0.5}:3306/climate?serverTimezone=Asia/Seoul&rewriteBatchedStatement=true
+    username: ${DB_USERNAME:climate_user}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false
+
+firebase:
+  service-account-path: ${FIREBASE_SA_PATH:/app/firebase-sa.json}
