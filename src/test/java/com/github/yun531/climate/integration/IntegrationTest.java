@@ -31,6 +31,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.MountableFile;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -47,8 +53,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Testcontainers
 @Import(IntegrationTest.WarningClientStubConfig.class)
 class IntegrationTest {
+
+    @Container
+    static MySQLContainer<?> mysql =
+            new MySQLContainer<>("mysql:8.0")
+                    .withDatabaseName("climate")
+                    .withUsername("test")
+                    .withPassword("test")
+                    .withCommand("--log-bin-trust-function-creators=1")
+                    .withCopyFileToContainer(
+                            MountableFile.forClasspathResource("schema.sql"),
+                            "/schema.sql"
+                    )
+                    .withCopyFileToContainer(
+                            MountableFile.forClasspathResource("integration-init.sql"),
+                            "/init-procedures.sql"
+                    );
+
+    @DynamicPropertySource
+    static void datasourceConfig(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", mysql::getJdbcUrl);
+        registry.add("spring.datasource.username", mysql::getUsername);
+        registry.add("spring.datasource.password", mysql::getPassword);
+        registry.add("spring.sql.init.mode", () -> "never");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
+    }
+
+    @BeforeAll
+    static void initSchema() throws Exception {
+        var result = mysql.execInContainer(
+                "sh", "-c",
+                "mysql -u test -ptest climate < /schema.sql && mysql -u test -ptest climate < /init-procedures.sql"
+        );
+        if (result.getExitCode() != 0) {
+            throw new RuntimeException("init failed: " + result.getStderr());
+        }
+    }
 
     private static final String REGION_ID              = "11B10101";
     private static final String NON_EXISTENT_REGION_ID = "99Z99999";
