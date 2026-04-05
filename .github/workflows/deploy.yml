@@ -62,6 +62,7 @@ jobs:
                 --name climate-api \
                 --restart unless-stopped \
                 -p 8080:8080 \
+                -e TZ=Asia/Seoul \ 
                 -e DB_HOST=10.178.0.5 \
                 -e DB_USERNAME=climate_user \
                 -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \

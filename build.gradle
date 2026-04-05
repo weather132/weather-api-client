@@ -64,6 +64,7 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
+    jvmArgs '-Duser.timezone=Asia/Seoul'
 }
 
 // ------ JaCoCo Configuration ------
