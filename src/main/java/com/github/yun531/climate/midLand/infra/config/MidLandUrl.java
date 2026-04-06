@@ -1,16 +1,13 @@
 package com.github.yun531.climate.midLand.infra.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-@ConfigurationProperties(prefix = "url.mid")
+@Getter
+@Component
 public class MidLandUrl {
-    private final String land;
 
-    public MidLandUrl(String land) {
-        this.land = land;
-    }
-
-    public String getUrl() {
-        return land;
-    }
+    @Value("${url.mid.land}")
+    private String url;
 }

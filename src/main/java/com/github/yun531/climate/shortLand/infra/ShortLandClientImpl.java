@@ -36,7 +36,7 @@ public class ShortLandClientImpl implements ShortLandClient {
     @Override
     public List<ShortLand> requestShortLand(CityRegionCode cityRegionCode) {
         Map<String, String> params = makeParams(cityRegionCode);
-        String json = weatherClient.requestGet(url.getLand(), params);
+        String json = weatherClient.requestGet(url.getUrl(), params);
 
         return parse(json, cityRegionCode);
     }

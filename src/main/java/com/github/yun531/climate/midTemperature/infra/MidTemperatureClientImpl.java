@@ -6,6 +6,7 @@ import com.github.yun531.climate.common.apiKey.ApiKey;
 import com.github.yun531.climate.common.client.WeatherClient;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
 import com.github.yun531.climate.midTemperature.domain.MidTemperatureClient;
+import com.github.yun531.climate.midTemperature.infra.config.MidTemperatureUrl;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

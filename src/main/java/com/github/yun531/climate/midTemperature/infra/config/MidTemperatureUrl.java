@@ -1,4 +1,4 @@
-package com.github.yun531.climate.shortLand.infra.config;
+package com.github.yun531.climate.midTemperature.infra.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 
 @Getter
 @Component
-public class ShortLandUrl {
+public class MidTemperatureUrl {
 
-    @Value("${url.short.land}")
+    @Value("${url.mid.temperature}")
     private String url;
 }
