@@ -39,7 +39,7 @@ class MidLandParserTest {
                 mockRegionCode);
 
         // then
-        assertThat(actual).hasSize(9);
+        assertThat(actual).hasSize(11);
     }
 
     @Test
