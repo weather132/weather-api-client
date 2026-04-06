@@ -48,7 +48,7 @@ public class ShortGridClientImpl implements ShortGridClient {
     @Override
     public List<ShortGrid> requestShortGridsForHours(AnnounceTime announceTime, int hours) {
         return IntStream.range(1, hours)
-                .mapToObj(hour -> announceTime.getAnnounceTime().plusHours(hour))
+                .mapToObj(hour -> announceTime.getTime().plusHours(hour))
                 .map(effectiveTime -> requestShortGrids(announceTime, effectiveTime))
                 .flatMap(List::stream)
                 .toList();
@@ -57,7 +57,7 @@ public class ShortGridClientImpl implements ShortGridClient {
 
     private Map<String, String> makeParams(AnnounceTime announceTime, LocalDateTime effectiveTime, String fcstVar) {
         Map<String, String> parameters = new HashMap<>();
-        parameters.put("tmfc", format(announceTime.getAnnounceTime()));
+        parameters.put("tmfc", format(announceTime.getTime()));
         parameters.put("tmef",  format(effectiveTime));
         parameters.put("vars", fcstVar);
         parameters.put("authKey", apiKey.getApiKey());

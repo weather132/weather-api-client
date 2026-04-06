@@ -10,16 +10,16 @@ import java.time.format.DateTimeFormatter;
 @Embeddable
 public class AnnounceTime {
     @Getter
-    @Column(columnDefinition = "DATETIME")
-    private LocalDateTime announceTime;
+    @Column(name = "announce_time", columnDefinition = "DATETIME")
+    private LocalDateTime time;
 
     public AnnounceTime(LocalDateTime nowTime) {
         int pastHours = calculatePastHours(nowTime.getHour());
-        this.announceTime = nowTime.minusHours(pastHours).withMinute(0).withSecond(0).withNano(0);
+        this.time = nowTime.minusHours(pastHours).withMinute(0).withSecond(0).withNano(0);
     }
 
     public String formatIso() {
-        return announceTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     protected AnnounceTime() {}

@@ -29,7 +29,7 @@ public class ShortGridRepositoryImpl implements ShortGridRepository {
                 shortGrids.size(),
                 (ps, grid) -> {
                     ps.setNull(1, Types.BIGINT);
-                    ps.setObject(2, grid.getAnnounceTime());
+                    ps.setObject(2, grid.getAnnounceTime().getTime());
                     ps.setObject(3, grid.getEffectiveTime());
                     ps.setInt(4, grid.getX());
                     ps.setInt(5, grid.getY());
