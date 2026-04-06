@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.yun531.climate.common.MidAnnounceTime;
 import com.github.yun531.climate.midLand.domain.MidLand;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Setter
 public class MidLandItem {
     @Getter
     private String regId;
@@ -55,5 +57,6 @@ public class MidLandItem {
     }
 
 
-    protected MidLandItem() {}
+    protected MidLandItem() {
+    }
 }
