@@ -87,6 +87,10 @@ public class ShortGridClientImpl implements ShortGridClient {
     }
 
     private List<Coordinates> getCoords() {
-        return cityRegionCodeRepository.findAll().stream().map(CityRegionCode::getCoordinates).toList();
+        return cityRegionCodeRepository.findAll()
+                .stream()
+                .map(CityRegionCode::getCoordinates)
+                .distinct()
+                .toList();
     }
 }
