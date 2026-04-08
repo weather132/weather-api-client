@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -94,6 +95,39 @@ class DailyForecastComposerTest {
                 .allMatch(i -> i.getTemp() == 10);
         assertThat(result.stream().filter(i -> i.getEffectiveTime().getHour() == 21))
                 .allMatch(i -> i.getTemp() == 25);
+    }
+
+    @Test
+    void composeDailyForecastItemFromMid_정상() {
+        // given
+        MidAnnounceTime announceTime = new MidAnnounceTime(LocalDateTime.of(2026, 4, 8, 6, 0));
+        LocalDateTime morningEf = LocalDateTime.of(2026, 4, 8, 9, 0);
+        LocalDateTime afternoonEf = LocalDateTime.of(2026, 4, 8, 21, 0);
+
+        MidTemperature midTemp = new MidTemperature(announceTime, morningEf, CITY_ID, 10, 0);
+
+        when(midTemperatureRepository.findRecent(regionCode, morningEf)).thenReturn(midTemp);
+
+        when(provinceRegionCodeRepository.findById(any())).thenReturn(Optional.ofNullable(provinceRegionCode));
+
+        MidLand morningLand = new MidLand(announceTime, morningEf, PROVINCE_ID, 1);
+        MidLand afternoonLand = new MidLand(announceTime, afternoonEf, PROVINCE_ID, 2);
+
+        when(midLandRepository.findRecent(provinceRegionCode, morningEf)).thenReturn(morningLand);
+        when(midLandRepository.findRecent(provinceRegionCode, afternoonEf)).thenReturn(afternoonLand);
+
+        DailyForecastComposer composer1 = new DailyForecastComposer(shortLandRepository, midLandRepository, midTemperatureRepository, provinceRegionCodeRepository);
+
+        // when
+        DailyForecastItem morningActual = ReflectionTestUtils.invokeMethod(composer1, "composeDailyForecastItemFromMid", regionCode, morningEf);
+        DailyForecastItem afternoonActual = ReflectionTestUtils.invokeMethod(composer1, "composeDailyForecastItemFromMid", regionCode, afternoonEf);
+
+        // then
+        assertThat(morningActual.getTemp()).isEqualTo(0);
+        assertThat(morningActual.getPop()).isEqualTo(1);
+
+        assertThat(afternoonActual.getTemp()).isEqualTo(10);
+        assertThat(afternoonActual.getPop()).isEqualTo(2);
     }
 
     // ==================== helper ====================
