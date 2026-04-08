@@ -24,26 +24,17 @@ public class DailyForecastComposer {
     private final MidTemperatureRepository midTemperatureRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
 
-    public DailyForecastComposer(
-            ShortLandRepository shortLandRepository,
-            MidLandRepository midLandRepository,
-            MidTemperatureRepository midTemperatureRepository,
-            ProvinceRegionCodeRepository provinceRegionCodeRepository
-    ) {
+    public DailyForecastComposer(ShortLandRepository shortLandRepository, MidLandRepository midLandRepository, MidTemperatureRepository midTemperatureRepository, ProvinceRegionCodeRepository provinceRegionCodeRepository) {
         this.shortLandRepository = shortLandRepository;
         this.midLandRepository = midLandRepository;
         this.midTemperatureRepository = midTemperatureRepository;
         this.provinceRegionCodeRepository = provinceRegionCodeRepository;
     }
 
-    public List<DailyForecastItem> compose(
-            CityRegionCode regionCode
-    ) {
+    public List<DailyForecastItem> compose(CityRegionCode regionCode) {
         List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now());
 
-        return effectiveTimes.stream()
-                .map(efTime -> composeDailyForecastItem(regionCode, efTime))
-                .toList();
+        return effectiveTimes.stream().map(efTime -> composeDailyForecastItem(regionCode, efTime)).toList();
     }
 
     private List<LocalDateTime> getEffectiveTimes(LocalDateTime now) {
@@ -53,8 +44,7 @@ public class DailyForecastComposer {
             baseDate = now.minusDays(1);
         }
 
-        LocalDateTime standardTime = baseDate
-                .withHour(9).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime standardTime = baseDate.withHour(9).withMinute(0).withSecond(0).withNano(0);
 
         List<LocalDateTime> effectiveTimes = new ArrayList<>();
         for (int day = 0; day <= 6; day++) {
@@ -64,11 +54,8 @@ public class DailyForecastComposer {
         return effectiveTimes;
     }
 
-    private DailyForecastItem composeDailyForecastItem(
-            CityRegionCode regionCode, LocalDateTime effectiveTime
-    ) {
-        ShortLand shortLand = shortLandRepository
-                .findRecent(regionCode, effectiveTime);
+    private DailyForecastItem composeDailyForecastItem(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        ShortLand shortLand = shortLandRepository.findRecent(regionCode, effectiveTime);
 
         if (shortLand != null) {
             return DailyForecastItem.from(shortLand);
@@ -77,25 +64,14 @@ public class DailyForecastComposer {
         return composeDailyForecastItemFromMid(regionCode, effectiveTime);
     }
 
-    private DailyForecastItem composeDailyForecastItemFromMid(
-            CityRegionCode regionCode, LocalDateTime effectiveTime
-    ) {
-        MidTemperature midTemp = midTemperatureRepository
-                .findRecent(regionCode, effectiveTime);
-        Integer temp = isMorning(effectiveTime)
-                ? midTemp.getMinTemp() : midTemp.getMaxTemp();
+    private DailyForecastItem composeDailyForecastItemFromMid(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        MidTemperature midTemp = midTemperatureRepository.findRecent(regionCode, effectiveTime.withHour(9));
+        Integer temp = isMorning(effectiveTime) ? midTemp.getMinTemp() : midTemp.getMaxTemp();
 
-        ProvinceRegionCode provinceRegionCode = provinceRegionCodeRepository
-                .findById(regionCode.getProvinceRegionCodeId()).get();
-        MidLand midLand = midLandRepository
-                .findRecent(provinceRegionCode, effectiveTime);
+        ProvinceRegionCode provinceRegionCode = provinceRegionCodeRepository.findById(regionCode.getProvinceRegionCodeId()).get();
+        MidLand midLand = midLandRepository.findRecent(provinceRegionCode, effectiveTime);
 
-        return new DailyForecastItem(
-                midLand.getAnnounceTime().getTime(),
-                effectiveTime,
-                temp,
-                midLand.getPop()
-        );
+        return new DailyForecastItem(midLand.getAnnounceTime().getTime(), effectiveTime, temp, midLand.getPop());
     }
 
     private boolean isMorning(LocalDateTime effectiveTime) {
