@@ -3,6 +3,8 @@ package com.github.yun531.climate.shortLand.infra;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -16,6 +18,9 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
 
     private final JpaShortLandRepository jpaShortLandRepository;
     private final JdbcTemplate jdbcTemplate;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Autowired
     public ShortLandRepositoryImpl(JpaShortLandRepository jpaShortLandRepository, JdbcTemplate jdbcTemplate) {
@@ -70,5 +75,48 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
                 .stream()
                 .reduce((sLand1, sLand2) -> sLand1.getAnnounceTime().isAfter(sLand2.getAnnounceTime()) ? sLand1 : sLand2)
                 .orElse(null);
+    }
+
+    @Override
+    public Integer findRecentPop(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        Long cityId = regionCode.getId();
+        String query = "select sl.pop from ShortLand sl" +
+                " where sl.cityRegionCodeId = :cityId" +
+                " and sl.effectiveTime = :efTime" +
+                " and sl.pop is not null" +
+                " order by sl.announceTime desc" +
+                " limit 1";
+
+
+        return em.createQuery(query, Integer.class)
+                .setParameter("cityId", cityId)
+                .setParameter("efTime", effectiveTime)
+                .getSingleResult();
+    }
+
+    @Override
+    public Integer findRecentMaxTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        return findRecentTemp(regionCode, effectiveTime);
+    }
+
+    @Override
+    public Integer findRecentMinTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        return findRecentTemp(regionCode, effectiveTime);
+    }
+
+
+    private Integer findRecentTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        Long cityId = regionCode.getId();
+        String query = "select sl.temp from ShortLand sl" +
+                " where sl.cityRegionCodeId = :cityId" +
+                " and sl.effectiveTime = :efTime" +
+                " and temp is not null" +
+                " order by sl.announceTime desc" +
+                " limit 1";
+
+        return em.createQuery(query, Integer.class)
+                .setParameter("cityId", cityId)
+                .setParameter("efTime", effectiveTime)
+                .getSingleResult();
     }
 }

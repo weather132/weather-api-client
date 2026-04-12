@@ -9,4 +9,7 @@ public interface ShortLandRepository {
     ShortLand save(ShortLand shortLand);
     void saveAll(List<ShortLand> shortLands);
     ShortLand findRecent(CityRegionCode regionCode, LocalDateTime effectiveTime);
+    Integer findRecentPop(CityRegionCode regionCode, LocalDateTime effectiveTime);
+    Integer findRecentMaxTemp(CityRegionCode regionCode, LocalDateTime effectiveTime);
+    Integer findRecentMinTemp(CityRegionCode regionCode, LocalDateTime effectiveTime);
 }
