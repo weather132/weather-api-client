@@ -29,7 +29,7 @@ public class DailyForecastItem {
         return new DailyForecastItem(
                 shortLand.getAnnounceTime(),
                 shortLand.getEffectiveTime(),
-                shortLand.getTemp(),
+                shortLand.getTemp(),   //todo 일단 여기서 터지는듯
                 shortLand.getPop()
         );
     }
