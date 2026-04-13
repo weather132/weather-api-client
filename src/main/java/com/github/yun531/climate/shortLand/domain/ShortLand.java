@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class ShortLand {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(columnDefinition = "DATETIME")
