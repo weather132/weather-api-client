@@ -6,19 +6,24 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
 public interface JpaMidTemperatureRepository extends JpaRepository<MidTemperature, Long> {
 
     @Query(value = """
-            SELECT * FROM mid_temperature
-            WHERE city_region_code_id = :regionId
-              AND effective_time = :effectiveTime
-            ORDER BY announce_time DESC
-            LIMIT 1
+            SELECT mt.* FROM mid_temperature mt
+            INNER JOIN (
+                SELECT effective_time, MAX(announce_time) AS max_at
+                FROM mid_temperature
+                WHERE city_region_code_id = :regionId
+                  AND effective_time IN (:effectiveTimes)
+                GROUP BY effective_time
+            ) latest ON mt.effective_time = latest.effective_time
+                   AND mt.announce_time = latest.max_at
+                   AND mt.city_region_code_id = :regionId
             """, nativeQuery = true)
-    Optional<MidTemperature> findRecentByRegionAndEffectiveTime(
+    List<MidTemperature> findRecentByRegionAndEffectiveTimes(
             @Param("regionId") Long regionId,
-            @Param("effectiveTime") LocalDateTime effectiveTime
+            @Param("effectiveTimes") List<LocalDateTime> effectiveTimes
     );
 }

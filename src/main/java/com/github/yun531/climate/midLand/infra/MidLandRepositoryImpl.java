@@ -9,10 +9,14 @@ import org.springframework.stereotype.Repository;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Repository
 public class MidLandRepositoryImpl implements MidLandRepository {
-    private final JdbcTemplate  jdbcTemplate;
+
+    private final JdbcTemplate jdbcTemplate;
     private final JpaMidLandRepository jpaMidLandRepository;
 
     public MidLandRepositoryImpl(JdbcTemplate jdbcTemplate, JpaMidLandRepository jpaMidLandRepository) {
@@ -50,8 +54,19 @@ public class MidLandRepositoryImpl implements MidLandRepository {
 
     @Override
     public MidLand findRecent(ProvinceRegionCode regionCode, LocalDateTime effectiveTime) {
+        return findRecentAll(regionCode, List.of(effectiveTime))
+                .getOrDefault(effectiveTime, new MidLand(null, null, null, null));
+    }
+
+    @Override
+    public Map<LocalDateTime, MidLand> findRecentAll(
+            ProvinceRegionCode regionCode, List<LocalDateTime> effectiveTimes
+    ) {
+        if (effectiveTimes == null || effectiveTimes.isEmpty()) return Map.of();
+
         return jpaMidLandRepository
-                .findRecentByRegionAndEffectiveTime(regionCode.getId(), effectiveTime)
-                .orElse(new MidLand(null, null, null, null));
+                .findRecentByRegionAndEffectiveTimes(regionCode.getId(), effectiveTimes)
+                .stream()
+                .collect(Collectors.toMap(MidLand::getEffectiveTime, Function.identity()));
     }
 }

@@ -9,6 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Repository
 public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
@@ -37,15 +40,13 @@ public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
 
                     if (midTemp.getMaxTemp() == null) {
                         ps.setNull(5, Types.INTEGER);
-                    }
-                    else {
+                    } else {
                         ps.setInt(5, midTemp.getMaxTemp());
                     }
 
                     if (midTemp.getMinTemp() == null) {
                         ps.setNull(6, Types.INTEGER);
-                    }
-                    else {
+                    } else {
                         ps.setInt(6, midTemp.getMinTemp());
                     }
                 });
@@ -53,9 +54,20 @@ public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
 
     @Override
     public MidTemperature findRecent(CityRegionCode cityRegionCode, LocalDateTime effectiveTime) {
+        return findRecentAll(cityRegionCode, List.of(effectiveTime))
+                .getOrDefault(effectiveTime, new MidTemperature(null, null, null, null, null));
+    }
+
+    @Override
+    public Map<LocalDateTime, MidTemperature> findRecentAll(
+            CityRegionCode regionCode, List<LocalDateTime> effectiveTimes
+    ) {
+        if (effectiveTimes == null || effectiveTimes.isEmpty()) return Map.of();
+
         return jpaMidTemperatureRepository
-                .findRecentByRegionAndEffectiveTime(cityRegionCode.getId(), effectiveTime)
-                .orElse(new MidTemperature(null, null, null, null, null));
+                .findRecentByRegionAndEffectiveTimes(regionCode.getId(), effectiveTimes)
+                .stream()
+                .collect(Collectors.toMap(MidTemperature::getEffectiveTime, Function.identity()));
     }
 
     @Override

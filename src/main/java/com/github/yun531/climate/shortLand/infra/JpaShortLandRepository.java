@@ -6,19 +6,24 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
 public interface JpaShortLandRepository extends JpaRepository<ShortLand, Long> {
 
     @Query(value = """
-            SELECT * FROM short_land
-            WHERE city_region_code_id = :regionId
-              AND effective_time = :effectiveTime
-            ORDER BY announce_time DESC
-            LIMIT 1
+            SELECT sl.* FROM short_land sl
+            INNER JOIN (
+                SELECT effective_time, MAX(announce_time) AS max_at
+                FROM short_land
+                WHERE city_region_code_id = :regionId
+                  AND effective_time IN (:effectiveTimes)
+                GROUP BY effective_time
+            ) latest ON sl.effective_time = latest.effective_time
+                   AND sl.announce_time = latest.max_at
+                   AND sl.city_region_code_id = :regionId
             """, nativeQuery = true)
-    Optional<ShortLand> findRecentByRegionAndEffectiveTime(
+    List<ShortLand> findRecentByRegionAndEffectiveTimes(
             @Param("regionId") Long regionId,
-            @Param("effectiveTime") LocalDateTime effectiveTime
+            @Param("effectiveTimes") List<LocalDateTime> effectiveTimes
     );
 }

@@ -6,19 +6,24 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 
 public interface JpaMidLandRepository extends JpaRepository<MidLand, Long> {
 
     @Query(value = """
-            SELECT * FROM mid_pop
-            WHERE province_region_code_id = :regionId
-              AND effective_time = :effectiveTime
-            ORDER BY announce_time DESC
-            LIMIT 1
+            SELECT mp.* FROM mid_pop mp
+            INNER JOIN (
+                SELECT effective_time, MAX(announce_time) AS max_at
+                FROM mid_pop
+                WHERE province_region_code_id = :regionId
+                  AND effective_time IN (:effectiveTimes)
+                GROUP BY effective_time
+            ) latest ON mp.effective_time = latest.effective_time
+                   AND mp.announce_time = latest.max_at
+                   AND mp.province_region_code_id = :regionId
             """, nativeQuery = true)
-    Optional<MidLand> findRecentByRegionAndEffectiveTime(
+    List<MidLand> findRecentByRegionAndEffectiveTimes(
             @Param("regionId") Long regionId,
-            @Param("effectiveTime") LocalDateTime effectiveTime
+            @Param("effectiveTimes") List<LocalDateTime> effectiveTimes
     );
 }

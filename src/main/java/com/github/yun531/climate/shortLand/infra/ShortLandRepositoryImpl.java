@@ -3,13 +3,15 @@ package com.github.yun531.climate.shortLand.infra;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Repository
 public class ShortLandRepositoryImpl implements ShortLandRepository {
@@ -17,7 +19,6 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
     private final JpaShortLandRepository jpaShortLandRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    @Autowired
     public ShortLandRepositoryImpl(JpaShortLandRepository jpaShortLandRepository, JdbcTemplate jdbcTemplate) {
         this.jpaShortLandRepository = jpaShortLandRepository;
         this.jdbcTemplate = jdbcTemplate;
@@ -56,18 +57,27 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
 
                     if (shortLand.getRainType() == null) {
                         ps.setNull(7, Types.INTEGER);
-                    } else  {
+                    } else {
                         ps.setInt(7, shortLand.getRainType());
                     }
                 }
-
         );
     }
 
     @Override
     public ShortLand findRecent(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        return findRecentAll(regionCode, List.of(effectiveTime)).get(effectiveTime);
+    }
+
+    @Override
+    public Map<LocalDateTime, ShortLand> findRecentAll(
+            CityRegionCode regionCode, List<LocalDateTime> effectiveTimes
+    ) {
+        if (effectiveTimes == null || effectiveTimes.isEmpty()) return Map.of();
+
         return jpaShortLandRepository
-                .findRecentByRegionAndEffectiveTime(regionCode.getId(), effectiveTime)
-                .orElse(null);
+                .findRecentByRegionAndEffectiveTimes(regionCode.getId(), effectiveTimes)
+                .stream()
+                .collect(Collectors.toMap(ShortLand::getEffectiveTime, Function.identity()));
     }
 }
