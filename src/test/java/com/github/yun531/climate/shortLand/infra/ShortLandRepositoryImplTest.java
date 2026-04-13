@@ -2,8 +2,6 @@ package com.github.yun531.climate.shortLand.infra;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,11 +20,8 @@ class ShortLandRepositoryImplTest {
     @Autowired
     ShortLandRepositoryImpl shortLandRepository;
 
-    @PersistenceContext
-    EntityManager em;
-
     @Test
-    void findRecentPop() {
+    void findRecentPop_정상() {
         // given
         LocalDateTime recentAnTime = LocalDateTime.of(2026, 4, 13, 11, 0);
         LocalDateTime efTime = LocalDateTime.of(2026, 4, 13, 9, 0);
@@ -49,7 +44,7 @@ class ShortLandRepositoryImplTest {
     }
 
     @Test
-    void findRecentMaxTemp() {
+    void findRecentMaxTemp_정상() {
         // given
         LocalDateTime recentAnTime = LocalDateTime.of(2026, 4, 13, 11, 0);
         LocalDateTime efTime = LocalDateTime.of(2026, 4, 13, 9, 0);
@@ -72,7 +67,7 @@ class ShortLandRepositoryImplTest {
     }
 
     @Test
-    void findRecentMinTemp() {
+    void findRecentMinTemp_정상() {
         // given
         LocalDateTime recentAnTime = LocalDateTime.of(2026, 4, 13, 11, 0);
         LocalDateTime efTime = LocalDateTime.of(2026, 4, 13, 21, 0);
