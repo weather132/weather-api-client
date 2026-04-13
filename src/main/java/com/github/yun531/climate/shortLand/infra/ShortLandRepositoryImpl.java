@@ -87,4 +87,44 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
                 .stream()
                 .collect(Collectors.toMap(ShortLand::getEffectiveTime, Function.identity()));
     }
+
+    @Override
+    public Integer findRecentPop(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        String sql = "select sl.pop from ShortLand sl" +
+                " where sl.pop is not null" +
+                " and sl.cityRegionCodeId = :cityId" +
+                " and sl.effectiveTime = :efTime" +
+                " order by sl.announceTime desc" +
+                " limit 1";
+
+        return em.createQuery(sql, Integer.class)
+                .setParameter("cityId", regionCode.getId())
+                .setParameter("efTime", effectiveTime)
+                .getSingleResult();
+    }
+
+    @Override
+    public Integer findRecentMaxTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        return findRecentTemp(regionCode, effectiveTime);
+    }
+
+    @Override
+    public Integer findRecentMinTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        return findRecentTemp(regionCode, effectiveTime);
+    }
+
+
+    private Integer findRecentTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
+        String sql = "select sl.temp from ShortLand sl" +
+                " where sl.temp is not null" +
+                " and sl.cityRegionCodeId = :cityId" +
+                " and sl.effectiveTime = :efTime" +
+                " order by sl.announceTime desc" +
+                " limit 1";
+
+        return em.createQuery(sql, Integer.class)
+                .setParameter("cityId", regionCode.getId())
+                .setParameter("efTime", effectiveTime)
+                .getSingleResult();
+    }
 }
