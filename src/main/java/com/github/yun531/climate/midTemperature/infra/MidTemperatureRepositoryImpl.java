@@ -53,19 +53,13 @@ public class MidTemperatureRepositoryImpl implements MidTemperatureRepository {
 
     @Override
     public MidTemperature findRecent(CityRegionCode cityRegionCode, LocalDateTime effectiveTime) {
-        return jpaMidTemperatureRepository.findByCityRegionCodeIdAndEffectiveTime(cityRegionCode.getId(), effectiveTime)
-                .stream()
-                .reduce((midTemp1, midTemp2) -> isAnnouncedAfter(midTemp1, midTemp2) ? midTemp1 : midTemp2)
+        return jpaMidTemperatureRepository
+                .findRecentByRegionAndEffectiveTime(cityRegionCode.getId(), effectiveTime)
                 .orElse(new MidTemperature(null, null, null, null, null));
     }
 
     @Override
     public List<MidTemperature> findAll() {
         return jpaMidTemperatureRepository.findAll();
-    }
-
-
-    private boolean isAnnouncedAfter(MidTemperature midTemp1, MidTemperature midTemp2) {
-        return midTemp1.getAnnounceTime().getTime().isAfter(midTemp2.getAnnounceTime().getTime());
     }
 }

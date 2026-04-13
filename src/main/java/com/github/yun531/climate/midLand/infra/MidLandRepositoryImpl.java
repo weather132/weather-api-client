@@ -50,14 +50,8 @@ public class MidLandRepositoryImpl implements MidLandRepository {
 
     @Override
     public MidLand findRecent(ProvinceRegionCode regionCode, LocalDateTime effectiveTime) {
-        return jpaMidLandRepository.findByProvinceRegionCodeIdAndEffectiveTime(regionCode.getId(), effectiveTime)
-                .stream()
-                .reduce((midLand1, midLand2) -> isAnnouncedAfter(midLand1, midLand2) ? midLand1 : midLand2)
+        return jpaMidLandRepository
+                .findRecentByRegionAndEffectiveTime(regionCode.getId(), effectiveTime)
                 .orElse(new MidLand(null, null, null, null));
-    }
-
-
-    private boolean isAnnouncedAfter(MidLand midLand1, MidLand midLand2) {
-        return midLand1.getAnnounceTime().getTime().isAfter(midLand2.getAnnounceTime().getTime());
     }
 }
