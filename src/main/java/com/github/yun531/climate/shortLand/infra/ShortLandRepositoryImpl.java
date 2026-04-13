@@ -12,6 +12,9 @@ import org.springframework.stereotype.Repository;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Repository
 public class ShortLandRepositoryImpl implements ShortLandRepository {
@@ -61,62 +64,27 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
 
                     if (shortLand.getRainType() == null) {
                         ps.setNull(7, Types.INTEGER);
-                    } else  {
+                    } else {
                         ps.setInt(7, shortLand.getRainType());
                     }
                 }
-
         );
     }
 
     @Override
     public ShortLand findRecent(CityRegionCode regionCode, LocalDateTime effectiveTime) {
-        return jpaShortLandRepository.findByCityRegionCodeIdAndEffectiveTime(regionCode.getId(), effectiveTime)
+        return findRecentAll(regionCode, List.of(effectiveTime)).get(effectiveTime);
+    }
+
+    @Override
+    public Map<LocalDateTime, ShortLand> findRecentAll(
+            CityRegionCode regionCode, List<LocalDateTime> effectiveTimes
+    ) {
+        if (effectiveTimes == null || effectiveTimes.isEmpty()) return Map.of();
+
+        return jpaShortLandRepository
+                .findRecentByRegionAndEffectiveTimes(regionCode.getId(), effectiveTimes)
                 .stream()
-                .reduce((sLand1, sLand2) -> sLand1.getAnnounceTime().isAfter(sLand2.getAnnounceTime()) ? sLand1 : sLand2)
-                .orElse(null);
-    }
-
-    @Override
-    public Integer findRecentPop(CityRegionCode regionCode, LocalDateTime effectiveTime) {
-        Long cityId = regionCode.getId();
-        String query = "select sl.pop from ShortLand sl" +
-                " where sl.cityRegionCodeId = :cityId" +
-                " and sl.effectiveTime = :efTime" +
-                " and sl.pop is not null" +
-                " order by sl.announceTime desc" +
-                " limit 1";
-
-
-        return em.createQuery(query, Integer.class)
-                .setParameter("cityId", cityId)
-                .setParameter("efTime", effectiveTime)
-                .getSingleResult();
-    }
-
-    @Override
-    public Integer findRecentMaxTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
-        return findRecentTemp(regionCode, effectiveTime);
-    }
-
-    @Override
-    public Integer findRecentMinTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
-        return findRecentTemp(regionCode, effectiveTime);
-    }
-
-
-    private Integer findRecentTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
-        Long cityId = regionCode.getId();
-        String query = "select sl.temp from ShortLand sl" +
-                " where sl.cityRegionCodeId = :cityId" +
-                " and sl.effectiveTime = :efTime" +
-                " and temp is not null" +
-                " order by sl.announceTime desc" +
-                " limit 1";
-
-        return em.createQuery(query, Integer.class)
-                .setParameter("cityId", cityId)
-                .setParameter("efTime", effectiveTime)
-                .getSingleResult();
+                .collect(Collectors.toMap(ShortLand::getEffectiveTime, Function.identity()));
     }
 }

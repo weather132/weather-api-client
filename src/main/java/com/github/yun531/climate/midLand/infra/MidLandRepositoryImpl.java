@@ -9,10 +9,14 @@ import org.springframework.stereotype.Repository;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Repository
 public class MidLandRepositoryImpl implements MidLandRepository {
-    private final JdbcTemplate  jdbcTemplate;
+
+    private final JdbcTemplate jdbcTemplate;
     private final JpaMidLandRepository jpaMidLandRepository;
 
     public MidLandRepositoryImpl(JdbcTemplate jdbcTemplate, JpaMidLandRepository jpaMidLandRepository) {
@@ -50,14 +54,19 @@ public class MidLandRepositoryImpl implements MidLandRepository {
 
     @Override
     public MidLand findRecent(ProvinceRegionCode regionCode, LocalDateTime effectiveTime) {
-        return jpaMidLandRepository.findByProvinceRegionCodeIdAndEffectiveTime(regionCode.getId(), effectiveTime)
-                .stream()
-                .reduce((midLand1, midLand2) -> isAnnouncedAfter(midLand1, midLand2) ? midLand1 : midLand2)
-                .orElse(new MidLand(null, null, null, null));
+        return findRecentAll(regionCode, List.of(effectiveTime))
+                .getOrDefault(effectiveTime, new MidLand(null, null, null, null));
     }
 
+    @Override
+    public Map<LocalDateTime, MidLand> findRecentAll(
+            ProvinceRegionCode regionCode, List<LocalDateTime> effectiveTimes
+    ) {
+        if (effectiveTimes == null || effectiveTimes.isEmpty()) return Map.of();
 
-    private boolean isAnnouncedAfter(MidLand midLand1, MidLand midLand2) {
-        return midLand1.getAnnounceTime().getTime().isAfter(midLand2.getAnnounceTime().getTime());
+        return jpaMidLandRepository
+                .findRecentByRegionAndEffectiveTimes(regionCode.getId(), effectiveTimes)
+                .stream()
+                .collect(Collectors.toMap(MidLand::getEffectiveTime, Function.identity()));
     }
 }

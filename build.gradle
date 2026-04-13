@@ -60,11 +60,25 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
-// ------ Test Task------
+// ------ Test Task ------
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'benchmark'
+    }
     finalizedBy jacocoTestReport
     jvmArgs '-Duser.timezone=Asia/Seoul'
+}
+
+// ------ Benchmark Test Task ------
+tasks.register('benchmarkTest', Test) {
+    useJUnitPlatform {
+        includeTags 'benchmark'
+    }
+    jvmArgs '-Duser.timezone=Asia/Seoul'
+    testLogging {
+        events 'STANDARD_OUT', 'STANDARD_ERROR'
+        showStandardStreams = true
+    }
 }
 
 // ------ JaCoCo Configuration ------

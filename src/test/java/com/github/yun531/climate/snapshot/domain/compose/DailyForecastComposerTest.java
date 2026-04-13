@@ -17,11 +17,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -56,7 +57,7 @@ class DailyForecastComposerTest {
     @Test
     @DisplayName("ShortLand 데이터 존재 시 ShortLand 값으로 14개 생성, Mid 미호출")
     void shortLand_path() {
-        stubShortLand(70, 22);
+        stubShortLandBatch(70, 22);
 
         List<DailyForecastItem> result = composer.compose(regionCode);
 
@@ -66,14 +67,14 @@ class DailyForecastComposerTest {
                 .isEqualTo(7);
         assertThat(result.stream().filter(i -> i.getEffectiveTime().getHour() == 21).count())
                 .isEqualTo(7);
-        verify(midLandRepository, never()).findRecent(any(), any());
-        verify(midTemperatureRepository, never()).findRecent(any(), any());
+        verify(midLandRepository, never()).findRecentAll(any(), any());
+        verify(midTemperatureRepository, never()).findRecentAll(any(), any());
     }
 
     @Test
-    @DisplayName("ShortLand null → Mid fallback, 강수확률은 MidLand 값 사용")
+    @DisplayName("ShortLand 빈 결과 → Mid fallback, 강수확률은 MidLand 값 사용")
     void mid_fallback_pop() {
-        stubMidFallback(80, 25, 10);
+        stubMidFallbackBatch(80, 25, 10);
 
         List<DailyForecastItem> result = composer.compose(regionCode);
 
@@ -84,7 +85,7 @@ class DailyForecastComposerTest {
     @Test
     @DisplayName("Mid fallback 시 오전은 minTemp, 오후는 maxTemp 매핑")
     void mid_fallback_temp_by_time_of_day() {
-        stubMidFallback(80, 25, 10);
+        stubMidFallbackBatch(80, 25, 10);
 
         List<DailyForecastItem> result = composer.compose(regionCode);
 
@@ -97,65 +98,51 @@ class DailyForecastComposerTest {
                 .allMatch(i -> i.getTemp() == 25);
     }
 
-    @Test
-    void composeDailyForecastItemFromMid_정상() {
-        // given
-        MidAnnounceTime announceTime = new MidAnnounceTime(LocalDateTime.of(2026, 4, 8, 6, 0));
-        LocalDateTime morningEf = LocalDateTime.of(2026, 4, 8, 9, 0);
-        LocalDateTime afternoonEf = LocalDateTime.of(2026, 4, 8, 21, 0);
-
-        MidTemperature midTemp = new MidTemperature(announceTime, morningEf, CITY_ID, 10, 0);
-
-        when(midTemperatureRepository.findRecent(regionCode, morningEf)).thenReturn(midTemp);
-
-        when(provinceRegionCodeRepository.findById(any())).thenReturn(Optional.ofNullable(provinceRegionCode));
-
-        MidLand morningLand = new MidLand(announceTime, morningEf, PROVINCE_ID, 1);
-        MidLand afternoonLand = new MidLand(announceTime, afternoonEf, PROVINCE_ID, 2);
-
-        when(midLandRepository.findRecent(provinceRegionCode, morningEf)).thenReturn(morningLand);
-        when(midLandRepository.findRecent(provinceRegionCode, afternoonEf)).thenReturn(afternoonLand);
-
-        DailyForecastComposer composer1 = new DailyForecastComposer(shortLandRepository, midLandRepository, midTemperatureRepository, provinceRegionCodeRepository);
-
-        // when
-        DailyForecastItem morningActual = ReflectionTestUtils.invokeMethod(composer1, "composeDailyForecastItemFromMid", regionCode, morningEf);
-        DailyForecastItem afternoonActual = ReflectionTestUtils.invokeMethod(composer1, "composeDailyForecastItemFromMid", regionCode, afternoonEf);
-
-        // then
-        assertThat(morningActual.getTemp()).isEqualTo(0);
-        assertThat(morningActual.getPop()).isEqualTo(1);
-
-        assertThat(afternoonActual.getTemp()).isEqualTo(10);
-        assertThat(afternoonActual.getPop()).isEqualTo(2);
-    }
-
     // ==================== helper ====================
 
-    private void stubShortLand(int pop, int temp) {
-        when(shortLandRepository.findRecent(eq(regionCode), any()))
+    private void stubShortLandBatch(int pop, int temp) {
+        when(shortLandRepository.findRecentAll(eq(regionCode), any()))
                 .thenAnswer(invocation -> {
-                    LocalDateTime efTime = invocation.getArgument(1);
-                    return new ShortLand(
-                            LocalDateTime.of(2026, 3, 28, 17, 0),
-                            efTime, CITY_ID, pop, temp, 0);
+                    List<LocalDateTime> times = invocation.getArgument(1);
+                    return times.stream().collect(Collectors.toMap(
+                            et -> et,
+                            et -> new ShortLand(
+                                    LocalDateTime.of(2026, 3, 28, 17, 0),
+                                    et, CITY_ID, pop, temp, 0)
+                    ));
                 });
     }
 
-    private void stubMidFallback(int pop, int maxTemp, int minTemp) {
-        when(shortLandRepository.findRecent(eq(regionCode), any()))
-                .thenReturn(null);
+    private void stubMidFallbackBatch(int pop, int maxTemp, int minTemp) {
+        // ShortLand 배치 → 빈 Map
+        when(shortLandRepository.findRecentAll(eq(regionCode), any()))
+                .thenReturn(Map.of());
+
+        // ProvinceRegionCode 1회
+        when(provinceRegionCodeRepository.findById(PROVINCE_ID))
+                .thenReturn(Optional.of(provinceRegionCode));
 
         MidAnnounceTime midAnnounceTime = new MidAnnounceTime(
                 LocalDateTime.of(2026, 3, 28, 12, 0));
 
-        when(provinceRegionCodeRepository.findById(PROVINCE_ID))
-                .thenReturn(Optional.of(provinceRegionCode));
-        when(midLandRepository.findRecent(eq(provinceRegionCode), any()))
-                .thenReturn(new MidLand(midAnnounceTime,
-                        LocalDateTime.of(2026, 3, 29, 9, 0), PROVINCE_ID, pop));
-        when(midTemperatureRepository.findRecent(eq(regionCode), any()))
-                .thenReturn(new MidTemperature(midAnnounceTime,
-                        LocalDateTime.of(2026, 3, 29, 9, 0), CITY_ID, maxTemp, minTemp));
+        // MidTemperature 배치 → morning times에 대해 Map 반환
+        when(midTemperatureRepository.findRecentAll(eq(regionCode), any()))
+                .thenAnswer(invocation -> {
+                    List<LocalDateTime> times = invocation.getArgument(1);
+                    return times.stream().collect(Collectors.toMap(
+                            et -> et,
+                            et -> new MidTemperature(midAnnounceTime, et, CITY_ID, maxTemp, minTemp)
+                    ));
+                });
+
+        // MidLand 배치 → 전체 missing times에 대해 Map 반환
+        when(midLandRepository.findRecentAll(eq(provinceRegionCode), any()))
+                .thenAnswer(invocation -> {
+                    List<LocalDateTime> times = invocation.getArgument(1);
+                    return times.stream().collect(Collectors.toMap(
+                            et -> et,
+                            et -> new MidLand(midAnnounceTime, et, PROVINCE_ID, pop)
+                    ));
+                });
     }
 }
