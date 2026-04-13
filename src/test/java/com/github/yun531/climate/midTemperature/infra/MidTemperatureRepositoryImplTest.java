@@ -2,10 +2,12 @@ package com.github.yun531.climate.midTemperature.infra;
 
 import com.github.yun531.climate.common.MidAnnounceTime;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
+import com.github.yun531.climate.midTemperature.domain.MidTemperatureRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -20,28 +22,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@DataJpaTest
-@Testcontainers
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@SpringBootTest
 @ActiveProfiles("test")
-@Import(MidTemperatureRepositoryImpl.class)
 class MidTemperatureRepositoryImplTest {
     @Autowired
     MidTemperatureRepositoryImpl midTemperatureRepositoryImpl;
-
-    @Container
-    static MySQLContainer<?> mysql =
-            new MySQLContainer<>("mysql:8.0")
-                    .withDatabaseName("climate")
-                    .withUsername("test")
-                    .withPassword("test");
-
-    @DynamicPropertySource
-    static void datasourceConfig(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
-        registry.add("spring.datasource.username", mysql::getUsername);
-        registry.add("spring.datasource.password", mysql::getPassword);
-    }
 
     @Test
     void saveAll_및_조회() {
