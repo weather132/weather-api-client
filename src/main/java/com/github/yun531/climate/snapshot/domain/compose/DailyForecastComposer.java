@@ -41,29 +41,41 @@ public class DailyForecastComposer {
     public List<DailyForecastItem> compose(CityRegionCode regionCode) {
         List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now());
 
-        // 1단계: ShortLand 배치 조회 (1회 쿼리)
-        Map<LocalDateTime, ShortLand> shortLandMap =
+        // ShortLand 배치 조회 (1회 쿼리)
+        Map<LocalDateTime, ShortLand> shortLandItems =
                 shortLandRepository.findRecentAll(regionCode, effectiveTimes);
 
-        // 2단계: ShortLand 없는 시간대 분류
+        // ShortLand 없는 시간대 분류
         List<LocalDateTime> missingTimes = effectiveTimes.stream()
-                .filter(et -> !shortLandMap.containsKey(et))
+                .filter(et -> !shortLandItems.containsKey(et))
                 .toList();
 
-        // 3단계: Mid fallback 배치 조회 (최대 3회 쿼리)
+        // Mid fallback 배치 조회 (최대 3회 쿼리)
         Map<LocalDateTime, DailyForecastItem> midItems =
                 missingTimes.isEmpty()
                         ? Map.of()
                         : composeMidBatch(regionCode, missingTimes);
 
-        // 4단계: 순서 유지하며 조립
+        // 순서 유지하며 조립
         List<DailyForecastItem> result = new ArrayList<>(effectiveTimes.size());
-        for (LocalDateTime et : effectiveTimes) {
-            ShortLand sl = shortLandMap.get(et);
-            if (sl != null) {
-                result.add(DailyForecastItem.from(sl));
+        for (LocalDateTime effectiveTime : effectiveTimes) {
+            ShortLand shortLand = shortLandItems.get(effectiveTime);
+            if (shortLand != null) {
+                Integer pop  = shortLand.getPop();
+                Integer temp = shortLand.getTemp();
+
+                if (pop == null) {
+                    pop = shortLandRepository.findRecentPop(regionCode, effectiveTime);
+                }
+                if (temp == null) {
+                    temp = isMorning(effectiveTime)
+                            ? shortLandRepository.findRecentMinTemp(regionCode, effectiveTime)
+                            : shortLandRepository.findRecentMaxTemp(regionCode, effectiveTime);
+                }
+
+                result.add(new DailyForecastItem(shortLand.getAnnounceTime(), effectiveTime, temp, pop));
             } else {
-                DailyForecastItem midItem = midItems.get(et);
+                DailyForecastItem midItem = midItems.get(effectiveTime);
                 if (midItem != null) result.add(midItem);
             }
         }
