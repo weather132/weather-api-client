@@ -14,9 +14,12 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 RUN addgroup -S climate && adduser -S climate -G climate
-USER climate
 
 COPY --from=builder /app/build/libs/*.jar app.jar
+COPY firebase-sa.json /app/firebase-sa.json
+
+RUN chown climate:climate /app/firebase-sa.json
+USER climate
 
 EXPOSE 8080
 

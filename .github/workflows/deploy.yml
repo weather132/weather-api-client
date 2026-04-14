@@ -39,6 +39,10 @@ jobs:
 
       - run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
+      # ── Firebase 서비스 계정 복원 ──
+      - name: Decode Firebase service account
+        run: echo "${{ secrets.FIREBASE_SA_BASE64 }}" | base64 -d > firebase-sa.json
+
       # ── Docker 빌드 & 푸시 ──
       - name: Build and push image
         run: |
@@ -69,6 +73,5 @@ jobs:
                 -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
                 -e API_KEY=${{ secrets.API_KEY }} \
                 -e FIREBASE_SA_PATH=/app/firebase-sa.json \
-                -v /home/deploy/firebase-sa.json:/app/firebase-sa.json:ro \
                 ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
             "
