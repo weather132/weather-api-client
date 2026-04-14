@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Profile("!test")
+@Profile("prod")
 @RequiredArgsConstructor
 public class TriggerScheduler {
 

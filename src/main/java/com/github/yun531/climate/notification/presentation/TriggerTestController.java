@@ -16,7 +16,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@Profile("!test")
+@Profile("prod")
 @RequiredArgsConstructor
 @RequestMapping("/internal/trigger")
 @ConditionalOnProperty(prefix = "notification.internal-api", name = "enabled", havingValue = "true")
