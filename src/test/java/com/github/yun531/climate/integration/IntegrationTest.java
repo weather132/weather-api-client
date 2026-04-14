@@ -52,7 +52,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@ActiveProfiles("test")
+@ActiveProfiles("integration-test")
 @Testcontainers
 @Import(IntegrationTest.WarningClientStubConfig.class)
 class IntegrationTest {

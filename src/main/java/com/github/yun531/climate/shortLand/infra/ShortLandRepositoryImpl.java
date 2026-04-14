@@ -8,6 +8,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -87,26 +88,29 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer findRecentPop(CityRegionCode regionCode, LocalDateTime effectiveTime) {
         String sql = "select sl.pop from ShortLand sl" +
                 " where sl.pop is not null" +
                 " and sl.cityRegionCodeId = :cityId" +
                 " and sl.effectiveTime = :efTime" +
-                " order by sl.announceTime desc" +
-                " limit 1";
+                " order by sl.announceTime desc";
 
         return em.createQuery(sql, Integer.class)
                 .setParameter("cityId", regionCode.getId())
                 .setParameter("efTime", effectiveTime)
+                .setMaxResults(1)
                 .getSingleResult();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer findRecentMaxTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
         return findRecentTemp(regionCode, effectiveTime);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer findRecentMinTemp(CityRegionCode regionCode, LocalDateTime effectiveTime) {
         return findRecentTemp(regionCode, effectiveTime);
     }
@@ -117,12 +121,12 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
                 " where sl.temp is not null" +
                 " and sl.cityRegionCodeId = :cityId" +
                 " and sl.effectiveTime = :efTime" +
-                " order by sl.announceTime desc" +
-                " limit 1";
+                " order by sl.announceTime desc";
 
         return em.createQuery(sql, Integer.class)
                 .setParameter("cityId", regionCode.getId())
                 .setParameter("efTime", effectiveTime)
+                .setMaxResults(1)
                 .getSingleResult();
     }
 }
