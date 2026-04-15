@@ -73,11 +73,6 @@ public class ShortLandRepositoryImpl implements ShortLandRepository {
     }
 
     @Override
-    public ShortLand findRecent(CityRegionCode regionCode, LocalDateTime effectiveTime) {
-        return findRecentAll(regionCode, List.of(effectiveTime)).get(effectiveTime);
-    }
-
-    @Override
     public Map<LocalDateTime, ShortLand> findRecentAll(CityRegionCode regionCode, List<LocalDateTime> effectiveTimes) {
         if (effectiveTimes == null || effectiveTimes.isEmpty()) return Map.of();
 
