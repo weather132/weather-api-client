@@ -52,4 +52,9 @@ public class ShortGridRepositoryImpl implements ShortGridRepository {
     public List<ShortGrid> findByAnnounceTimeAndXAndY(AnnounceTime announceTime, int x, int y) {
         return jpaShortGridRepository.findByAnnounceTimeAndXAndY(announceTime, x, y);
     }
+
+    @Override
+    public List<ShortGrid> findRecentByXAndY(int x, int y) {
+        return jpaShortGridRepository.findRecentByXAndY(x, y);
+    }
 }
