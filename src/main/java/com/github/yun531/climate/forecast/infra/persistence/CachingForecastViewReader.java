@@ -14,12 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-/**
- * {@link ForecastViewReader} 구현체.
- *
- * <p>캐시를 앞에 두고 미스 시 Composer를 호출하는 구조.
- * Mapper 불필요: Composer가 readmodel을 직접 생산하므로 변환할 대상이 없음.
- */
 @Component
 @RequiredArgsConstructor
 public class CachingForecastViewReader implements ForecastViewReader {
