@@ -25,9 +25,6 @@ jobs:
       - name: Test with Gradle
         run: ./gradlew test
 
-      - name: Decode Firebase service account
-        run: echo "${{ secrets.FIREBASE_SA_BASE64 }}" | base64 -d > firebase-sa.json
-
       - name: Build and push image
         run: |
           TAG=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:${GITHUB_SHA::7}
