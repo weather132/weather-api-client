@@ -13,6 +13,7 @@ import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -31,14 +32,18 @@ public class DailyForecastComposer {
     private final MidLandRepository midLandRepository;
     private final MidTemperatureRepository midTemperatureRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
+    private final Clock clock;
 
     public record DailyComposeResult(
             LocalDateTime announceTime,
             List<ForecastDailyPoint> forecastDailyPoints
     ) {}
 
+    /**
+     *   todo: 데이터 부재 시 null을 포함한 7일 기본 구조 반환하고 있음, 확인 필요
+     **/
     public DailyComposeResult compose(CityRegionCode cityRegionCode) {
-        List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now());
+        List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now(clock));
 
         // ShortLand 배치 조회 (1회 쿼리)
         Map<LocalDateTime, ShortLand> shortLandItems =
@@ -91,10 +96,10 @@ public class DailyForecastComposer {
                 ? shortLandAnnounceTime
                 : midResult.announceTime();
 
-        // DailyRawItem → ForecastDailyPoint 집계 (기존 SnapshotAssembler 로직 흡수)
+        // DailyRawItem → ForecastDailyPoint 집계
         LocalDate baseDate = (announceTime != null)
                 ? announceTime.toLocalDate()
-                : LocalDateTime.now().toLocalDate();
+                : LocalDateTime.now(clock).toLocalDate();
         List<ForecastDailyPoint> dailyPoints = aggregate(baseDate, rawItems);
 
         return new DailyComposeResult(announceTime, dailyPoints);

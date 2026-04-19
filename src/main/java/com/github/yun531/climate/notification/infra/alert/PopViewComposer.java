@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -37,6 +38,7 @@ public class PopViewComposer {
     private final MidLandRepository midLandRepository;
     private final ProvinceRegionCodeRepository provinceRegionCodeRepository;
     private final CityRegionCodeRepository cityRegionCodeRepository;
+    private final Clock clock;
 
     @Nullable
     public PopView compose(String regionId) {
@@ -82,7 +84,7 @@ public class PopViewComposer {
     // ── Daily: ShortLand → MidLand fallback, 7일 am/pm POP ─────────────
 
     private Daily composeDaily(CityRegionCode cityRegionCode) {
-        List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now());
+        List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now(clock));
 
         // ShortLand 배치 조회
         Map<LocalDateTime, ShortLand> shortLandItems =
@@ -127,7 +129,7 @@ public class PopViewComposer {
 
         LocalDate baseDate = (dailyAnnounceTime != null)
                 ? dailyAnnounceTime.toLocalDate()
-                : LocalDateTime.now().toLocalDate();
+                : LocalDateTime.now(clock).toLocalDate();
 
         return aggregateDaily(baseDate, popSlots);
     }
