@@ -12,9 +12,8 @@ import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import com.github.yun531.climate.notification.domain.payload.RainForecastPayload;
 import com.github.yun531.climate.notification.domain.payload.RainOnsetPayload;
 import com.github.yun531.climate.notification.domain.payload.WarningIssuedPayload;
-import com.github.yun531.climate.snapshot.contract.HourlyPoint;
-import com.github.yun531.climate.snapshot.contract.SnapshotReader;
-import com.github.yun531.climate.snapshot.contract.WeatherSnapshot;
+import com.github.yun531.climate.notification.domain.readmodel.PopView;
+import com.github.yun531.climate.notification.infra.alert.PopCacheManager;
 import com.github.yun531.climate.warning.application.WarningCollectService;
 import com.github.yun531.climate.warning.domain.WarningClient;
 import com.github.yun531.climate.warning.domain.model.WarningCurrent;
@@ -43,6 +42,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -95,12 +95,11 @@ class IntegrationTest {
 
     private static final String REGION_ID              = "11B10101";
     private static final String NON_EXISTENT_REGION_ID = "99Z99999";
-    private static final long ANNOUNCE_INTERVAL_HOURS  = 3;
     private static final int EXPECTED_FORECAST_DAYS    = 7;
 
-    @Autowired SnapshotReader snapshotReader;
     @Autowired ForecastService forecastService;
     @Autowired GenerateAlertsService generateAlertsService;
+    @Autowired PopCacheManager popCacheManager;
     @Autowired DataSource dataSource;
     @Autowired JdbcTemplate jdbcTemplate;
 
@@ -293,7 +292,7 @@ class IntegrationTest {
         private static final Integer[] PAST_POPS = {
                 0, 0, 0, 20, 70, 80, 70, 30, 0, 0,
                 60, 70, 80, 70, 60, 0, 0, 0, 0, 30,
-                50, 70, 80, 70, 30, 0,
+                50, 70, 80, 70, 30, 0
         };
         private static final int[] EXPECTED_ONSET_HOURS = {5, 6, 13, 14, 15, 18};
 
@@ -313,99 +312,48 @@ class IntegrationTest {
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
                 stmt.execute("CALL insert_all()");
             }
+
+            warmPreviousPopCache();
         }
 
-        @Nested
-        @DisplayName("경로: Snapshot")
-        class SnapshotPath {
+        /**
+         * RAIN_ONSET 테스트를 위한 previous POP 캐시 pre-warm.
+         * - 통합 테스트에서는 SQL로 데이터를 직접 삽입하므로 이벤트 기반 rotate가 발생하지 않아,
+         *   past announceTime의 PAST_POPS 데이터로 PopView를 수동 구성하여 previous 캐시에 배치.
+         */
+        private void warmPreviousPopCache() {
+            LocalDateTime pastAt = jdbcTemplate.queryForObject(
+                    "SELECT MIN(announce_time) FROM short_grid", LocalDateTime.class);
 
-            @Test
-            @DisplayName("snapshot 정상 로드 및 기본 구조")
-            void loadsSnapshotWithValidStructure() {
-                WeatherSnapshot snapshot = snapshotReader.loadCurrent(REGION_ID);
-
-                assertThat(snapshot)
-                        .as("유효한 regionId로 로드한 snapshot은 null이 아니어야 한다")
-                        .isNotNull();
-                assertThat(snapshot.hourly())
-                        .as("시간별 데이터가 비어 있지 않아야 한다")
-                        .isNotEmpty();
-                assertThat(snapshot.daily())
-                        .as("일별 데이터가 비어 있지 않아야 한다")
-                        .isNotEmpty();
+            List<PopView.Hourly.Pop> hourlyPops = new ArrayList<>(PopView.HOURLY_SIZE);
+            for (int i = 0; i < PAST_POPS.length; i++) {
+                hourlyPops.add(new PopView.Hourly.Pop(pastAt.plusHours(i + 1), PAST_POPS[i]));
             }
 
-            @Test
-            @DisplayName("current/previous 발표시각 3시간 차이")
-            void announceTimeGapMatchesInterval() {
-                WeatherSnapshot current = snapshotReader.loadCurrent(REGION_ID);
-                WeatherSnapshot previous = snapshotReader.loadPrevious(REGION_ID);
-
-                assertThat(current)
-                        .as("current snapshot")
-                        .isNotNull();
-                assertThat(previous)
-                        .as("previous snapshot")
-                        .isNotNull();
-
-                long actualGap = Duration.between(
-                        previous.announceTime(), current.announceTime()
-                ).toHours();
-
-                assertThat(actualGap)
-                        .as("current와 previous의 발표시각 차이(시간)")
-                        .isEqualTo(ANNOUNCE_INTERVAL_HOURS);
+            List<PopView.Daily.Pop> dailyPops = new ArrayList<>(PopView.DAILY_SIZE);
+            for (int i = 0; i < PopView.DAILY_SIZE; i++) {
+                dailyPops.add(new PopView.Daily.Pop(null, null));
             }
 
-            @Test
-            @DisplayName("current snapshot의 시간별 POP이 시나리오와 일치")
-            void currentSnapshotHourlyPopMatchesScenario() {
-                WeatherSnapshot current = snapshotReader.loadCurrent(REGION_ID);
-                assertThat(current).isNotNull();
-                LocalDateTime latestAt = current.announceTime();
+            PopView pastView = new PopView(
+                    new PopView.Hourly(hourlyPops),
+                    new PopView.Daily(dailyPops),
+                    pastAt
+            );
 
-                List<HourlyPoint> hourly = current.hourly();
-                assertThat(hourly).hasSize(LATEST_POPS.length);
+            // putCurrent → rotate → PAST_POPS가 previous로 이동
+            popCacheManager.putCurrent(REGION_ID, pastView);
+            popCacheManager.rotate();
+        }
 
-                for (int i = 0; i < LATEST_POPS.length; i++) {
-                    HourlyPoint point = hourly.get(i);
-                    assertThat(point.effectiveTime())
-                            .as("hourly[%d].effectiveTime", i)
-                            .isEqualTo(latestAt.plusHours(i + 1));
-                    assertThat(point.pop())
-                            .as("hourly[%d].pop (i=%d)", i, i + 1)
-                            .isEqualTo(LATEST_POPS[i]);
-                }
-            }
-
-            @Test
-            @DisplayName("previous snapshot의 시간별 POP이 시나리오와 일치")
-            void previousSnapshotHourlyPopMatchesScenario() {
-                WeatherSnapshot previous = snapshotReader.loadPrevious(REGION_ID);
-                assertThat(previous).isNotNull();
-                LocalDateTime pastAt = previous.announceTime();
-
-                List<HourlyPoint> hourly = previous.hourly();
-                assertThat(hourly).hasSize(PAST_POPS.length);
-
-                for (int i = 0; i < PAST_POPS.length; i++) {
-                    HourlyPoint point = hourly.get(i);
-                    assertThat(point.effectiveTime())
-                            .as("hourly[%d].effectiveTime", i)
-                            .isEqualTo(pastAt.plusHours(i + 1));
-                    assertThat(point.pop())
-                            .as("hourly[%d].pop (i=%d)", i, i + 1)
-                            .isEqualTo(PAST_POPS[i]);
-                }
-            }
-
-            @Test
-            @DisplayName("미존재 regionId -> null 반환")
-            void returnsNullForUnknownRegion() {
-                assertThat(snapshotReader.loadCurrent(NON_EXISTENT_REGION_ID))
-                        .as("존재하지 않는 regionId는 null을 반환해야 한다")
-                        .isNull();
-            }
+        /**
+         * DB 에서 가장 최근 ShortGrid 발표시각을 조회.
+         */
+        private LocalDateTime loadAnnounceTime() {
+            LocalDateTime announceTime = jdbcTemplate.queryForObject(
+                    "SELECT MAX(announce_time) FROM short_grid", LocalDateTime.class);
+            assertThat(announceTime).as("short_grid announceTime").isNotNull();
+            return announceTime;
         }
 
         @Nested
@@ -415,9 +363,7 @@ class IntegrationTest {
             @Test
             @DisplayName("hourlyForecast의 POP 값이 시나리오와 일치")
             void hourlyForecastPopMatchesScenario() {
-                WeatherSnapshot snap = snapshotReader.loadCurrent(REGION_ID);
-                assertThat(snap).as("snapShot").isNotNull();
-                LocalDateTime announceTime = snap.announceTime();
+                LocalDateTime announceTime = loadAnnounceTime();
 
                 ForecastHourlyView hourly = forecastService.getHourlyForecast(REGION_ID);
                 assertThat(hourly).as("시간별 예보 뷰").isNotNull();
@@ -479,16 +425,6 @@ class IntegrationTest {
         @DisplayName("경로: Notification")
         class NotificationPath {
 
-            /**
-             * onset 검증의 기준 시각을 announceTime(=latest_at)으로 고정
-             * 테스트 실행 시간과 무관한 결정적 결과를 보장
-             */
-            private LocalDateTime loadAnnounceTime() {
-                WeatherSnapshot snap = snapshotReader.loadCurrent(REGION_ID);
-                assertThat(snap).as("onset 기준 시각 로드용 snapshot").isNotNull();
-                return snap.announceTime();
-            }
-
             @Test
             @DisplayName("RAIN_ONSET: 정확히 6건, 각 effectiveTime이 시나리오와 일치")
             void detectsRainOnsetWithExactTimesAndCount() {
@@ -501,7 +437,6 @@ class IntegrationTest {
                 );
                 List<AlertEvent> events = generateAlertsService.generate(cmd, announceTime);
 
-                // onset 이벤트만 필터
                 List<AlertEvent> onsetEvents = events.stream()
                         .filter(e -> e.type() == AlertTypeEnum.RAIN_ONSET)
                         .toList();
@@ -510,7 +445,6 @@ class IntegrationTest {
                         .as("RAIN_ONSET 이벤트 건수")
                         .hasSize(EXPECTED_ONSET_HOURS.length);
 
-                // 각 onset의 effectiveTime 검증
                 List<LocalDateTime> expectedTimes = IntStream.of(EXPECTED_ONSET_HOURS)
                         .mapToObj(announceTime::plusHours)
                         .toList();

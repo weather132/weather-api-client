@@ -72,6 +72,9 @@ tasks.named('test') {
 
 // ------ Benchmark Test Task ------
 tasks.register('benchmarkTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
     useJUnitPlatform {
         includeTags 'benchmark'
     }

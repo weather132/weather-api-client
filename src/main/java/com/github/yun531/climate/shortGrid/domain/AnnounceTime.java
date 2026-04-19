@@ -24,7 +24,6 @@ public class AnnounceTime {
 
     protected AnnounceTime() {}
 
-
     // 단기예보 발표시간 : 2, 5, 8, 11, 14, 17, 20, 23시 (3시간 간격)
     private int calculatePastHours(int nowHour) {
         return (nowHour + 1) % 3;
