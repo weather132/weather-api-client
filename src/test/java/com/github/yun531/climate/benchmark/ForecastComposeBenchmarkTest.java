@@ -2,8 +2,10 @@ package com.github.yun531.climate.benchmark;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
-import com.github.yun531.climate.snapshot.contract.WeatherSnapshot;
-import com.github.yun531.climate.snapshot.domain.compose.SnapshotComposeService;
+import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer;
+import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer.DailyComposeResult;
+import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer;
+import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer.HourlyComposeResult;
 import com.github.yun531.climate.warning.domain.WarningClient;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -25,7 +27,6 @@ import org.testcontainers.utility.MountableFile;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,8 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @Tag("benchmark")
 @TestMethodOrder(OrderAnnotation.class)
-@Import(SnapshotComposeBenchmarkTest.StubConfig.class)
-class SnapshotComposeBenchmarkTest {
+@Import(ForecastComposeBenchmarkTest.StubConfig.class)
+class ForecastComposeBenchmarkTest {
 
     @Container
     static MySQLContainer<?> mysql =
@@ -74,12 +75,12 @@ class SnapshotComposeBenchmarkTest {
         }
     }
 
-    @Autowired SnapshotComposeService composeService;
+    @Autowired HourlyForecastComposer hourlyComposer;
+    @Autowired DailyForecastComposer dailyComposer;
     @Autowired DataSource dataSource;
     @Autowired JdbcTemplate jdbcTemplate;
 
     private static List<CityRegionCode> allRegions;
-    private static LocalDateTime announceTime;
 
     @BeforeAll
     static void setUp(
@@ -105,40 +106,39 @@ class SnapshotComposeBenchmarkTest {
         allRegions = cityRegionCodeRepository.findAll();
         assertThat(allRegions).isNotEmpty();
 
-        announceTime = jdbcTemplate.queryForObject(
-                "SELECT announce_time FROM short_grid ORDER BY announce_time DESC LIMIT 1",
-                LocalDateTime.class
-        );
-        assertThat(announceTime).isNotNull();
-
-        System.out.printf("[SETUP] 전체 지역 수: %d, announceTime: %s%n",
-                allRegions.size(), announceTime);
+        System.out.printf("[SETUP] 전체 지역 수: %d%n", allRegions.size());
     }
 
     @Test
     @Order(1)
     @DisplayName("검증: 첫 번째 지역 compose 성공 확인")
     void verifyFirstRegionCompose() {
-        WeatherSnapshot snapshot = composeService.composeSnapshot(
-                allRegions.get(0).getRegionCode(), announceTime);
+        CityRegionCode first = allRegions.get(0);
 
-        assertThat(snapshot)
-                .as("벤치마크 데이터 정합성 확인")
-                .isNotNull();
-        assertThat(snapshot.hourly()).isNotEmpty();
-        assertThat(snapshot.daily()).isNotEmpty();
+        HourlyComposeResult hourly = hourlyComposer.compose(first);
+        DailyComposeResult daily = dailyComposer.compose(first);
+
+        assertThat(hourly.forecastHourlyPoints())
+                .as("hourly 벤치마크 데이터 정합성")
+                .isNotEmpty();
+        assertThat(daily.forecastDailyPoints())
+                .as("daily 벤치마크 데이터 정합성")
+                .isNotEmpty();
 
         System.out.printf("[VERIFY] regionId=%s, hourly=%d건, daily=%d건%n",
-                snapshot.regionId(), snapshot.hourly().size(), snapshot.daily().size());
+                first.getRegionCode(),
+                hourly.forecastHourlyPoints().size(),
+                daily.forecastDailyPoints().size());
     }
 
     @Test
     @Order(2)
-    @DisplayName("벤치마크: 전체 지역 스냅샷 compose 소요 시간 (best case)")
+    @DisplayName("벤치마크: 전체 지역 forecast compose 소요 시간 (best case)")
     void benchmarkAllRegionsCompose() {
         // ── 워밍업: 전체 1회 순회 ──
         for (CityRegionCode region : allRegions) {
-            composeService.composeSnapshot(region.getRegionCode(), announceTime);
+            hourlyComposer.compose(region);
+            dailyComposer.compose(region);
         }
 
         // ── 본 측정 ──
@@ -149,14 +149,19 @@ class SnapshotComposeBenchmarkTest {
         long totalStart = System.nanoTime();
 
         for (int i = 0; i < allRegions.size(); i++) {
-            String regionId = allRegions.get(i).getRegionCode();
+            CityRegionCode region = allRegions.get(i);
 
             long regionStart = System.nanoTime();
-            WeatherSnapshot snap = composeService.composeSnapshot(regionId, announceTime);
+            HourlyComposeResult hourly = hourlyComposer.compose(region);
+            DailyComposeResult daily = dailyComposer.compose(region);
             perRegionNanos[i] = System.nanoTime() - regionStart;
 
-            if (snap != null) successCount++;
-            else failCount++;
+            if (!hourly.forecastHourlyPoints().isEmpty()
+                    && !daily.forecastDailyPoints().isEmpty()) {
+                successCount++;
+            } else {
+                failCount++;
+            }
         }
 
         long totalElapsed = System.nanoTime() - totalStart;
@@ -178,7 +183,7 @@ class SnapshotComposeBenchmarkTest {
         System.out.printf("""
                 
                 ══════════════════════════════════════════════
-                  BEST CASE BENCHMARK (ShortLand 존재)
+                  BEST CASE BENCHMARK (Forecast Composer)
                 ══════════════════════════════════════════════
                   전체 지역 수 : %d
                   성공         : %d
@@ -211,16 +216,15 @@ class SnapshotComposeBenchmarkTest {
     @DisplayName("벤치마크: worst case — ShortLand 전체 null, Mid fallback 강제")
     void benchmarkWorstCase_midFallbackOnly() throws Exception {
         try {
-            // ── short_land 비우기 + D+0~D+2 mid 데이터 보충 ──
+            // ── short_land 비우기 ──
             jdbcTemplate.execute("TRUNCATE TABLE short_land");
-            fillMissingMidData();
 
             // ── 워밍업 ──
             for (CityRegionCode region : allRegions) {
-                composeService.composeSnapshot(region.getRegionCode(), announceTime);
+                dailyComposer.compose(region);
             }
 
-            // ── 본 측정 ──
+            // ── 본 측정 (daily만 — hourly는 ShortGrid 기반이라 영향 없음) ──
             int successCount = 0;
             int failCount = 0;
             long[] perRegionNanos = new long[allRegions.size()];
@@ -228,13 +232,13 @@ class SnapshotComposeBenchmarkTest {
             long totalStart = System.nanoTime();
 
             for (int i = 0; i < allRegions.size(); i++) {
-                String regionId = allRegions.get(i).getRegionCode();
+                CityRegionCode region = allRegions.get(i);
 
                 long regionStart = System.nanoTime();
-                WeatherSnapshot snap = composeService.composeSnapshot(regionId, announceTime);
+                DailyComposeResult daily = dailyComposer.compose(region);
                 perRegionNanos[i] = System.nanoTime() - regionStart;
 
-                if (snap != null) successCount++;
+                if (!daily.forecastDailyPoints().isEmpty()) successCount++;
                 else failCount++;
             }
 
@@ -256,7 +260,7 @@ class SnapshotComposeBenchmarkTest {
             System.out.printf("""
                     
                     ══════════════════════════════════════════════
-                      WORST CASE BENCHMARK (Mid fallback 강제)
+                      WORST CASE BENCHMARK (Mid Fallback Only)
                     ══════════════════════════════════════════════
                       전체 지역 수 : %d
                       성공         : %d
@@ -279,68 +283,17 @@ class SnapshotComposeBenchmarkTest {
                             .collect(Collectors.joining("\n"))
             );
 
-            assertThat(successCount).isGreaterThan(0);
+            assertThat(successCount)
+                    .as("worst-case compose 성공 건수")
+                    .isGreaterThan(0);
 
         } finally {
-            // ── short_land 복원 (테스트 성공/실패 무관하게 실행) ──
+            // ── short_land 복원 ──
             try (Connection conn = dataSource.getConnection();
                  Statement stmt = conn.createStatement()) {
                 stmt.execute("SET time_zone = '+09:00'");
-                stmt.execute("CALL insert_short_land(DATE_SUB(NOW(), INTERVAL 10 MINUTE))");
+                stmt.execute("CALL insert_short_land(NOW() - INTERVAL 10 MINUTE)");
             }
         }
-    }
-
-    // ==================== helper ====================
-
-    /**
-     * D+0 ~ D+2 구간의 mid_pop, mid_temperature 데이터를 보충한다.
-     * 저장 프로시저는 D+3부터만 넣기 때문에, ShortLand를 비우면
-     * D+0 ~ D+2가 Mid fallback을 타면서 null 데이터로 NPE 가 발생한다.
-     */
-    private void fillMissingMidData() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime baseDate = now.getHour() < 6 ? now.minusDays(1) : now;
-        LocalDateTime standardTime = baseDate
-                .withHour(9).withMinute(0).withSecond(0).withNano(0);
-
-        // get_mid_announceTime 과 동일한 로직
-        int hour = now.getHour();
-        LocalDateTime midAnnounceTime;
-        if (hour >= 18) {
-            midAnnounceTime = now.withHour(18).withMinute(0).withSecond(0).withNano(0);
-        } else if (hour < 6) {
-            midAnnounceTime = now.minusDays(1)
-                    .withHour(18).withMinute(0).withSecond(0).withNano(0);
-        } else {
-            midAnnounceTime = now.withHour(6).withMinute(0).withSecond(0).withNano(0);
-        }
-
-        for (int day = 0; day < 3; day++) {
-            LocalDateTime morning = standardTime.plusDays(day).withHour(9);
-            LocalDateTime afternoon = standardTime.plusDays(day).withHour(21);
-
-            insertMidPop(midAnnounceTime, morning);
-            insertMidPop(midAnnounceTime, afternoon);
-            insertMidTemp(midAnnounceTime, morning);
-        }
-    }
-
-    private void insertMidPop(LocalDateTime announceTime, LocalDateTime effectiveTime) {
-        jdbcTemplate.update("""
-                INSERT IGNORE INTO mid_pop
-                    (id, announce_time, effective_time, province_region_code_id, pop)
-                SELECT null, ?, ?, p.id, 50
-                FROM province_region_code p
-                """, announceTime, effectiveTime);
-    }
-
-    private void insertMidTemp(LocalDateTime announceTime, LocalDateTime effectiveTime) {
-        jdbcTemplate.update("""
-                INSERT IGNORE INTO mid_temperature
-                    (id, announce_time, effective_time, city_region_code_id, max_temp, min_temp)
-                SELECT null, ?, ?, c.id, 20, 10
-                FROM city_region_code c
-                """, announceTime, effectiveTime);
     }
 }
