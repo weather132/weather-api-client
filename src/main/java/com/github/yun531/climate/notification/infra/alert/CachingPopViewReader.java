@@ -1,14 +1,12 @@
 package com.github.yun531.climate.notification.infra.alert;
 
+import com.github.yun531.climate.notification.domain.compose.PopViewComposer;
 import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import com.github.yun531.climate.notification.domain.readmodel.PopViewReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-/**
- * {@link PopViewReader} 구현체.
- */
 @Component
 @RequiredArgsConstructor
 public class CachingPopViewReader implements PopViewReader {

@@ -1,5 +1,6 @@
 package com.github.yun531.climate.notification.infra.alert;
 
+import com.github.yun531.climate.notification.domain.compose.PopViewComposer;
 import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,8 @@ import static org.mockito.Mockito.*;
 class CachingPopViewReaderTest {
 
     @Mock PopCacheManager cache;
-    @Mock PopViewComposer composer;
+    @Mock
+    PopViewComposer composer;
 
     private CachingPopViewReader reader;
 

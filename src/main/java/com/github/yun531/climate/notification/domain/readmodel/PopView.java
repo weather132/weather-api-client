@@ -1,6 +1,7 @@
 package com.github.yun531.climate.notification.domain.readmodel;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,7 +29,11 @@ public record PopView(
     public record Hourly(List<Pop> pops) {
 
         /** @param pop null 이면 "데이터 없음" */
-        public record Pop(LocalDateTime effectiveTime, Integer pop) {}
+        public record Pop(LocalDateTime effectiveTime, Integer pop) {
+            public static Pop empty() {
+                return new Pop(null, null);
+            }
+        }
 
         public Hourly {
             pops = (pops == null) ? List.of() : List.copyOf(pops);
@@ -37,13 +42,28 @@ public record PopView(
                         "HourlySeries must have " + HOURLY_SIZE + " points");
             }
         }
+
+        /**
+         * 가용 데이터로 Hourly를 생성. HOURLY_SIZE 미만이면 empty로 패딩.
+         */
+        public static Hourly padded(List<Pop> available) {
+            List<Pop> pops = new ArrayList<>(HOURLY_SIZE);
+            for (int i = 0; i < HOURLY_SIZE; i++) {
+                pops.add(i < available.size() ? available.get(i) : Pop.empty());
+            }
+            return new Hourly(pops);
+        }
     }
 
     /** ======================= Daily ======================= */
     public record Daily(List<Pop> pops) {
 
         /** @param am null 이면 "데이터 없음", @param pm null 이면 "데이터 없음" */
-        public record Pop(Integer am, Integer pm) {}
+        public record Pop(Integer am, Integer pm) {
+            public static Pop empty() {
+                return new Pop(null, null);
+            }
+        }
 
         public Daily {
             pops = (pops == null) ? List.of() : List.copyOf(pops);
