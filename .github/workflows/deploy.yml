@@ -29,49 +29,49 @@ jobs:
       - name: Test with Gradle
         run: ./gradlew test
 
-      # ── GCP 인증 ──
-      - id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - uses: google-github-actions/setup-gcloud@v2
-
-      - run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-
-      # ── Firebase 서비스 계정 복원 ──
-      - name: Decode Firebase service account
-        run: echo "${{ secrets.FIREBASE_SA_BASE64 }}" | base64 -d > firebase-sa.json
-
-      # ── Docker 빌드 & 푸시 ──
-      - name: Build and push image
-        run: |
-          TAG=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:${GITHUB_SHA::7}
-          LATEST=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
-
-          docker build -t ${TAG} -t ${LATEST} .
-          docker push ${TAG}
-          docker push ${LATEST}
-
-      # ── VM 배포 ──
-      - name: Deploy to GCE
-        run: |
-          gcloud compute ssh ${VM_NAME} \
-            --zone=${VM_ZONE} \
-            --command="
-              gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet && \
-              docker pull ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest && \
-              docker stop climate-api || true && \
-              docker rm climate-api || true && \
-              docker run -d \
-                --name climate-api \
-                --restart unless-stopped \
-                -p 8080:8080 \
-                -e TZ=Asia/Seoul \
-                -e DB_HOST=10.178.0.5 \
-                -e DB_USERNAME=climate_user \
-                -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-                -e API_KEY=${{ secrets.API_KEY }} \
-                -e FIREBASE_SA_PATH=/app/firebase-sa.json \
-                ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
-            "
+#      # ── GCP 인증 ──
+#      - id: auth
+#        uses: google-github-actions/auth@v2
+#        with:
+#          credentials_json: ${{ secrets.GCP_SA_KEY }}
+#
+#      - uses: google-github-actions/setup-gcloud@v2
+#
+#      - run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+#
+#      # ── Firebase 서비스 계정 복원 ──
+#      - name: Decode Firebase service account
+#        run: echo "${{ secrets.FIREBASE_SA_BASE64 }}" | base64 -d > firebase-sa.json
+#
+#      # ── Docker 빌드 & 푸시 ──
+#      - name: Build and push image
+#        run: |
+#          TAG=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:${GITHUB_SHA::7}
+#          LATEST=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
+#
+#          docker build -t ${TAG} -t ${LATEST} .
+#          docker push ${TAG}
+#          docker push ${LATEST}
+#
+#      # ── VM 배포 ──
+#      - name: Deploy to GCE
+#        run: |
+#          gcloud compute ssh ${VM_NAME} \
+#            --zone=${VM_ZONE} \
+#            --command="
+#              gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet && \
+#              docker pull ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest && \
+#              docker stop climate-api || true && \
+#              docker rm climate-api || true && \
+#              docker run -d \
+#                --name climate-api \
+#                --restart unless-stopped \
+#                -p 8080:8080 \
+#                -e TZ=Asia/Seoul \
+#                -e DB_HOST=10.178.0.5 \
+#                -e DB_USERNAME=climate_user \
+#                -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+#                -e API_KEY=${{ secrets.API_KEY }} \
+#                -e FIREBASE_SA_PATH=/app/firebase-sa.json \
+#                ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
+#            "
