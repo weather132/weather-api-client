@@ -31,23 +31,31 @@ public class HourlyForecastComposer {
     ) {}
 
     public HourlyComposeResult compose(CityRegionCode cityRegionCode) {
+        List<ShortGrid> shortGrids = fetchRecentShortGrids(cityRegionCode);
+        LocalDateTime announceTime = extractAnnounceTime(shortGrids);
+        List<ForecastHourlyPoint> forecastHourlyPoints = buildHourlyPoints(shortGrids);
+
+        return new HourlyComposeResult(announceTime, forecastHourlyPoints);
+    }
+
+    private List<ShortGrid> fetchRecentShortGrids(CityRegionCode cityRegionCode) {
         Coordinates coords = cityRegionCode.getCoordinates();
+        return shortGridRepository.findRecentByXAndY(coords.getX(), coords.getY());
+    }
 
-        List<ShortGrid> shortGrids = shortGridRepository
-                .findRecentByXAndY(coords.getX(), coords.getY());
-
-        LocalDateTime announceTime = shortGrids.isEmpty()
+    private LocalDateTime extractAnnounceTime(List<ShortGrid> shortGrids) {
+        return shortGrids.isEmpty()
                 ? null
                 : shortGrids.get(0).getAnnounceTime().getTime();
+    }
 
-        List<ForecastHourlyPoint> forecastHourlyPoints = shortGrids.stream()
+    private List<ForecastHourlyPoint> buildHourlyPoints(List<ShortGrid> shortGrids) {
+        return shortGrids.stream()
                 .filter(sg -> sg.getEffectiveTime() != null)
                 .sorted(Comparator.comparing(ShortGrid::getEffectiveTime))
                 .limit(MAX_HOURLY_POINTS)
                 .map(sg -> new ForecastHourlyPoint(
                         sg.getEffectiveTime(), sg.getTemp(), sg.getPop()))
                 .toList();
-
-        return new HourlyComposeResult(announceTime, forecastHourlyPoints);
     }
 }

@@ -11,12 +11,11 @@ import com.github.yun531.climate.provinceRegionCode.ProvinceRegionCodeRepository
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -39,188 +38,200 @@ public class DailyForecastComposer {
             List<ForecastDailyPoint> forecastDailyPoints
     ) {}
 
-    /**
-     *   todo: 데이터 부재 시 null을 포함한 7일 기본 구조 반환하고 있음, 확인 필요
-     **/
     public DailyComposeResult compose(CityRegionCode cityRegionCode) {
-        List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now(clock));
+        List<LocalDateTime> effectiveTimes           = getEffectiveTimes(LocalDateTime.now(clock));
+        Map<LocalDateTime, ShortLand> shortLandItems = fetchRecentShortLands(cityRegionCode, effectiveTimes);
+        List<LocalDateTime> missingTimes             = findMissingTimes(effectiveTimes, shortLandItems);
+        MidBatchResult midResult                     = composeMidBatch(cityRegionCode, missingTimes);
 
-        // ShortLand 배치 조회 (1회 쿼리)
-        Map<LocalDateTime, ShortLand> shortLandItems =
-                shortLandRepository.findRecentAll(cityRegionCode, effectiveTimes);
+        Map<LocalDateTime, DailyRawItem> rawItemMap  =
+                collectRawItems(effectiveTimes, shortLandItems, midResult.items(), cityRegionCode);
+        LocalDateTime announceTime                   = extractAnnounceTime(shortLandItems, midResult);
+        List<ForecastDailyPoint> forecastDailyPoints = buildDaily(effectiveTimes, rawItemMap);
 
-        // ShortLand 없는 시간대 분류
-        List<LocalDateTime> missingTimes = effectiveTimes.stream()
+        return new DailyComposeResult(announceTime, forecastDailyPoints);
+    }
+
+
+    private Map<LocalDateTime, ShortLand> fetchRecentShortLands(
+            CityRegionCode cityRegionCode, List<LocalDateTime> effectiveTimes) {
+        return shortLandRepository.findRecentAll(cityRegionCode, effectiveTimes);
+    }
+
+    private List<LocalDateTime> findMissingTimes(
+            List<LocalDateTime> effectiveTimes,
+            Map<LocalDateTime, ShortLand> shortLandItems) {
+        return effectiveTimes.stream()
                 .filter(et -> !shortLandItems.containsKey(et))
                 .toList();
+    }
 
-        // Mid fallback 배치 조회 (최대 3회 쿼리)
-        MidBatchResult midResult = missingTimes.isEmpty()
-                ? new MidBatchResult(Map.of(), null)
-                : composeMidBatch(cityRegionCode, missingTimes);
-
-        // 순서 유지하며 DailyRawItem 조립
-        List<DailyRawItem> rawItems = new ArrayList<>(effectiveTimes.size());
-        LocalDateTime shortLandAnnounceTime = null;
-
-        for (LocalDateTime effectiveTime : effectiveTimes) {
-            ShortLand shortLand = shortLandItems.get(effectiveTime);
-            if (shortLand != null) {
-                if (shortLandAnnounceTime == null) {
-                    shortLandAnnounceTime = shortLand.getAnnounceTime();
-                }
-
-                Integer pop = shortLand.getPop();
-                Integer temp = shortLand.getTemp();
-
-                if (pop == null) {
-                    pop = shortLandRepository.findRecentPop(cityRegionCode, effectiveTime);
-                }
-                if (temp == null) {
-                    temp = isMorning(effectiveTime)
-                            ? shortLandRepository.findRecentMinTemp(cityRegionCode, effectiveTime)
-                            : shortLandRepository.findRecentMaxTemp(cityRegionCode, effectiveTime);
-                }
-
-                rawItems.add(new DailyRawItem(effectiveTime, temp, pop));
-            } else {
-                DailyRawItem midItem = midResult.items().get(effectiveTime);
-                if (midItem != null) {
-                    rawItems.add(midItem);
-                }
+    /**
+     * effectiveTime별 DailyRawItem을 수집.
+     * 우선순위: ShortLand → ShortLand(이전 발표) → MidLand/MidTemperature
+     */
+    private Map<LocalDateTime, DailyRawItem> collectRawItems(
+            List<LocalDateTime> effectiveTimes,
+            Map<LocalDateTime, ShortLand> shortLandItems,
+            Map<LocalDateTime, DailyRawItem> midItems,
+            CityRegionCode cityRegionCode
+    ) {
+        Map<LocalDateTime, DailyRawItem> rawItemMap = new HashMap<>();
+        for (LocalDateTime et : effectiveTimes) {
+            DailyRawItem item = findRawItemForTime(et, shortLandItems, midItems, cityRegionCode);
+            if (item != null) {
+                rawItemMap.put(et, item);
             }
         }
+        return rawItemMap;
+    }
 
-        // announceTime: ShortLand 우선, 없으면 Mid fallback
-        LocalDateTime announceTime = (shortLandAnnounceTime != null)
+    /**
+     * 단일 effectiveTime에 대한 temp/pop을 찾는다.
+     * ShortLand 존재 → getPop()/getTemp() 우선, null 이면 이전 발표 시각에서 조회.
+     * ShortLand 없음 → MidLand/MidTemperature fallback.
+     */
+    @Nullable
+    private DailyRawItem findRawItemForTime(
+            LocalDateTime et,
+            Map<LocalDateTime, ShortLand> shortLandItems,
+            Map<LocalDateTime, DailyRawItem> midItems,
+            CityRegionCode cityRegionCode
+    ) {
+        ShortLand shortLand = shortLandItems.get(et);
+        if (shortLand != null) {
+            Integer pop = shortLand.getPop();
+            Integer temp = shortLand.getTemp();
+
+            if (pop == null) {
+                pop = shortLandRepository.findRecentPop(cityRegionCode, et);
+            }
+            if (temp == null) {
+                temp = isMorning(et)
+                        ? shortLandRepository.findRecentMinTemp(cityRegionCode, et)
+                        : shortLandRepository.findRecentMaxTemp(cityRegionCode, et);
+            }
+            return new DailyRawItem(temp, pop);
+        }
+        return midItems.get(et);
+    }
+
+    private LocalDateTime extractAnnounceTime(
+            Map<LocalDateTime, ShortLand> shortLandItems,
+            MidBatchResult midResult
+    ) {
+        LocalDateTime shortLandAnnounceTime = shortLandItems.values().stream()
+                .findFirst()
+                .map(ShortLand::getAnnounceTime)
+                .orElse(null);
+
+        return (shortLandAnnounceTime != null)
                 ? shortLandAnnounceTime
                 : midResult.announceTime();
-
-        // DailyRawItem → ForecastDailyPoint 집계
-        LocalDate baseDate = (announceTime != null)
-                ? announceTime.toLocalDate()
-                : LocalDateTime.now(clock).toLocalDate();
-        List<ForecastDailyPoint> dailyPoints = aggregate(baseDate, rawItems);
-
-        return new DailyComposeResult(announceTime, dailyPoints);
     }
 
 
-    // ── 집계 로직 ──────────────────────
-
-    private List<ForecastDailyPoint> aggregate(LocalDate baseDate, List<DailyRawItem> rawItems) {
-        if (rawItems.isEmpty()) {
-            return emptyDailyPoints();
-        }
-
-        Map<Integer, List<DailyRawItem>> grouped = groupByDaysAhead(baseDate, rawItems);
-
-        List<ForecastDailyPoint> points = new ArrayList<>(DAILY_RANGE);
-        for (int daysAhead = 0; daysAhead < DAILY_RANGE; daysAhead++) {
-            List<DailyRawItem> dayItems = grouped.getOrDefault(daysAhead, List.of());
-            points.add(aggregateDay(daysAhead, dayItems));
-        }
-        return points;
-    }
-
-    private Map<Integer, List<DailyRawItem>> groupByDaysAhead(
-            LocalDate baseDate, List<DailyRawItem> items
+    /**
+     * effectiveTimes 인덱스 기반으로 ForecastDailyPoint를 조립.
+     * effectiveTimes는 [D+0 09:00, D+0 21:00, D+1 09:00, D+1 21:00, ...] 고정 순서.
+     * → index day*2 = AM(09:00, minTemp), day*2+1 = PM(21:00, maxTemp)
+     * rawItemMap 비어있음 → 빈 리스트 반환.
+     */
+    private List<ForecastDailyPoint> buildDaily(
+            List<LocalDateTime> effectiveTimes,
+            Map<LocalDateTime, DailyRawItem> rawItemMap
     ) {
-        Map<Integer, List<DailyRawItem>> grouped = new HashMap<>();
+        if (rawItemMap.isEmpty()) return List.of();
 
-        for (DailyRawItem item : items) {
-            if (item.effectiveTime() == null) continue;
+        List<ForecastDailyPoint> dailyPoints = new ArrayList<>(DAILY_RANGE);
+        for (int day = 0; day < DAILY_RANGE; day++) {
+            DailyRawItem amItem = rawItemMap.get(effectiveTimes.get(day * 2));
+            DailyRawItem pmItem = rawItemMap.get(effectiveTimes.get(day * 2 + 1));
 
-            int daysAhead = (int) ChronoUnit.DAYS.between(
-                    baseDate, item.effectiveTime().toLocalDate());
-            if (daysAhead < 0 || daysAhead >= DAILY_RANGE) continue;
+            Integer minTemp = amItem != null ? amItem.temp() : null;
+            Integer maxTemp = pmItem != null ? pmItem.temp() : null;
+            Integer amPop   = amItem != null ? amItem.pop() : null;
+            Integer pmPop   = pmItem != null ? pmItem.pop() : null;
 
-            grouped.computeIfAbsent(daysAhead, k -> new ArrayList<>()).add(item);
+            dailyPoints.add(new ForecastDailyPoint(day, minTemp, maxTemp, amPop, pmPop));
         }
-        return grouped;
+        return dailyPoints;
     }
 
-    private ForecastDailyPoint aggregateDay(int daysAhead, List<DailyRawItem> items) {
-        Integer minTemp = null, maxTemp = null;
-        Integer amPop = null, pmPop = null;
-
-        for (DailyRawItem item : items) {
-            Integer temp = item.temp();
-            if (temp != null) {
-                minTemp = (minTemp == null) ? temp : Math.min(minTemp, temp);
-                maxTemp = (maxTemp == null) ? temp : Math.max(maxTemp, temp);
-            }
-
-            Integer pop = item.pop();
-            if (pop != null) {
-                if (item.effectiveTime().getHour() < 12) {
-                    amPop = (amPop == null) ? pop : Math.max(amPop, pop);
-                } else {
-                    pmPop = (pmPop == null) ? pop : Math.max(pmPop, pop);
-                }
-            }
-        }
-        return new ForecastDailyPoint(daysAhead, minTemp, maxTemp, amPop, pmPop);
-    }
-
-    private List<ForecastDailyPoint> emptyDailyPoints() {
-        List<ForecastDailyPoint> points = new ArrayList<>(DAILY_RANGE);
-        for (int i = 0; i < DAILY_RANGE; i++) {
-            points.add(new ForecastDailyPoint(i, null, null, null, null));
-        }
-        return points;
-    }
-
-    // ── Mid fallback 배치 조회 ──────────────────────────────────────────
+    // --- Mid (Fallback) 처리 로직 ---
 
     /**
      * Mid fallback 배치: ProvinceRegionCode 1회 + MidTemperature 1회 + MidLand 1회.
-     * announceTime을 MidLand에서 추출하여 함께 반환.
+     * missingTimes 비어있음 → empty MidBatchResult 반환.
      */
     private MidBatchResult composeMidBatch(
             CityRegionCode cityRegionCode, List<LocalDateTime> missingTimes
     ) {
+        if (missingTimes.isEmpty()) return new MidBatchResult(Map.of(), null);
+
         ProvinceRegionCode provinceRegionCode =
                 provinceRegionCodeRepository.findById(cityRegionCode.getProvinceRegionCodeId())
                         .orElse(null);
         if (provinceRegionCode == null) return new MidBatchResult(Map.of(), null);
 
-        // MidTemperature: 오전/오후 모두 morning(09:00) 기준으로 조회하므로 중복 제거
+        Map<LocalDateTime, MidTemperature> midTempMap = findMidTemperatures(cityRegionCode, missingTimes);
+        Map<LocalDateTime, MidLand> midLandMap        = findMidLands(provinceRegionCode, missingTimes);
+
+        Map<LocalDateTime, DailyRawItem> items        = buildMidRawItems(missingTimes, midTempMap, midLandMap);
+        LocalDateTime midAnnounceTime                 = extractMidAnnounceTime(midLandMap);
+
+        return new MidBatchResult(items, midAnnounceTime);
+    }
+
+    /**
+     * MidTemp 배치 조회: AM 시각(09:00) 기준으로 중복 제거 후 조회.
+     * MidTemp는 AM/PM 구분 없이, 발효시간이 09시로 저장되어 있음.
+     */
+    private Map<LocalDateTime, MidTemperature> findMidTemperatures(
+            CityRegionCode cityRegionCode, List<LocalDateTime> missingTimes) {
         List<LocalDateTime> morningTimes = missingTimes.stream()
                 .map(et -> et.withHour(9))
                 .distinct()
                 .toList();
-        Map<LocalDateTime, MidTemperature> midTempMap =
-                midTemperatureRepository.findRecentAll(cityRegionCode, morningTimes);
+        return midTemperatureRepository.findRecentAll(cityRegionCode, morningTimes);
+    }
 
-        // MidLand: 실제 effectiveTime(09:00, 21:00) 기준으로 조회
-        Map<LocalDateTime, MidLand> midLandMap =
-                midLandRepository.findRecentAll(provinceRegionCode, missingTimes);
+    private Map<LocalDateTime, MidLand> findMidLands(
+            ProvinceRegionCode provinceRegionCode, List<LocalDateTime> missingTimes) {
+        return midLandRepository.findRecentAll(provinceRegionCode, missingTimes);
+    }
 
-        // announceTime 추출: 첫 번째 MidLand 기준
-        LocalDateTime midAnnounceTime = midLandMap.values().stream()
-                .findFirst()
-                .map(ml -> ml.getAnnounceTime().getTime())
-                .orElse(null);
-
+    /**
+     * missingTimes 각 시각에 대해 Mid 데이터로 DailyRawItem을 조립.
+     * isMorning(et) → minTemp, 아니면 maxTemp 매핑.
+     */
+    private Map<LocalDateTime, DailyRawItem> buildMidRawItems(
+            List<LocalDateTime> missingTimes,
+            Map<LocalDateTime, MidTemperature> midTempMap,
+            Map<LocalDateTime, MidLand> midLandMap
+    ) {
         Map<LocalDateTime, DailyRawItem> items = new HashMap<>();
         for (LocalDateTime et : missingTimes) {
             MidTemperature midTemp = midTempMap.get(et.withHour(9));
-            MidLand midLand = midLandMap.get(et);
+            MidLand midLand        = midLandMap.get(et);
 
             if (midTemp == null || midLand == null) continue;
 
             Integer temp = isMorning(et) ? midTemp.getMinTemp() : midTemp.getMaxTemp();
-
-            items.put(et, new DailyRawItem(et, temp, midLand.getPop()));
+            items.put(et, new DailyRawItem(temp, midLand.getPop()));
         }
-        return new MidBatchResult(items, midAnnounceTime);
+        return items;
     }
 
-    // ── 시간 계산 ───────────────────────────────────────────────────────
+    private LocalDateTime extractMidAnnounceTime(Map<LocalDateTime, MidLand> midLandMap) {
+        return midLandMap.values().stream()
+                .findFirst()
+                .map(ml -> ml.getAnnounceTime().getTime())
+                .orElse(null);
+    }
+
 
     private List<LocalDateTime> getEffectiveTimes(LocalDateTime now) {
-        // 00시 ~ 05시 59분 사이라면 "전날" 데이터 기준으로 계산하기 위해 기준일을 하루 뺌
         LocalDateTime baseDate = now;
         if (now.getHour() < 6) {
             baseDate = now.minusDays(1);
@@ -241,22 +252,11 @@ public class DailyForecastComposer {
         return effectiveTime.getHour() == 9;
     }
 
-    // ── 내부 전용 타입 ──────────────────────────────────────────────────
 
-    /**
-     * composeMidBatch의 반환 타입. DailyRawItem 맵과 MidLand의 announceTime을 함께 전달.
-     */
     private record MidBatchResult(
             Map<LocalDateTime, DailyRawItem> items,
             LocalDateTime announceTime
     ) {}
 
-    /**
-     * Composer 내부 전용 중간 타입
-     */
-    private record DailyRawItem(
-            LocalDateTime effectiveTime,
-            Integer temp,
-            Integer pop
-    ) {}
+    private record DailyRawItem(Integer temp, Integer pop) {}
 }
