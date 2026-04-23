@@ -42,7 +42,7 @@ public class PopViewComposer {
         if (cityRegionCode == null) return null;
 
         HourlyResult hourlyResult = composeHourly(cityRegionCode);
-        Daily daily = composeDaily(cityRegionCode);
+        Daily daily               = composeDaily(cityRegionCode);
 
         return new PopView(hourlyResult.hourly(), daily, hourlyResult.announceTime());
     }
@@ -50,14 +50,16 @@ public class PopViewComposer {
     // ── Hourly: ShortGrid → POP + effectiveTime, 26개 고정 ──────────────
 
     private HourlyResult composeHourly(CityRegionCode cityRegionCode) {
-        Coordinates coords = cityRegionCode.getCoordinates();
-        List<ShortGrid> shortGrids = shortGridRepository
-                .findRecentByXAndY(coords.getX(), coords.getY());
-
+        List<ShortGrid> shortGrids = fetchRecentShortGrids(cityRegionCode);
         LocalDateTime announceTime = extractAnnounceTime(shortGrids);
-        Hourly hourly = buildHourly(shortGrids);
+        Hourly hourly              = buildHourly(shortGrids);
 
         return new HourlyResult(hourly, announceTime);
+    }
+
+    private List<ShortGrid> fetchRecentShortGrids(CityRegionCode cityRegionCode) {
+        Coordinates coords = cityRegionCode.getCoordinates();
+        return shortGridRepository.findRecentByXAndY(coords.getX(), coords.getY());
     }
 
     private LocalDateTime extractAnnounceTime(List<ShortGrid> shortGrids) {
@@ -80,23 +82,87 @@ public class PopViewComposer {
     // ── Daily: ShortLand → MidLand fallback, 7일 AM/PM POP ──────────────
 
     private Daily composeDaily(CityRegionCode cityRegionCode) {
-        List<LocalDateTime> effectiveTimes = getEffectiveTimes(LocalDateTime.now(clock));
-
-        Map<LocalDateTime, ShortLand> shortLandItems =
-                shortLandRepository.findRecentAll(cityRegionCode, effectiveTimes);
-
-        List<LocalDateTime> missingTimes = effectiveTimes.stream()
-                .filter(et -> !shortLandItems.containsKey(et))
-                .toList();
-
-        Map<LocalDateTime, Integer> midPops = missingTimes.isEmpty()
-                ? Map.of()
-                : composeMidPops(cityRegionCode, missingTimes);
+        List<LocalDateTime> effectiveTimes           = getEffectiveTimes(LocalDateTime.now(clock));
+        Map<LocalDateTime, ShortLand> shortLandItems = fetchRecentShortLands(cityRegionCode, effectiveTimes);
+        List<LocalDateTime> missingTimes             = findMissingTimes(effectiveTimes, shortLandItems);
+        Map<LocalDateTime, Integer> midPops          = composeMidPops(cityRegionCode, missingTimes);
 
         Map<LocalDateTime, Integer> popMap =
                 collectPops(effectiveTimes, shortLandItems, midPops, cityRegionCode);
 
         return buildDaily(effectiveTimes, popMap);
+    }
+
+    private List<LocalDateTime> getEffectiveTimes(LocalDateTime now) {
+        LocalDateTime baseDate = now;
+        if (now.getHour() < 6) {
+            baseDate = now.minusDays(1);
+        }
+
+        LocalDateTime standardTime = baseDate
+                .withHour(9).withMinute(0).withSecond(0).withNano(0);
+
+        List<LocalDateTime> effectiveTimes = new ArrayList<>();
+        for (int day = 0; day <= 6; day++) {
+            effectiveTimes.add(standardTime.plusDays(day).withHour(9));
+            effectiveTimes.add(standardTime.plusDays(day).withHour(21));
+        }
+        return effectiveTimes;
+    }
+
+    private Map<LocalDateTime, ShortLand> fetchRecentShortLands(
+            CityRegionCode cityRegionCode, List<LocalDateTime> effectiveTimes) {
+        return shortLandRepository.findRecentAll(cityRegionCode, effectiveTimes);
+    }
+
+    private List<LocalDateTime> findMissingTimes(
+            List<LocalDateTime> effectiveTimes,
+            Map<LocalDateTime, ShortLand> shortLandItems) {
+        return effectiveTimes.stream()
+                .filter(et -> !shortLandItems.containsKey(et))
+                .toList();
+    }
+
+    /**
+     * MidLand fallback: missingTimes에 대한 POP Map 반환.
+     * missingTimes 비어있음 → 빈 Map.
+     */
+    private Map<LocalDateTime, Integer> composeMidPops(
+            CityRegionCode cityRegionCode, List<LocalDateTime> missingTimes
+    ) {
+        if (missingTimes.isEmpty()) return Map.of();
+
+        ProvinceRegionCode provinceRegionCode = findProvinceRegionCode(cityRegionCode);
+        if (provinceRegionCode == null) return Map.of();
+
+        Map<LocalDateTime, MidLand> midLandMap = findMidLands(provinceRegionCode, missingTimes);
+
+        return extractPopsFromMidLands(missingTimes, midLandMap);
+    }
+
+    @Nullable
+    private ProvinceRegionCode findProvinceRegionCode(CityRegionCode cityRegionCode) {
+        return provinceRegionCodeRepository.findById(cityRegionCode.getProvinceRegionCodeId())
+                .orElse(null);
+    }
+
+    private Map<LocalDateTime, MidLand> findMidLands(
+            ProvinceRegionCode provinceRegionCode, List<LocalDateTime> missingTimes) {
+        return midLandRepository.findRecentAll(provinceRegionCode, missingTimes);
+    }
+
+    private Map<LocalDateTime, Integer> extractPopsFromMidLands(
+            List<LocalDateTime> missingTimes,
+            Map<LocalDateTime, MidLand> midLandMap
+    ) {
+        Map<LocalDateTime, Integer> popMap = new HashMap<>();
+        for (LocalDateTime et : missingTimes) {
+            MidLand midLand = midLandMap.get(et);
+            if (midLand != null) {
+                popMap.put(et, midLand.getPop());
+            }
+        }
+        return popMap;
     }
 
     /**
@@ -140,30 +206,6 @@ public class PopViewComposer {
     }
 
     /**
-     * MidLand fallback: missingTimes에 대한 POP Map 반환.
-     */
-    private Map<LocalDateTime, Integer> composeMidPops(
-            CityRegionCode cityRegionCode, List<LocalDateTime> missingTimes
-    ) {
-        ProvinceRegionCode provinceRegionCode =
-                provinceRegionCodeRepository.findById(cityRegionCode.getProvinceRegionCodeId())
-                        .orElse(null);
-        if (provinceRegionCode == null) return Map.of();
-
-        Map<LocalDateTime, MidLand> midLandMap =
-                midLandRepository.findRecentAll(provinceRegionCode, missingTimes);
-
-        Map<LocalDateTime, Integer> popMap = new HashMap<>();
-        for (LocalDateTime et : missingTimes) {
-            MidLand midLand = midLandMap.get(et);
-            if (midLand != null) {
-                popMap.put(et, midLand.getPop());
-            }
-        }
-        return popMap;
-    }
-
-    /**
      * effectiveTimes 인덱스 기반으로 Daily를 조립한다.
      * effectiveTimes는 [D+0 09:00, D+0 21:00, D+1 09:00, D+1 21:00, ...] 고정 순서.
      * → index day*2 = AM(09:00), day*2+1 = PM(21:00)
@@ -179,22 +221,6 @@ public class PopViewComposer {
         return new Daily(dailyPops);
     }
 
-    private List<LocalDateTime> getEffectiveTimes(LocalDateTime now) {
-        LocalDateTime baseDate = now;
-        if (now.getHour() < 6) {
-            baseDate = now.minusDays(1);
-        }
-
-        LocalDateTime standardTime = baseDate
-                .withHour(9).withMinute(0).withSecond(0).withNano(0);
-
-        List<LocalDateTime> effectiveTimes = new ArrayList<>();
-        for (int day = 0; day <= 6; day++) {
-            effectiveTimes.add(standardTime.plusDays(day).withHour(9));
-            effectiveTimes.add(standardTime.plusDays(day).withHour(21));
-        }
-        return effectiveTimes;
-    }
 
     private record HourlyResult(Hourly hourly, LocalDateTime announceTime) {}
 }
