@@ -5,7 +5,6 @@ import com.github.yun531.climate.notification.domain.model.AlertEvent;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import com.github.yun531.climate.notification.domain.payload.WarningIssuedPayload;
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
 import org.springframework.lang.Nullable;
 
 import java.time.LocalDateTime;
@@ -22,7 +21,7 @@ public class WarningIssuedDetector {
     public List<AlertEvent> detect(
             String regionId,
             List<WarningView> warningViews,
-            @Nullable Set<WarningKind> warningKinds
+            @Nullable Set<String> warningKinds
     ) {
         if (regionId == null || regionId.isBlank()) return List.of();
         if (warningViews == null || warningViews.isEmpty()) return List.of();
@@ -38,7 +37,7 @@ public class WarningIssuedDetector {
         return alertEvents.isEmpty() ? List.of() : List.copyOf(alertEvents);
     }
 
-    private boolean matchesKindFilter(WarningView warningView, @Nullable Set<WarningKind> warningKinds) {
+    private boolean matchesKindFilter(WarningView warningView, @Nullable Set<String> warningKinds) {
         if (warningKinds == null || warningKinds.isEmpty()) return true;
         return warningKinds.contains(warningView.kind());
     }

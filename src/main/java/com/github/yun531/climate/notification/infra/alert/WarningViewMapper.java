@@ -10,10 +10,10 @@ public class WarningViewMapper {
     public WarningView toWarningView(IssuedWarning w) {
         return new WarningView(
                 w.eventId(),
-                w.kind(),
-                w.level(),
-                w.prevLevel(),
-                w.eventType(),
+                w.kind().name(),
+                w.level().name(),
+                w.prevLevel() != null ? w.prevLevel().name() : null,
+                w.eventType().name(),
                 w.announceTime(),
                 w.effectiveTime()
         );

@@ -8,11 +8,14 @@ import com.github.yun531.climate.warning.domain.model.WarningKind;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 @RestController
 @RequiredArgsConstructor
@@ -62,7 +65,7 @@ public class AlertController {
             @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds
     ) {
         var cmd = new GenerateAlertsCommand(
-                regionIds, EnumSet.of(AlertTypeEnum.WARNING_ISSUED), warningKinds, null
+                regionIds, EnumSet.of(AlertTypeEnum.WARNING_ISSUED), toKindCodes(warningKinds), null
         );
         return ResponseEntity.ok(service.generate(cmd));
     }
@@ -82,8 +85,13 @@ public class AlertController {
         var cmd = new GenerateAlertsCommand(
                 regionIds,
                 EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED),
-                warningKinds, withinHours
+                toKindCodes(warningKinds), withinHours
         );
         return ResponseEntity.ok(service.generate(cmd));
+    }
+
+    @Nullable
+    private static Set<String> toKindCodes(@Nullable Set<WarningKind> kinds) {
+        return kinds == null ? null : kinds.stream().map(Enum::name).collect(toUnmodifiableSet());
     }
 }

@@ -1,9 +1,6 @@
 package com.github.yun531.climate.notification.infra.alert;
 
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
-import com.github.yun531.climate.warning.domain.model.WarningEventType;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +63,7 @@ class WarningViewCacheManagerTest {
 
     private WarningView buildView() {
         return new WarningView(
-                1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                WarningEventType.NEW, ANNOUNCE_TIME, ANNOUNCE_TIME);
+                1L, "RAIN", "ADVISORY", null,
+                "NEW", ANNOUNCE_TIME, ANNOUNCE_TIME);
     }
 }

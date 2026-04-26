@@ -14,9 +14,6 @@ import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import com.github.yun531.climate.notification.domain.readmodel.PopViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
 import com.github.yun531.climate.notification.domain.readmodel.WarningViewReader;
-import com.github.yun531.climate.warning.domain.model.WarningEventType;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -191,14 +188,14 @@ class GenerateAlertsServiceTest {
         @DisplayName("정상 -- warningViewReader 로드 -> detect 파이프라인")
         void fullPipeline() {
             WarningView warningView = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.WARNING, null,
-                    WarningEventType.NEW, NOW, NOW);
+                    1L, "RAIN", "WARNING", null,
+                    "NEW", NOW, NOW);
             when(warningViewReader.loadWarningViews("R1")).thenReturn(List.of(warningView));
 
             AlertEvent event = new AlertEvent(AlertTypeEnum.WARNING_ISSUED, "R1", NOW,
                     new WarningIssuedPayload(
-                            WarningKind.RAIN, WarningLevel.WARNING, null,
-                            WarningEventType.NEW, 1L, NOW));
+                            "RAIN", "WARNING", null,
+                            "NEW", 1L, NOW));
             when(warningIssuedDetector.detect(eq("R1"), anyList(), any()))
                     .thenReturn(List.of(event));
 

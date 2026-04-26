@@ -42,10 +42,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -577,10 +574,10 @@ class IntegrationTest {
                         .hasSize(1);
 
                 WarningIssuedPayload payload = (WarningIssuedPayload) warningEvents.get(0).payload();
-                assertThat(payload.kind()).isEqualTo(WarningKind.RAIN);
-                assertThat(payload.level()).isEqualTo(WarningLevel.WARNING);
-                assertThat(payload.prevLevel()).isEqualTo(WarningLevel.ADVISORY);
-                assertThat(payload.eventType()).isEqualTo(WarningEventType.UPGRADED);
+                assertThat(payload.kind()).isEqualTo("RAIN");
+                assertThat(payload.level()).isEqualTo("WARNING");
+                assertThat(payload.prevLevel()).isEqualTo("ADVISORY");
+                assertThat(payload.eventType()).isEqualTo("UPGRADED");
             }
 
             @Test
@@ -589,7 +586,7 @@ class IntegrationTest {
                 var cmd = new GenerateAlertsCommand(
                         List.of(REGION_ID),
                         EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
-                        EnumSet.of(WarningKind.HEAT),
+                        Set.of("HEAT"),
                         null
                 );
 

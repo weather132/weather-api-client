@@ -8,12 +8,16 @@ import org.springframework.lang.Nullable;
 
 import java.time.LocalDateTime;
 
+/**
+ * 기상특보 발령 알림 페이로드.
+ * - level: 특보 단계 (WarningEventType)
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record WarningIssuedPayload(
-        WarningKind kind,
-        WarningLevel level,
-        @Nullable WarningLevel prevLevel,
-        WarningEventType eventType,
+        String kind,
+        String level,
+        @Nullable String prevLevel,
+        String eventType,
         long eventId,
         LocalDateTime effectiveTime
 ) implements AlertPayload {}

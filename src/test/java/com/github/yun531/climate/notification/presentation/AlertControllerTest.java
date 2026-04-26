@@ -5,7 +5,6 @@ import com.github.yun531.climate.notification.application.alert.GenerateAlertsSe
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import com.github.yun531.climate.notification.domain.payload.RainOnsetPayload;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,7 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AlertController.class)
 class AlertControllerTest {
@@ -107,7 +107,7 @@ class AlertControllerTest {
 
         GenerateAlertsCommand cmd = cmdCaptor.getValue();
         assertThat(cmd.enabledTypes()).containsExactly(AlertTypeEnum.WARNING_ISSUED);
-        assertThat(cmd.warningKinds()).containsExactlyInAnyOrder(WarningKind.RAIN, WarningKind.HEAT);
+        assertThat(cmd.warningKinds()).containsExactlyInAnyOrder("RAIN", "HEAT");
     }
 
     @Test

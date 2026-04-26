@@ -25,14 +25,14 @@ class WarningViewSelectorTest {
         @DisplayName("(kind, level) 동일한 4건 -- 1건으로 통합, announceTime 최대값 채택")
         void multipleSameGroup_pickLatest() {
             List<WarningView> raw = List.of(
-                    new WarningView(321L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1),
-                    new WarningView(325L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1),
-                    new WarningView(330L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1),
-                    new WarningView(334L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T2, T2)
+                    new WarningView(321L, "DRY", "ADVISORY", null,
+                            "NEW", T1, T1),
+                    new WarningView(325L, "DRY", "ADVISORY", null,
+                            "NEW", T1, T1),
+                    new WarningView(330L, "DRY", "ADVISORY", null,
+                            "NEW", T1, T1),
+                    new WarningView(334L, "DRY", "ADVISORY", null,
+                            "NEW", T2, T2)
             );
 
             List<WarningView> result = WarningViewSelector.pickLatestPerKindAndLevel(raw);
@@ -46,10 +46,10 @@ class WarningViewSelectorTest {
         @DisplayName("같은 announceTime 동률 -- 먼저 들어온 항목 유지")
         void sameAnnounceTime_keepsFirst() {
             List<WarningView> raw = List.of(
-                    new WarningView(100L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1),
-                    new WarningView(200L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1)
+                    new WarningView(100L, "DRY", "ADVISORY", null,
+                            "NEW", T1, T1),
+                    new WarningView(200L, "DRY", "ADVISORY", null,
+                            "NEW", T1, T1)
             );
 
             List<WarningView> result = WarningViewSelector.pickLatestPerKindAndLevel(raw);
@@ -67,12 +67,12 @@ class WarningViewSelectorTest {
         @DisplayName("다른 (kind, level)은 모두 보존")
         void differentGroups_allPreserved() {
             List<WarningView> raw = List.of(
-                    new WarningView(1L, WarningKind.RAIN, WarningLevel.WARNING, null,
-                            WarningEventType.NEW, T1, T1),
-                    new WarningView(2L, WarningKind.HEAT, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1),
-                    new WarningView(3L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1)
+                    new WarningView(1L, "RAIN", "WARNING", null,
+                            "NEW", T1, T1),
+                    new WarningView(2L, "HEAT", "ADVISORY", null,
+                            "NEW", T1, T1),
+                    new WarningView(3L, "DRY", "ADVISORY", null,
+                            "NEW", T1, T1)
             );
 
             List<WarningView> result = WarningViewSelector.pickLatestPerKindAndLevel(raw);
@@ -86,17 +86,17 @@ class WarningViewSelectorTest {
         @DisplayName("같은 kind 다른 level은 별도 항목으로 유지")
         void sameKindDifferentLevel_separate() {
             List<WarningView> raw = List.of(
-                    new WarningView(1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, T1, T1),
-                    new WarningView(2L, WarningKind.RAIN, WarningLevel.WARNING, null,
-                            WarningEventType.NEW, T1, T1)
+                    new WarningView(1L, "RAIN", "ADVISORY", null,
+                            "NEW", T1, T1),
+                    new WarningView(2L, "RAIN", "WARNING", null,
+                            "NEW", T1, T1)
             );
 
             List<WarningView> result = WarningViewSelector.pickLatestPerKindAndLevel(raw);
 
             assertThat(result).hasSize(2);
             assertThat(result).extracting(WarningView::level)
-                    .containsExactlyInAnyOrder(WarningLevel.ADVISORY, WarningLevel.WARNING);
+                    .containsExactlyInAnyOrder("ADVISORY", "WARNING");
         }
     }
 
