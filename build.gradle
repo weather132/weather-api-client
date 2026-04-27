@@ -107,7 +107,10 @@ jacocoTestReport {
                     '**/*Dto*',
                     '**/fcm/infra/firebase/**',
                     '**/fcm/infra/config/**',
-                    '**/presentation/TriggerTestController.class'
+                    '**/presentation/TriggerTestController.class',
+                    '**/warning/domain/model/RegionCodeMappingId.class',
+                    '**/warning/domain/model/WarningId.class',
+                    '**/warning/infra/scheduler/**'
             ])
         }))
     }
