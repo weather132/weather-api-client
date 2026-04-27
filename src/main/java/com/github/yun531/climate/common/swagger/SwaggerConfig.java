@@ -1,4 +1,4 @@
-package com.github.yun531.climate.config;
+package com.github.yun531.climate.common.swagger;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
