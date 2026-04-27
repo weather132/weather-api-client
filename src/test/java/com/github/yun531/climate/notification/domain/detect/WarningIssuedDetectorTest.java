@@ -4,16 +4,13 @@ import com.github.yun531.climate.notification.domain.model.AlertEvent;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import com.github.yun531.climate.notification.domain.payload.WarningIssuedPayload;
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
-import com.github.yun531.climate.warning.domain.model.WarningEventType;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,8 +31,8 @@ class WarningIssuedDetectorTest {
         @DisplayName("단일 WarningView -> AlertEvent 1건 생성")
         void singleWarning_detected() {
             WarningView rain = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect("R1", List.of(rain), null);
 
@@ -49,11 +46,11 @@ class WarningIssuedDetectorTest {
         @DisplayName("여러 종류 특보 -> 전부 반환")
         void multipleWarnings_allReturned() {
             WarningView rain = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
             WarningView heat = new WarningView(
-                    2L, WarningKind.HEAT, WarningLevel.WARNING, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    2L, "HEAT", "WARNING", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect("R1", List.of(rain, heat), null);
 
@@ -64,14 +61,14 @@ class WarningIssuedDetectorTest {
         @DisplayName("모든 eventType(NEW, UPGRADED, DOWNGRADED, EXTENDED) 알림 대상")
         void allActiveEventTypes_detected() {
             List<WarningView> warnings = List.of(
-                    new WarningView(1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                            WarningEventType.NEW, ANNOUNCE, EFFECTIVE),
-                    new WarningView(2L, WarningKind.HEAT, WarningLevel.WARNING, WarningLevel.ADVISORY,
-                            WarningEventType.UPGRADED, ANNOUNCE, EFFECTIVE),
-                    new WarningView(3L, WarningKind.WIND, WarningLevel.ADVISORY, WarningLevel.WARNING,
-                            WarningEventType.DOWNGRADED, ANNOUNCE, EFFECTIVE),
-                    new WarningView(4L, WarningKind.DRY, WarningLevel.ADVISORY, null,
-                            WarningEventType.EXTENDED, ANNOUNCE, EFFECTIVE)
+                    new WarningView(1L, "RAIN", "ADVISORY", null,
+                            "NEW", ANNOUNCE, EFFECTIVE),
+                    new WarningView(2L, "HEAT", "WARNING", "ADVISORY",
+                            "UPGRADED", ANNOUNCE, EFFECTIVE),
+                    new WarningView(3L, "WIND", "ADVISORY", "WARNING",
+                            "DOWNGRADED", ANNOUNCE, EFFECTIVE),
+                    new WarningView(4L, "DRY", "ADVISORY", null,
+                            "EXTENDED", ANNOUNCE, EFFECTIVE)
             );
 
             List<AlertEvent> events = detector.detect("R1", warnings, null);
@@ -90,29 +87,29 @@ class WarningIssuedDetectorTest {
         @DisplayName("RAIN만 요청하면 HEAT 제외")
         void kindFilter_onlyMatchingKinds() {
             WarningView rain = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
             WarningView heat = new WarningView(
-                    2L, WarningKind.HEAT, WarningLevel.WARNING, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    2L, "HEAT", "WARNING", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect(
-                    "R1", List.of(rain, heat), EnumSet.of(WarningKind.RAIN));
+                    "R1", List.of(rain, heat), Set.of("RAIN"));
 
             assertThat(events).hasSize(1);
             WarningIssuedPayload payload = (WarningIssuedPayload) events.get(0).payload();
-            assertThat(payload.kind()).isEqualTo(WarningKind.RAIN);
+            assertThat(payload.kind()).isEqualTo("RAIN");
         }
 
         @Test
-        @DisplayName("빈 EnumSet -> 전체 특보 대상")
+        @DisplayName("빈 Set -> 전체 특보 대상")
         void emptyWarningKinds_includesAll() {
             WarningView rain = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect(
-                    "R1", List.of(rain), EnumSet.noneOf(WarningKind.class));
+                    "R1", List.of(rain), Set.of());
 
             assertThat(events).hasSize(1);
         }
@@ -121,11 +118,11 @@ class WarningIssuedDetectorTest {
         @DisplayName("warningKinds에 없는 종류 요청 -> 빈 결과")
         void warningKindNotInList_empty() {
             WarningView rain = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect(
-                    "R1", List.of(rain), EnumSet.of(WarningKind.HEAT));
+                    "R1", List.of(rain), Set.of("HEAT"));
 
             assertThat(events).isEmpty();
         }
@@ -141,16 +138,16 @@ class WarningIssuedDetectorTest {
         @DisplayName("NEW 이벤트 — prevLevel null, eventType NEW")
         void newEvent_payloadFields() {
             WarningView view = new WarningView(
-                    42L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    42L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect("R1", List.of(view), null);
 
             WarningIssuedPayload payload = (WarningIssuedPayload) events.get(0).payload();
-            assertThat(payload.kind()).isEqualTo(WarningKind.RAIN);
-            assertThat(payload.level()).isEqualTo(WarningLevel.ADVISORY);
+            assertThat(payload.kind()).isEqualTo("RAIN");
+            assertThat(payload.level()).isEqualTo("ADVISORY");
             assertThat(payload.prevLevel()).isNull();
-            assertThat(payload.eventType()).isEqualTo(WarningEventType.NEW);
+            assertThat(payload.eventType()).isEqualTo("NEW");
             assertThat(payload.eventId()).isEqualTo(42L);
             assertThat(payload.effectiveTime()).isEqualTo(EFFECTIVE);
         }
@@ -159,15 +156,15 @@ class WarningIssuedDetectorTest {
         @DisplayName("UPGRADED 이벤트 — prevLevel 존재")
         void upgradedEvent_prevLevelPresent() {
             WarningView view = new WarningView(
-                    99L, WarningKind.HEAT, WarningLevel.WARNING, WarningLevel.ADVISORY,
-                    WarningEventType.UPGRADED, ANNOUNCE, EFFECTIVE);
+                    99L, "HEAT", "WARNING", "ADVISORY",
+                    "UPGRADED", ANNOUNCE, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect("R1", List.of(view), null);
 
             WarningIssuedPayload payload = (WarningIssuedPayload) events.get(0).payload();
-            assertThat(payload.level()).isEqualTo(WarningLevel.WARNING);
-            assertThat(payload.prevLevel()).isEqualTo(WarningLevel.ADVISORY);
-            assertThat(payload.eventType()).isEqualTo(WarningEventType.UPGRADED);
+            assertThat(payload.level()).isEqualTo("WARNING");
+            assertThat(payload.prevLevel()).isEqualTo("ADVISORY");
+            assertThat(payload.eventType()).isEqualTo("UPGRADED");
         }
     }
 
@@ -182,8 +179,8 @@ class WarningIssuedDetectorTest {
         void occurredAt_basedOnAnnounceTime() {
             LocalDateTime announceTime = LocalDateTime.of(2026, 1, 22, 5, 30, 45);
             WarningView view = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, announceTime, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", announceTime, EFFECTIVE);
 
             List<AlertEvent> events = detector.detect("R1", List.of(view), null);
 
@@ -214,8 +211,8 @@ class WarningIssuedDetectorTest {
         @DisplayName("null regionId -> 빈 결과")
         void nullRegion_empty() {
             WarningView view = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             assertThat(detector.detect(null, List.of(view), null)).isEmpty();
         }
@@ -224,8 +221,8 @@ class WarningIssuedDetectorTest {
         @DisplayName("blank regionId -> 빈 결과")
         void blankRegionId_empty() {
             WarningView view = new WarningView(
-                    1L, WarningKind.RAIN, WarningLevel.ADVISORY, null,
-                    WarningEventType.NEW, ANNOUNCE, EFFECTIVE);
+                    1L, "RAIN", "ADVISORY", null,
+                    "NEW", ANNOUNCE, EFFECTIVE);
 
             assertThat(detector.detect("", List.of(view), null)).isEmpty();
             assertThat(detector.detect("   ", List.of(view), null)).isEmpty();

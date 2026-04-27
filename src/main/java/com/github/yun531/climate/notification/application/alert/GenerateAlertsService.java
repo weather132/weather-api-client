@@ -1,5 +1,6 @@
 package com.github.yun531.climate.notification.application.alert;
 
+import com.github.yun531.climate.common.time.TimeUtil;
 import com.github.yun531.climate.notification.domain.adjust.RainForecastAdjuster;
 import com.github.yun531.climate.notification.domain.adjust.RainOnsetAdjuster;
 import com.github.yun531.climate.notification.domain.detect.RainForecastDetector;
@@ -11,8 +12,6 @@ import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import com.github.yun531.climate.notification.domain.readmodel.PopViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
 import com.github.yun531.climate.notification.domain.readmodel.WarningViewReader;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.common.time.TimeUtil;
 import org.springframework.lang.Nullable;
 
 import java.time.LocalDateTime;
@@ -131,7 +130,7 @@ public class GenerateAlertsService {
 
     /** load warning views -> detect issued warnings */
     private List<AlertEvent> detectWarningIssued(
-            String regionId, @Nullable Set<WarningKind> warningKinds
+            String regionId, @Nullable Set<String> warningKinds
     ) {
         List<WarningView> warningViews = warningViewReader.loadWarningViews(regionId);
         if (warningViews == null || warningViews.isEmpty()) return List.of();

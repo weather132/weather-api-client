@@ -1,8 +1,5 @@
 package com.github.yun531.climate.notification.domain.readmodel;
 
-import com.github.yun531.climate.warning.domain.model.WarningEventType;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
 import org.springframework.lang.Nullable;
 
 import java.time.LocalDateTime;
@@ -13,10 +10,10 @@ import java.util.Objects;
  */
 public record WarningView(
         long eventId,
-        WarningKind kind,
-        WarningLevel level,
-        @Nullable WarningLevel prevLevel,
-        WarningEventType eventType,
+        String kind,
+        String level,
+        @Nullable String prevLevel,
+        String eventType,
         LocalDateTime announceTime,
         LocalDateTime effectiveTime
 ) {
