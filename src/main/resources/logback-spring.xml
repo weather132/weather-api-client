@@ -29,7 +29,6 @@
         <labels>
             application=${appName}
             env=${env}
-            host=${HOSTNAME}
             level=%level
             logger=%logger{36}
         </labels>
