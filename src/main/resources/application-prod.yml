@@ -8,3 +8,19 @@ spring:
 
 firebase:
   service-account-path: ${FIREBASE_SA_PATH:/app/firebase-sa.json}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      env: prod
+
+logging:
+  loki:
+    url: ${LOKI_URL:http://monitoring:3100/loki/api/v1/push}
