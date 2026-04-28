@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Spring Boot 기본 패턴/색상 정의 로드 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Spring 설정에서 값 주입 -->
+    <springProperty scope="context" name="appName"
+                    source="spring.application.name" defaultValue="climate"/>
+    <springProperty scope="context" name="env"
+                    source="management.metrics.tags.env" defaultValue="local"/>
+    <springProperty scope="context" name="lokiUrl"
+                    source="logging.loki.url"
+                    defaultValue="http://localhost:3100/loki/api/v1/push"/>
+
+    <!-- Loki Appender -->
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${lokiUrl}</url>
+            <connectionTimeoutMs>5000</connectionTimeoutMs>
+            <requestTimeoutMs>10000</requestTimeoutMs>
+        </http>
+
+        <batch>
+            <maxItems>1000</maxItems>
+            <timeoutMs>1000</timeoutMs>
+        </batch>
+
+        <labels>
+            application=${appName}
+            env=${env}
+            host=${HOSTNAME}
+            level=%level
+            logger=%logger{36}
+        </labels>
+
+        <readMarkers>true</readMarkers>
+
+        <message>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n%ex</pattern>
+        </message>
+
+        <verbose>false</verbose>
+    </appender>
+
+    <!-- 콘솔 + Loki 동시 출력 (콘솔 흐름 보존) -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOKI"/>
+    </root>
+
+    <logger name="com.github.yun531.climate" level="DEBUG"/>
+</configuration>
