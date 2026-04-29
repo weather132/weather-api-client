@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * 소비자가 Firebase SDK에 의존하지 않게 한다.
  */
 @Component
-@Profile("!test")
+@Profile("!test & !integration-test")
 @RequiredArgsConstructor
 public class FirebaseTopicPushSender implements TopicPushSender {
 

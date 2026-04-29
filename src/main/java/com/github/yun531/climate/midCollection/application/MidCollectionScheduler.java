@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * 중기예보(MidLand + MidTemperature) 통합 수집 스케줄러.
  */
 @Component
-@Profile("!test")
+@Profile("!test & !integration-test")
 public class MidCollectionScheduler {
 
     private final MidCollectionService midCollectionService;

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * TopicPushMessage -> Firebase Message 변환.
  */
 @Component
-@Profile("!test")
+@Profile("!test & !integration-test")
 public class FirebaseMessageMapper {
 
     public Message toFirebaseMessage(TopicPushMessage pushMessage) {

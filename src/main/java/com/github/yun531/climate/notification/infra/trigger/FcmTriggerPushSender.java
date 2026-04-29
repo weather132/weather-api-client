@@ -17,7 +17,7 @@ import java.util.Map;
  * - topic 이름, 데이터 구조, TTL 등 전송 세부사항을 여기서 조립
  */
 @Component
-@Profile("!test")
+@Profile("!test & !integration-test")
 @RequiredArgsConstructor
 public class FcmTriggerPushSender implements TriggerPushSender {
 

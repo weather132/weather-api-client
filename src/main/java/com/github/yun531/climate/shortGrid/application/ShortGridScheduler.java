@@ -5,7 +5,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("!test")
+@Profile("!test & !integration-test")
 public class ShortGridScheduler {
     private final ShortGridService shortGridService;
 
