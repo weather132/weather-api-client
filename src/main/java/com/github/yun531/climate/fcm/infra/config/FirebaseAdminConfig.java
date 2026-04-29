@@ -14,7 +14,7 @@ import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
-@Profile("prod")
+@Profile("!test")
 public class FirebaseAdminConfig {
 
     private final FirebaseProperties props;
