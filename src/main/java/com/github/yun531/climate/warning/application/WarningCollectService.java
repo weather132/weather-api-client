@@ -1,6 +1,7 @@
 package com.github.yun531.climate.warning.application;
 
 import com.github.yun531.climate.common.event.WarningRefreshedEvent;
+import com.github.yun531.climate.common.log.MdcContext;
 import com.github.yun531.climate.warning.domain.WarningClient;
 import com.github.yun531.climate.warning.domain.detect.WarningChangeDetector;
 import com.github.yun531.climate.warning.domain.model.WarningCurrent;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -38,18 +40,20 @@ public class WarningCollectService {
 
     @Transactional
     public void collect(LocalDateTime tm) {
-        List<WarningCurrent> currentWarnings  = warningClient.requestCurrentWarnings(tm);
-        List<WarningCurrent> previousWarnings = currentRepository.findAll();
+        try (var ignored = MdcContext.of(Map.of("announceTime", tm.toString()))) {
+            List<WarningCurrent> currentWarnings  = warningClient.requestCurrentWarnings(tm);
+            List<WarningCurrent> previousWarnings = currentRepository.findAll();
 
-        List<WarningEvent> warningEvents = changeDetector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = changeDetector.detect(previousWarnings, currentWarnings);
 
-        currentRepository.replaceAll(currentWarnings);
+            currentRepository.replaceAll(currentWarnings);
 
-        if (!warningEvents.isEmpty()) {
-            eventRepository.saveAll(warningEvents);
-            log.info("[WarningCollect] {} 건 이벤트 감지: {}", warningEvents.size(),
-                    warningEvents.stream().map(e -> e.getEventType().name()).toList());
-            eventPublisher.publishEvent(new WarningRefreshedEvent(tm));
+            if (!warningEvents.isEmpty()) {
+                eventRepository.saveAll(warningEvents);
+                log.info("이벤트 감지: count={} types={}", warningEvents.size(),
+                        warningEvents.stream().map(e -> e.getEventType().name()).toList());
+                eventPublisher.publishEvent(new WarningRefreshedEvent(tm));
+            }
         }
     }
 }
