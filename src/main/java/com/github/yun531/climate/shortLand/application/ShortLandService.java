@@ -2,6 +2,7 @@ package com.github.yun531.climate.shortLand.application;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.common.event.ShortLandRefreshedEvent;
+import com.github.yun531.climate.common.log.MdcContext;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandClient;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -30,18 +32,18 @@ public class ShortLandService {
                 .flatMap(List::stream)
                 .toList();
 
-        shortLandRepository.saveAll(shortLands);
+        LocalDateTime announceTime = shortLands.isEmpty()
+                ? LocalDateTime.now()
+                : shortLands.get(0).getAnnounceTime();
 
-        eventPublisher.publishEvent(new ShortLandRefreshedEvent(extractAnnounceTime(shortLands)));
-    }
+        try (var ignored = MdcContext.of(Map.of("announceTime", announceTime.toString()))) {
+            if (shortLands.isEmpty()) {
+                log.warn("수집 결과 없음. announceTime을 현재 시각으로 fallback");
+            }
+            log.info("수집 결과: shortLands={}", shortLands.size());
 
-    private LocalDateTime extractAnnounceTime(List<ShortLand> shortLands) {
-        if (shortLands.isEmpty()) {
-            LocalDateTime fallback = LocalDateTime.now();
-            log.warn("[ShortLand] 수집 결과가 비어있음. announceTime을 현재 시각으로 폴백: {}", fallback);
-            return fallback;
+            shortLandRepository.saveAll(shortLands);
+            eventPublisher.publishEvent(new ShortLandRefreshedEvent(announceTime));
         }
-
-        return shortLands.get(0).getAnnounceTime();
     }
 }
