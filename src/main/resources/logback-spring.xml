@@ -2,6 +2,12 @@
 <configuration>
     <!-- Spring Boot 기본 패턴/색상 정의 로드 -->
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- 공통 로그 패턴: MDC(traceId, job, announceTime) 컬럼 출력 -->
+    <property name="LOG_PATTERN"
+              value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} traceId=%X{traceId:-} job=%X{job:-} announceTime=%X{announceTime:-} - %msg%n%ex"/>
+    <property name="CONSOLE_LOG_PATTERN" value="${LOG_PATTERN}"/>
+
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
     <!-- Spring 설정에서 값 주입 -->
@@ -36,7 +42,7 @@
         <readMarkers>true</readMarkers>
 
         <message>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n%ex</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </message>
 
         <verbose>false</verbose>
@@ -47,6 +53,4 @@
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="LOKI"/>
     </root>
-
-    <logger name="com.github.yun531.climate" level="DEBUG"/>
 </configuration>
