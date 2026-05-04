@@ -32,14 +32,13 @@ public class ShortLandService {
                 .flatMap(List::stream)
                 .toList();
 
-        LocalDateTime announceTime = shortLands.isEmpty()
-                ? LocalDateTime.now()
-                : shortLands.get(0).getAnnounceTime();
+        if (shortLands.isEmpty()) {
+            log.info("수집 결과: shortLands=0");
+            return;
+        }
 
+        LocalDateTime announceTime = shortLands.get(0).getAnnounceTime();
         try (var ignored = MdcContext.of(Map.of("announceTime", announceTime.toString()))) {
-            if (shortLands.isEmpty()) {
-                log.warn("수집 결과 없음. announceTime을 현재 시각으로 fallback");
-            }
             log.info("수집 결과: shortLands={}", shortLands.size());
 
             shortLandRepository.saveAll(shortLands);
