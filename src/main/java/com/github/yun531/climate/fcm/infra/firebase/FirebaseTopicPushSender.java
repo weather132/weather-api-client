@@ -6,6 +6,7 @@ import com.github.yun531.climate.fcm.domain.TopicPushSender;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
  * FirebaseMessagingException -> PushFailedException 으로 변환하여
  * 소비자가 Firebase SDK에 의존하지 않게 한다.
  */
+@Slf4j
 @Component
 @Profile("!test & !integration-test")
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class FirebaseTopicPushSender implements TopicPushSender {
             var firebaseMessage = mapper.toFirebaseMessage(message);
             return messaging.send(firebaseMessage, dryRun);
         } catch (FirebaseMessagingException e) {
+            log.error("FCM 푸시 실패. topic={} dryRun={}", message.topic(), dryRun, e);
             throw new PushFailedException(
                     "FCM push failed: topic=" + message.topic(), e);
         }
