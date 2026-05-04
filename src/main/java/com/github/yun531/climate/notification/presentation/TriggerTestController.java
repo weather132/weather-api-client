@@ -33,13 +33,13 @@ public class TriggerTestController {
 
         try {
             String messageId = sender.sendHourly(now, hour, dryRun);
-            log.info("[TRIGGER-TEST] hourly ok hour={} dryRun={} messageId={}",
+            log.info("수동 트리거 발송 완료. type=hourly hour={} dryRun={} messageId={}",
                     hour, dryRun, messageId);
             return ResponseEntity.ok(Map.of(
                     "ok", true, "hour", hour,
                     "dryRun", dryRun, "messageId", messageId));
         } catch (Exception e) {
-            log.error("[TRIGGER-TEST] hourly fail hour={} dryRun={}", hour, dryRun, e);
+            log.error("수동 트리거 발송 실패. type=hourly hour={} dryRun={}", hour, dryRun, e);
             return ResponseEntity.internalServerError().body(Map.of(
                     "ok", false, "hour", hour,
                     "dryRun", dryRun, "error", e.getMessage()));
@@ -60,13 +60,13 @@ public class TriggerTestController {
 
         try {
             String messageId = sender.sendDaily(now, hour, dryRun);
-            log.info("[TRIGGER-TEST] daily ok hour={} dryRun={} messageId={}",
+            log.info("수동 트리거 발송 완료. type=daily hour={} dryRun={} messageId={}",
                     hour, dryRun, messageId);
             return ResponseEntity.ok(Map.of(
                     "ok", true, "hour", hour,
                     "dryRun", dryRun, "messageId", messageId));
         } catch (Exception e) {
-            log.error("[TRIGGER-TEST] daily fail hour={} dryRun={}", hour, dryRun, e);
+            log.error("수동 트리거 발송 실패. type=daily hour={} dryRun={}", hour, dryRun, e);
             return ResponseEntity.internalServerError().body(Map.of(
                     "ok", false, "hour", hour,
                     "dryRun", dryRun, "error", e.getMessage()));
