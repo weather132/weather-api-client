@@ -13,14 +13,13 @@ import com.github.yun531.climate.shortGrid.infra.config.ShortGridUrl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Component
@@ -45,40 +44,28 @@ public class ShortGridClientImpl implements ShortGridClient {
         GridData popGridData = new GridData(request(announceTime, effectiveTime, fcstVar.getPop()));
         GridData tempGridData = new GridData(request(announceTime, effectiveTime, fcstVar.getTemperature()));
 
-        return gridDataToShortGrid(announceTime, effectiveTime, popGridData, tempGridData);
+        List<ShortGrid> result = gridDataToShortGrid(announceTime, effectiveTime, popGridData, tempGridData);
+        if (result.isEmpty()) {
+            log.warn("빈 응답. announceTime={} effectiveTime={}",
+                    announceTime.getTime(), effectiveTime);
+        }
+        return result;
     }
 
     @Override
     public List<ShortGrid> requestShortGridsForHours(AnnounceTime announceTime, int hours) {
-        List<ShortGrid> results = new ArrayList<>();
-        int attempted = 0;
-        int succeeded = 0;
-        int failed = 0;
-
-        for (int hour = 1; hour < hours; hour++) {
-            attempted++;
-            LocalDateTime effectiveTime = announceTime.getTime().plusHours(hour);
-            try {
-                results.addAll(requestShortGrids(announceTime, effectiveTime));
-                succeeded++;
-            } catch (RestClientException e) {
-                // WeatherClient 가 GET 실패 ERROR 로그 + stack trace 출력
-                failed++;
-            }
-        }
-
-        if (failed > 0) {
-            log.warn("호출 부분 실패. attempted={} succeeded={} failed={}", attempted, succeeded, failed);
-        }
-
-        return results;
+        return IntStream.range(1, hours)
+                .mapToObj(hour -> announceTime.getTime().plusHours(hour))
+                .map(effectiveTime -> requestShortGrids(announceTime, effectiveTime))
+                .flatMap(List::stream)
+                .toList();
     }
 
 
     private Map<String, String> makeParams(AnnounceTime announceTime, LocalDateTime effectiveTime, String fcstVar) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("tmfc", format(announceTime.getTime()));
-        parameters.put("tmef",  format(effectiveTime));
+        parameters.put("tmef", format(effectiveTime));
         parameters.put("vars", fcstVar);
         parameters.put("authKey", apiKey.getApiKey());
         return parameters;

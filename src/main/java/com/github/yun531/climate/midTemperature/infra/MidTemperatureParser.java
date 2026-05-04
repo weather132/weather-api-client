@@ -6,11 +6,13 @@ import com.github.yun531.climate.common.parseConfig.ParseConfig;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 public class MidTemperatureParser {
     private final ParseConfig parseConfig;
@@ -20,12 +22,16 @@ public class MidTemperatureParser {
     }
 
     public List<MidTemperature> parse(String rawJson, MidAnnounceTime announceTime, CityRegionCode regionCode) {
+        List<MidTemperature> result;
         try {
-            return _parse(rawJson, announceTime, regionCode);
-
+            result = _parse(rawJson, announceTime, regionCode);
         } catch (PathNotFoundException e) {
-            return new ArrayList<>();
+            result = new ArrayList<>();
         }
+        if (result.isEmpty()) {
+            log.warn("파싱 결과 없음. regionId={}", regionCode.getRegionCode());
+        }
+        return result;
     }
 
     private List<MidTemperature> _parse(String rawJson, MidAnnounceTime announceTime, CityRegionCode regionCode) {
