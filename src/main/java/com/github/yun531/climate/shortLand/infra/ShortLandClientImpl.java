@@ -10,6 +10,7 @@ import com.github.yun531.climate.shortLand.infra.config.ShortLandUrl;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import com.jayway.jsonpath.TypeRef;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 @Qualifier("short-land-client")
 public class ShortLandClientImpl implements ShortLandClient {
@@ -53,12 +55,16 @@ public class ShortLandClientImpl implements ShortLandClient {
     }
 
     private List<ShortLand> parse(String rawJson, CityRegionCode regionCode) {
+        List<ShortLand> result;
         try {
-            return _parse(rawJson, regionCode);
-
+            result = _parse(rawJson, regionCode);
         } catch (PathNotFoundException e) {
-            return new ArrayList<>();
+            result = new ArrayList<>();
         }
+        if (result.isEmpty()) {
+            log.warn("파싱 결과 없음. regionId={}", regionCode.getRegionCode());
+        }
+        return result;
     }
 
     private List<ShortLand> _parse(String rawJson, CityRegionCode regionCode) {

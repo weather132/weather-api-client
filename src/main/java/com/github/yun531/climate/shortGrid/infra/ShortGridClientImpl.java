@@ -10,6 +10,7 @@ import com.github.yun531.climate.shortGrid.domain.ShortGrid;
 import com.github.yun531.climate.shortGrid.domain.ShortGridClient;
 import com.github.yun531.climate.shortGrid.infra.config.ForecastVariable;
 import com.github.yun531.climate.shortGrid.infra.config.ShortGridUrl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+@Slf4j
 @Component
 @Qualifier("short-grid-client")
 public class ShortGridClientImpl implements ShortGridClient {
@@ -42,7 +44,12 @@ public class ShortGridClientImpl implements ShortGridClient {
         GridData popGridData = new GridData(request(announceTime, effectiveTime, fcstVar.getPop()));
         GridData tempGridData = new GridData(request(announceTime, effectiveTime, fcstVar.getTemperature()));
 
-        return gridDataToShortGrid(announceTime, effectiveTime, popGridData, tempGridData);
+        List<ShortGrid> result = gridDataToShortGrid(announceTime, effectiveTime, popGridData, tempGridData);
+        if (result.isEmpty()) {
+            log.warn("빈 응답. announceTime={} effectiveTime={}",
+                    announceTime.getTime(), effectiveTime);
+        }
+        return result;
     }
 
     @Override
@@ -58,7 +65,7 @@ public class ShortGridClientImpl implements ShortGridClient {
     private Map<String, String> makeParams(AnnounceTime announceTime, LocalDateTime effectiveTime, String fcstVar) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("tmfc", format(announceTime.getTime()));
-        parameters.put("tmef",  format(effectiveTime));
+        parameters.put("tmef", format(effectiveTime));
         parameters.put("vars", fcstVar);
         parameters.put("authKey", apiKey.getApiKey());
         return parameters;

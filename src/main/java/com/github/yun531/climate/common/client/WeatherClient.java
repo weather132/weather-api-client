@@ -1,10 +1,14 @@
 package com.github.yun531.climate.common.client;
 
+import com.github.yun531.climate.common.log.ParamMasker;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 public class WeatherClient {
     private final RestClient restClient;
@@ -14,6 +18,14 @@ public class WeatherClient {
     }
 
     public String requestGet(String url, Map<String, String> variables) {
-        return restClient.get().uri(url, variables).retrieve().body(String.class);
+        long startNanos = System.nanoTime();
+        try {
+            return restClient.get().uri(url, variables).retrieve().body(String.class);
+        } catch (RestClientException e) {
+            long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
+            log.error("GET 실패. url={} params={} elapsedMs={}",
+                    url, ParamMasker.mask(variables), elapsedMs, e);
+            throw e;
+        }
     }
 }

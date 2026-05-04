@@ -37,7 +37,10 @@ public class WarningParser {
     );
 
     public List<WarningCurrent> parse(String raw) {
-        if (raw == null || raw.isBlank()) return List.of();
+        if (raw == null || raw.isBlank()) {
+            log.warn("빈 응답");
+            return List.of();
+        }
 
         List<WarningCurrent> results = new ArrayList<>();
 
@@ -61,7 +64,7 @@ public class WarningParser {
         String[] fields = cleaned.split(",");
 
         if (fields.length < 8) {
-            log.warn("[WarningParser] 필드 수 부족, skip: {}", line);
+            log.warn("필드 수 부족, skip: line={}", line);
             return null;
         }
 
@@ -74,13 +77,13 @@ public class WarningParser {
 
         WarningKind kind = KIND_MAP.get(fields[6]);
         if (kind == null) {
-            log.warn("[WarningParser] 알 수 없는 특보종류, skip: {}", fields[6]);
+            log.warn("알 수 없는 특보종류, skip: kind={} line={}", fields[6], line);
             return null;
         }
 
         WarningLevel level = LEVEL_MAP.get(fields[7]);
         if (level == null) {
-            log.warn("[WarningParser] 알 수 없는 특보수준, skip: {}", fields[7]);
+            log.warn("알 수 없는 특보수준, skip: level={} line={}", fields[7], line);
             return null;
         }
 

@@ -6,11 +6,13 @@ import com.github.yun531.climate.midLand.domain.MidLand;
 import com.github.yun531.climate.provinceRegionCode.ProvinceRegionCode;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 public class MidLandParser {
     private final ParseConfig parseConfig;
@@ -20,12 +22,16 @@ public class MidLandParser {
     }
 
     public List<MidLand> parse(String raw, MidAnnounceTime announceTime, ProvinceRegionCode regionCode) {
+        List<MidLand> result;
         try {
-            return _parse(raw, announceTime, regionCode);
-
+            result = _parse(raw, announceTime, regionCode);
         } catch (PathNotFoundException e) {
-            return new ArrayList<>();
+            result = new ArrayList<>();
         }
+        if (result.isEmpty()) {
+            log.warn("파싱 결과 없음. regionId={}", regionCode.getRegionCode());
+        }
+        return result;
     }
 
     private List<MidLand> _parse(String raw, MidAnnounceTime announceTime, ProvinceRegionCode regionCode) {
