@@ -15,6 +15,7 @@ import com.github.yun531.climate.shortGrid.domain.ShortGridRepository;
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ import java.util.*;
 /**
  * regionId → DB 조회 → PopView 직접 생산.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PopViewComposer {
@@ -44,7 +46,9 @@ public class PopViewComposer {
         HourlyResult hourlyResult = composeHourly(cityRegionCode);
         Daily daily               = composeDaily(cityRegionCode);
 
-        return new PopView(hourlyResult.hourly(), daily, hourlyResult.announceTime());
+        PopView view = new PopView(hourlyResult.hourly(), daily, hourlyResult.announceTime());
+        logIfDegraded(regionId, view);
+        return view;
     }
 
     // ── Hourly: ShortGrid → POP + effectiveTime, 26개 고정 ──────────────
@@ -219,6 +223,26 @@ public class PopViewComposer {
             dailyPops.add(new Daily.Pop(amPop, pmPop));
         }
         return new Daily(dailyPops);
+    }
+
+    // ── 결과 검증: 생성된 데이터의 결손 여부 로그 ──────────────
+
+    private void logIfDegraded(String regionId, PopView view) {
+        long hourlyEmpty = view.hourly().pops().stream()
+                .filter(p -> p.pop() == null)
+                .count();
+        long dailyEmpty = view.daily().pops().stream()
+                .filter(p -> p.am() == null || p.pm() == null)
+                .count();
+
+        if (hourlyEmpty == PopView.HOURLY_SIZE && dailyEmpty == PopView.DAILY_SIZE) {
+            log.warn("PopView 결과 없음. regionId={}", regionId);
+            return;
+        }
+        if (hourlyEmpty > 0 || dailyEmpty > 0) {
+            log.warn("PopView 결손 슬롯. regionId={} hourlyEmpty={} dailyEmpty={}",
+                    regionId, hourlyEmpty, dailyEmpty);
+        }
     }
 
 
