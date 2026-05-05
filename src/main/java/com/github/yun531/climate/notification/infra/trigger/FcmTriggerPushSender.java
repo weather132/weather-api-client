@@ -4,6 +4,7 @@ import com.github.yun531.climate.fcm.domain.TopicPushMessage;
 import com.github.yun531.climate.fcm.domain.TopicPushSender;
 import com.github.yun531.climate.notification.application.trigger.TriggerPushSender;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import java.util.Map;
  * - "notification이 요구하는 인터페이스"를 "fcm이 제공하는 인터페이스"로 변환
  * - topic 이름, 데이터 구조, TTL 등 전송 세부사항을 여기서 조립
  */
+@Slf4j
 @Component
 @Profile("!test & !integration-test")
 @RequiredArgsConstructor
@@ -45,6 +47,8 @@ public class FcmTriggerPushSender implements TriggerPushSender {
     }
 
     private String send(String topic, String type, LocalDateTime firedAt, int hour, boolean dryRun) {
+        log.debug("토픽 메시지 조립. topic={} type={} hour={} dryRun={}", topic, type, hour, dryRun);
+
         Map<String, String> data = Map.of(
                 "type", type,
                 "triggerAtLocal", firedAt.format(ISO_LOCAL),

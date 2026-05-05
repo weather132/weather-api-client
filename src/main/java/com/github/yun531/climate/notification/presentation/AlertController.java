@@ -1,5 +1,7 @@
 package com.github.yun531.climate.notification.presentation;
 
+import com.github.yun531.climate.common.log.MdcContext;
+import com.github.yun531.climate.common.log.TraceIdGenerator;
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsCommand;
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsService;
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
@@ -33,12 +36,17 @@ public class AlertController {
             @RequestParam List<String> regionIds,
             @RequestParam(value = "withinHours", required = false) Integer withinHours
     ) {
-        if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
+        try (var ignored = MdcContext.of(Map.of(
+                "traceId", TraceIdGenerator.generate(),
+                "job", "alerts-rain-onset"))) {
 
-        var cmd = new GenerateAlertsCommand(
-                regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours
-        );
-        return ResponseEntity.ok(service.generate(cmd));
+            if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
+
+            var cmd = new GenerateAlertsCommand(
+                    regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours
+            );
+            return ResponseEntity.ok(service.generate(cmd));
+        }
     }
 
     @GetMapping("/rain-forecast")
@@ -49,10 +57,15 @@ public class AlertController {
     public ResponseEntity<List<AlertEvent>> getDayForecast(
             @RequestParam List<String> regionIds
     ) {
-        var cmd = new GenerateAlertsCommand(
-                regionIds, EnumSet.of(AlertTypeEnum.RAIN_FORECAST), null, null
-        );
-        return ResponseEntity.ok(service.generate(cmd));
+        try (var ignored = MdcContext.of(Map.of(
+                "traceId", TraceIdGenerator.generate(),
+                "job", "alerts-rain-forecast"))) {
+
+            var cmd = new GenerateAlertsCommand(
+                    regionIds, EnumSet.of(AlertTypeEnum.RAIN_FORECAST), null, null
+            );
+            return ResponseEntity.ok(service.generate(cmd));
+        }
     }
 
     @GetMapping("/warning-issued")
@@ -64,10 +77,15 @@ public class AlertController {
             @RequestParam List<String> regionIds,
             @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds
     ) {
-        var cmd = new GenerateAlertsCommand(
-                regionIds, EnumSet.of(AlertTypeEnum.WARNING_ISSUED), toKindCodes(warningKinds), null
-        );
-        return ResponseEntity.ok(service.generate(cmd));
+        try (var ignored = MdcContext.of(Map.of(
+                "traceId", TraceIdGenerator.generate(),
+                "job", "alerts-warning-issued"))) {
+
+            var cmd = new GenerateAlertsCommand(
+                    regionIds, EnumSet.of(AlertTypeEnum.WARNING_ISSUED), toKindCodes(warningKinds), null
+            );
+            return ResponseEntity.ok(service.generate(cmd));
+        }
     }
 
     @GetMapping("/summary")
@@ -80,14 +98,19 @@ public class AlertController {
             @RequestParam(value = "withinHours", required = false) Integer withinHours,
             @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds
     ) {
-        if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
+        try (var ignored = MdcContext.of(Map.of(
+                "traceId", TraceIdGenerator.generate(),
+                "job", "alerts-summary"))) {
 
-        var cmd = new GenerateAlertsCommand(
-                regionIds,
-                EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED),
-                toKindCodes(warningKinds), withinHours
-        );
-        return ResponseEntity.ok(service.generate(cmd));
+            if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
+
+            var cmd = new GenerateAlertsCommand(
+                    regionIds,
+                    EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED),
+                    toKindCodes(warningKinds), withinHours
+            );
+            return ResponseEntity.ok(service.generate(cmd));
+        }
     }
 
     @Nullable

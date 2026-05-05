@@ -43,7 +43,7 @@ public class RainForecastDetector {
         List<RainInterval> hourlyRanges = buildHourlyRanges(view);
         List<DailyRainFlags> dayFlags = buildDayFlags(view);
 
-        if (log.isInfoEnabled()) logSummary(view, hourlyRanges);
+        if (log.isDebugEnabled()) logSummary(view, hourlyRanges);
 
         LocalDateTime occurredAt = TimeUtil.truncateToMinutes(
                 view.announceTime() != null ? view.announceTime() : now);
@@ -146,7 +146,7 @@ public class RainForecastDetector {
             if (isRainy(pop)) rainCount++;
         }
 
-        log.info("[RAIN_FORECAST] pops={}, nullEffectiveTime={}, rainyPoints={}, segments={}",
+        log.debug("pops={} nullEffectiveTime={} rainyPoints={} segments={}",
                 pops.size(), nullCount, rainCount, hourlyRanges.size());
     }
 }

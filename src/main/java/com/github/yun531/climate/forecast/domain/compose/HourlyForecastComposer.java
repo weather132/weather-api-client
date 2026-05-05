@@ -5,6 +5,7 @@ import com.github.yun531.climate.cityRegionCode.domain.Coordinates;
 import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
 import com.github.yun531.climate.shortGrid.domain.ShortGrid;
 import com.github.yun531.climate.shortGrid.domain.ShortGridRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * ShortGrid DB 조회 → ForecastHourlyPoint 직접 생산.
  */
+@Slf4j
 @Component
 public class HourlyForecastComposer {
 
@@ -35,7 +37,9 @@ public class HourlyForecastComposer {
         LocalDateTime announceTime = extractAnnounceTime(shortGrids);
         List<ForecastHourlyPoint> forecastHourlyPoints = buildHourlyPoints(shortGrids);
 
-        return new HourlyComposeResult(announceTime, forecastHourlyPoints);
+        HourlyComposeResult result = new HourlyComposeResult(announceTime, forecastHourlyPoints);
+        logIfDegraded(cityRegionCode, result);
+        return result;
     }
 
     private List<ShortGrid> fetchRecentShortGrids(CityRegionCode cityRegionCode) {
@@ -57,5 +61,24 @@ public class HourlyForecastComposer {
                 .map(sg -> new ForecastHourlyPoint(
                         sg.getEffectiveTime(), sg.getTemp(), sg.getPop()))
                 .toList();
+    }
+
+    private void logIfDegraded(CityRegionCode regionCode, HourlyComposeResult result) {
+        String regionId = regionCode.getRegionCode();
+
+        if (result.forecastHourlyPoints().isEmpty()) {
+            log.warn("HourlyForecast 결과 없음. regionId={}", regionId);
+            return;
+        }
+
+        long emptySlots = result.forecastHourlyPoints().stream()
+                .filter(p -> p.temp() == null || p.pop() == null)
+                .count();
+        int missingPoints = Math.max(0, MAX_HOURLY_POINTS - result.forecastHourlyPoints().size());
+
+        if (emptySlots > 0 || missingPoints > 0) {
+            log.warn("HourlyForecast 결손 슬롯. regionId={} emptySlots={} missingPoints={}",
+                    regionId, emptySlots, missingPoints);
+        }
     }
 }

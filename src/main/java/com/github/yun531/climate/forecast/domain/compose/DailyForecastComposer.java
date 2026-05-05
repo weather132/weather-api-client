@@ -11,6 +11,7 @@ import com.github.yun531.climate.provinceRegionCode.ProvinceRegionCodeRepository
 import com.github.yun531.climate.shortLand.domain.ShortLand;
 import com.github.yun531.climate.shortLand.domain.ShortLandRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import java.util.*;
 /**
  * ShortLand + MidLand/MidTemperature fallback → ForecastDailyPoint 직접 생산.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DailyForecastComposer {
@@ -46,12 +48,30 @@ public class DailyForecastComposer {
 
         Map<LocalDateTime, DailyRawItem> rawItemMap  =
                 collectRawItems(effectiveTimes, shortLandItems, midResult.items(), cityRegionCode);
-        LocalDateTime announceTime                   = extractAnnounceTime(shortLandItems, midResult);
         List<ForecastDailyPoint> forecastDailyPoints = buildDaily(effectiveTimes, rawItemMap);
+        LocalDateTime announceTime                   = extractAnnounceTime(shortLandItems, midResult);
 
-        return new DailyComposeResult(announceTime, forecastDailyPoints);
+        DailyComposeResult result = new DailyComposeResult(announceTime, forecastDailyPoints);
+        logIfDegraded(cityRegionCode, result);
+        return result;
     }
 
+    private List<LocalDateTime> getEffectiveTimes(LocalDateTime now) {
+        LocalDateTime baseDate = now;
+        if (now.getHour() < 6) {
+            baseDate = now.minusDays(1);
+        }
+
+        LocalDateTime standardTime = baseDate
+                .withHour(9).withMinute(0).withSecond(0).withNano(0);
+
+        List<LocalDateTime> effectiveTimes = new ArrayList<>();
+        for (int day = 0; day <= 6; day++) {
+            effectiveTimes.add(standardTime.plusDays(day).withHour(9));
+            effectiveTimes.add(standardTime.plusDays(day).withHour(21));
+        }
+        return effectiveTimes;
+    }
 
     private Map<LocalDateTime, ShortLand> fetchRecentShortLands(
             CityRegionCode cityRegionCode, List<LocalDateTime> effectiveTimes) {
@@ -116,21 +136,6 @@ public class DailyForecastComposer {
         return midItems.get(et);
     }
 
-    private LocalDateTime extractAnnounceTime(
-            Map<LocalDateTime, ShortLand> shortLandItems,
-            MidBatchResult midResult
-    ) {
-        LocalDateTime shortLandAnnounceTime = shortLandItems.values().stream()
-                .findFirst()
-                .map(ShortLand::getAnnounceTime)
-                .orElse(null);
-
-        return (shortLandAnnounceTime != null)
-                ? shortLandAnnounceTime
-                : midResult.announceTime();
-    }
-
-
     /**
      * effectiveTimes 인덱스 기반으로 ForecastDailyPoint를 조립.
      * effectiveTimes는 [D+0 09:00, D+0 21:00, D+1 09:00, D+1 21:00, ...] 고정 순서.
@@ -156,6 +161,39 @@ public class DailyForecastComposer {
             dailyPoints.add(new ForecastDailyPoint(day, minTemp, maxTemp, amPop, pmPop));
         }
         return dailyPoints;
+    }
+
+    private LocalDateTime extractAnnounceTime(
+            Map<LocalDateTime, ShortLand> shortLandItems,
+            MidBatchResult midResult
+    ) {
+        LocalDateTime shortLandAnnounceTime = shortLandItems.values().stream()
+                .findFirst()
+                .map(ShortLand::getAnnounceTime)
+                .orElse(null);
+
+        return (shortLandAnnounceTime != null)
+                ? shortLandAnnounceTime
+                : midResult.announceTime();
+    }
+
+    private void logIfDegraded(CityRegionCode regionCode, DailyComposeResult result) {
+        String regionId = regionCode.getRegionCode();
+
+        if (result.forecastDailyPoints().isEmpty()) {
+            log.warn("DailyForecast 결과 없음. regionId={}", regionId);
+            return;
+        }
+
+        long emptyDays = result.forecastDailyPoints().stream()
+                .filter(p -> p.minTemp() == null || p.maxTemp() == null
+                        || p.amPop() == null || p.pmPop() == null)
+                .count();
+
+        if (emptyDays > 0) {
+            log.warn("DailyForecast 결손 슬롯. regionId={} emptyDays={}",
+                    regionId, emptyDays);
+        }
     }
 
     // --- Mid (Fallback) 처리 로직 ---
@@ -228,24 +266,6 @@ public class DailyForecastComposer {
                 .findFirst()
                 .map(ml -> ml.getAnnounceTime().getTime())
                 .orElse(null);
-    }
-
-
-    private List<LocalDateTime> getEffectiveTimes(LocalDateTime now) {
-        LocalDateTime baseDate = now;
-        if (now.getHour() < 6) {
-            baseDate = now.minusDays(1);
-        }
-
-        LocalDateTime standardTime = baseDate
-                .withHour(9).withMinute(0).withSecond(0).withNano(0);
-
-        List<LocalDateTime> effectiveTimes = new ArrayList<>();
-        for (int day = 0; day <= 6; day++) {
-            effectiveTimes.add(standardTime.plusDays(day).withHour(9));
-            effectiveTimes.add(standardTime.plusDays(day).withHour(21));
-        }
-        return effectiveTimes;
     }
 
     private boolean isMorning(LocalDateTime effectiveTime) {

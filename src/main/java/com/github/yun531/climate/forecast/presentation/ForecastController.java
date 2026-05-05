@@ -1,5 +1,7 @@
 package com.github.yun531.climate.forecast.presentation;
 
+import com.github.yun531.climate.common.log.MdcContext;
+import com.github.yun531.climate.common.log.TraceIdGenerator;
 import com.github.yun531.climate.forecast.application.ForecastService;
 import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
 import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
@@ -10,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/forecast")
@@ -24,10 +28,15 @@ public class ForecastController {
             description = "시간대별(1-24시간) 예보 조회, 3시간 마다 갱신."
     )
     public ResponseEntity<ForecastHourlyView> getHourlyForecast(@RequestParam String regionId) {
-        ForecastHourlyView view = forecastService.getHourlyForecast(regionId);
-        return (view == null)
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(view);
+        try (var ignored = MdcContext.of(Map.of(
+                "traceId", TraceIdGenerator.generate(),
+                "job", "forecast-hourly"))) {
+
+            ForecastHourlyView view = forecastService.getHourlyForecast(regionId);
+            return (view == null)
+                    ? ResponseEntity.noContent().build()
+                    : ResponseEntity.ok(view);
+        }
     }
 
     @GetMapping("/daily")
@@ -36,9 +45,14 @@ public class ForecastController {
             description = "일자별(0-6일차) AM/PM 예보 조회"
     )
     public ResponseEntity<ForecastDailyView> getDailyForecast(@RequestParam String regionId) {
-        ForecastDailyView view = forecastService.getDailyForecast(regionId);
-        return (view == null)
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(view);
+        try (var ignored = MdcContext.of(Map.of(
+                "traceId", TraceIdGenerator.generate(),
+                "job", "forecast-daily"))) {
+
+            ForecastDailyView view = forecastService.getDailyForecast(regionId);
+            return (view == null)
+                    ? ResponseEntity.noContent().build()
+                    : ResponseEntity.ok(view);
+        }
     }
 }
