@@ -1,10 +1,7 @@
 package com.github.yun531.climate.notification.infra.alert;
 
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
-import com.github.yun531.climate.warning.domain.model.WarningEvent;
-import com.github.yun531.climate.warning.domain.model.WarningEventType;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
+import com.github.yun531.climate.warning.domain.model.*;
 import com.github.yun531.climate.warning.domain.repository.RegionCodeMappingRepository;
 import com.github.yun531.climate.warning.domain.repository.WarningEventRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -231,8 +228,14 @@ class CachingWarningViewReaderTest {
     private WarningEvent buildEvent(long id, WarningKind kind, WarningLevel level,
                                     WarningLevel prevLevel, WarningEventType eventType,
                                     LocalDateTime time) {
-        WarningEvent event = new WarningEvent(
-                "L1100100", kind, level, prevLevel, eventType, time, time);
+        WarningCurrent current = new WarningCurrent("L1100100", kind, level, time, time);
+        WarningEvent event = switch (eventType) {
+            case NEW        -> WarningEvent.issued(current);
+            case UPGRADED   -> WarningEvent.upgraded(current, prevLevel);
+            case DOWNGRADED -> WarningEvent.downgraded(current, prevLevel);
+            case EXTENDED   -> WarningEvent.extended(current);
+            case LIFTED     -> WarningEvent.lifted(current, time);
+        };
         ReflectionTestUtils.setField(event, "id", id);
         return event;
     }

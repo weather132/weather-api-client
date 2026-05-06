@@ -66,16 +66,6 @@ create table warning_region_mapping
     primary key (region_code, warning_region_code)
 );
 
-create table warning_current
-(
-    warning_region_code varchar(16) not null,
-    kind                varchar(20) not null,
-    level               varchar(12) not null,
-    announce_time       datetime    not null,
-    effective_time      datetime    not null,
-    primary key (warning_region_code, kind)
-);
-
 create table warning_event
 (
     id                  bigint auto_increment primary key,

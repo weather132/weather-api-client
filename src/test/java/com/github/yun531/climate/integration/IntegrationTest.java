@@ -148,7 +148,6 @@ class IntegrationTest {
             try (Connection conn = dataSource.getConnection();
                  Statement stmt = conn.createStatement()) {
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 0");
-                stmt.execute("TRUNCATE TABLE warning_current");
                 stmt.execute("TRUNCATE TABLE warning_event");
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
             }
@@ -159,7 +158,7 @@ class IntegrationTest {
         class WarningCollectPath {
 
             @Test
-            @DisplayName("첫 수집: warning_current 저장 및 NEW 이벤트 생성")
+            @DisplayName("첫 수집: NEW 이벤트 생성")
             void firstCollectCreatesNewEvents() {
                 stub().setResponse(List.of(
                         new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
@@ -167,12 +166,6 @@ class IntegrationTest {
                 ));
 
                 warningCollectService.collect(FIRST_ANNOUNCE_TIME);
-
-                Integer currentCount = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM warning_current", Integer.class);
-                assertThat(currentCount)
-                        .as("warning_current 건수")
-                        .isEqualTo(1);
 
                 List<Map<String, Object>> events = jdbcTemplate.queryForList(
                         "SELECT * FROM warning_event ORDER BY id");
@@ -222,13 +215,6 @@ class IntegrationTest {
                 ));
                 warningCollectService.collect(SECOND_ANNOUNCE_TIME);
 
-                String currentLevel = jdbcTemplate.queryForObject(
-                        "SELECT level FROM warning_current WHERE warning_region_code = 'L1100100'",
-                        String.class);
-                assertThat(currentLevel)
-                        .as("warning_current level")
-                        .isEqualTo("WARNING");
-
                 List<Map<String, Object>> events = jdbcTemplate.queryForList(
                         "SELECT * FROM warning_event ORDER BY id");
                 assertThat(events)
@@ -256,12 +242,6 @@ class IntegrationTest {
 
                 stub().setResponse(List.of());
                 warningCollectService.collect(SECOND_ANNOUNCE_TIME);
-
-                Integer currentCount = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM warning_current", Integer.class);
-                assertThat(currentCount)
-                        .as("해제 후 warning_current 건수")
-                        .isEqualTo(0);
 
                 List<Map<String, Object>> events = jdbcTemplate.queryForList(
                         "SELECT * FROM warning_event ORDER BY id");
@@ -304,7 +284,6 @@ class IntegrationTest {
                 stmt.execute("TRUNCATE TABLE short_land");
                 stmt.execute("TRUNCATE TABLE mid_pop");
                 stmt.execute("TRUNCATE TABLE mid_temperature");
-                stmt.execute("TRUNCATE TABLE warning_current");
                 stmt.execute("TRUNCATE TABLE warning_event");
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
                 stmt.execute("CALL insert_all()");
