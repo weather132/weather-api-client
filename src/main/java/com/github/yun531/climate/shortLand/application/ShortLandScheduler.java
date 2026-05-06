@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@Profile("prod")
+@Profile("!test & !integration-test")
 public class ShortLandScheduler {
     private final ShortLandService shortLandService;
 
