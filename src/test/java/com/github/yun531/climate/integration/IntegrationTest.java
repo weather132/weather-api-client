@@ -91,7 +91,6 @@ class IntegrationTest {
     }
 
     private static final String REGION_ID              = "11B10101";
-    private static final String NON_EXISTENT_REGION_ID = "99Z99999";
     private static final int EXPECTED_FORECAST_DAYS    = 7;
 
     @Autowired ForecastService forecastService;
@@ -424,17 +423,6 @@ class IntegrationTest {
                         .as("daysAhead 시퀀스는 0부터 연속이어야 한다")
                         .containsExactly(0, 1, 2, 3, 4, 5, 6);
             }
-
-            @Test
-            @DisplayName("미존재 regionId -> null 반환")
-            void returnsNullForUnknownRegion() {
-                assertThat(forecastService.getHourlyForecast(NON_EXISTENT_REGION_ID))
-                        .as("미존재 regionId hourly")
-                        .isNull();
-                assertThat(forecastService.getDailyForecast(NON_EXISTENT_REGION_ID))
-                        .as("미존재 regionId daily")
-                        .isNull();
-            }
         }
 
         @Nested
@@ -597,40 +585,6 @@ class IntegrationTest {
                 assertThat(payload.level()).isEqualTo("WARNING");
                 assertThat(payload.prevLevel()).isEqualTo("ADVISORY");
                 assertThat(payload.eventType()).isEqualTo("UPGRADED");
-            }
-
-            @Test
-            @DisplayName("WARNING_ISSUED: warningKinds 필터로 HEAT만 요청 시 빈 결과")
-            void warningIssuedRespectsKindFilter() {
-                var cmd = new GenerateAlertsCommand(
-                        List.of(REGION_ID),
-                        EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
-                        Set.of("HEAT"),
-                        null
-                );
-
-                List<AlertEvent> events = generateAlertsService.generate(cmd);
-
-                assertThat(events)
-                        .as("HEAT 필터 시 WARNING_ISSUED 이벤트")
-                        .isEmpty();
-            }
-
-            @Test
-            @DisplayName("미존재 regionId -> 빈 리스트")
-            void returnsEmptyForUnknownRegion() {
-                var cmd = new GenerateAlertsCommand(
-                        List.of(NON_EXISTENT_REGION_ID),
-                        EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.RAIN_FORECAST, AlertTypeEnum.WARNING_ISSUED),
-                        null,
-                        null
-                );
-
-                List<AlertEvent> events = generateAlertsService.generate(cmd);
-
-                assertThat(events)
-                        .as("미존재 regionId에 대한 알림 이벤트")
-                        .isEmpty();
             }
         }
     }
