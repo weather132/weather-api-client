@@ -138,6 +138,7 @@ class IntegrationTest {
         private static final LocalDateTime FIRST_EFFECTIVE_TIME = LocalDateTime.of(2026, 3, 30, 14, 0);
         private static final LocalDateTime SECOND_ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 30, 15, 0);
         private static final LocalDateTime SECOND_EFFECTIVE_TIME = LocalDateTime.of(2026, 3, 30, 18, 0);
+        private static final LocalDateTime THIRD_ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 30, 18, 0);
 
         private StubWarningClient stub() {
             return (StubWarningClient) warningClient;
@@ -182,25 +183,6 @@ class IntegrationTest {
             }
 
             @Test
-            @DisplayName("동일 데이터 재수집: 추가 이벤트 없음")
-            void identicalCollectProducesNoNewEvents() {
-                List<WarningCurrent> data = List.of(
-                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
-                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
-                );
-                stub().setResponse(data);
-
-                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
-                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
-
-                Integer eventCount = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM warning_event", Integer.class);
-                assertThat(eventCount)
-                        .as("동일 데이터 재수집 후 이벤트 건수")
-                        .isEqualTo(1);
-            }
-
-            @Test
             @DisplayName("변화 수집: UPGRADED 이벤트 생성")
             void changedCollectCreatesUpgradedEvent() {
                 stub().setResponse(List.of(
@@ -231,26 +213,84 @@ class IntegrationTest {
                 assertThat(upgradedEvent.get("prev_level")).isEqualTo("ADVISORY");
             }
 
-            @Test
-            @DisplayName("특보 해제: LIFTED 이벤트 생성")
-            void liftedCollectCreatesLiftedEvent() {
-                stub().setResponse(List.of(
-                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
-                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
-                ));
-                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+            @Nested
+            @DisplayName("재기동 회복 회귀 시나리오")
+            class RestartRecoveryRegression {
 
-                stub().setResponse(List.of());
-                warningCollectService.collect(SECOND_ANNOUNCE_TIME);
+                @Test
+                @DisplayName("warning_event에 NEW만 남은 상태에서 재기동 후 KMA 빈 응답 -- LIFTED 자동 생성")
+                void recoversLiftedAfterRestart() {
+                    insertActiveWarningEvent("L1100100", "WIND", "ADVISORY",
+                            FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME);
+                    stub().setResponse(List.of());
 
-                List<Map<String, Object>> events = jdbcTemplate.queryForList(
-                        "SELECT * FROM warning_event ORDER BY id");
-                assertThat(events)
-                        .as("warning_event 건수")
-                        .hasSize(2);
+                    warningCollectService.collect(THIRD_ANNOUNCE_TIME);
 
-                assertThat(events.get(0).get("event_type")).isEqualTo("NEW");
-                assertThat(events.get(1).get("event_type")).isEqualTo("LIFTED");
+                    List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                            "SELECT * FROM warning_event ORDER BY id");
+                    assertThat(events)
+                            .as("재기동 회복 후 warning_event 건수")
+                            .hasSize(2);
+
+                    assertThat(events.get(0).get("event_type")).isEqualTo("NEW");
+                    assertThat(events.get(1).get("event_type")).isEqualTo("LIFTED");
+
+                    LocalDateTime liftedAnnounceTime = jdbcTemplate.queryForObject(
+                            "SELECT announce_time FROM warning_event WHERE event_type = 'LIFTED'",
+                            LocalDateTime.class);
+                    assertThat(liftedAnnounceTime)
+                            .as("LIFTED.announceTime은 detectedAt(현재 사이클 tm)")
+                            .isEqualTo(THIRD_ANNOUNCE_TIME);
+                }
+
+                @Test
+                @DisplayName("warning_event에 NEW만 남은 상태에서 재기동 후 같은 레벨 새 발표 -- EXTENDED 자동 생성")
+                void recoversExtendedAfterRestart() {
+                    insertActiveWarningEvent("L1100100", "WIND", "ADVISORY",
+                            FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME);
+                    stub().setResponse(List.of(
+                            new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                    THIRD_ANNOUNCE_TIME, THIRD_ANNOUNCE_TIME)
+                    ));
+
+                    warningCollectService.collect(THIRD_ANNOUNCE_TIME);
+
+                    List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                            "SELECT * FROM warning_event ORDER BY id");
+                    assertThat(events)
+                            .as("재기동 회복 후 warning_event 건수")
+                            .hasSize(2);
+
+                    assertThat(events.get(0).get("event_type")).isEqualTo("NEW");
+                    assertThat(events.get(1).get("event_type")).isEqualTo("EXTENDED");
+                }
+
+                @Test
+                @DisplayName("연속 사이클에서 같은 announceTime 응답 -- 이벤트 미생성")
+                void noEventOnIdenticalAnnouncement() {
+                    stub().setResponse(List.of(
+                            new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                    FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
+                    ));
+                    warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+
+                    warningCollectService.collect(SECOND_ANNOUNCE_TIME);
+
+                    Integer eventCount = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM warning_event", Integer.class);
+                    assertThat(eventCount)
+                            .as("동일 announceTime 응답 - 추가 이벤트 미생성")
+                            .isEqualTo(1);
+                }
+
+                private void insertActiveWarningEvent(String regionCode, String kind, String level,
+                                                      LocalDateTime announceTime, LocalDateTime effectiveTime) {
+                    jdbcTemplate.update(
+                            "INSERT INTO warning_event "
+                                    + "(warning_region_code, kind, level, prev_level, event_type, announce_time, effective_time) "
+                                    + "VALUES (?, ?, ?, NULL, 'NEW', ?, ?)",
+                            regionCode, kind, level, announceTime, effectiveTime);
+                }
             }
         }
     }
