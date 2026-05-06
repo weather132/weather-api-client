@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -54,10 +55,10 @@ public class WarningEvent {
     @Column(name = "effective_time", nullable = false)
     private LocalDateTime effectiveTime;
 
-    public WarningEvent(String warningRegionCode, WarningKind kind,
-                        WarningLevel level, WarningLevel prevLevel,
-                        WarningEventType eventType,
-                        LocalDateTime announceTime, LocalDateTime effectiveTime) {
+    private WarningEvent(String warningRegionCode, WarningKind kind,
+                         WarningLevel level, WarningLevel prevLevel,
+                         WarningEventType eventType,
+                         LocalDateTime announceTime, LocalDateTime effectiveTime) {
         this.warningRegionCode = warningRegionCode;
         this.kind = kind;
         this.level = level;
@@ -65,6 +66,59 @@ public class WarningEvent {
         this.eventType = eventType;
         this.announceTime = announceTime;
         this.effectiveTime = effectiveTime;
+    }
+
+    public static WarningEvent issued(WarningCurrent current) {
+        Objects.requireNonNull(current);
+        return new WarningEvent(
+                current.warningRegionCode(), current.kind(),
+                current.level(), null,
+                WarningEventType.NEW,
+                current.announceTime(), current.effectiveTime()
+        );
+    }
+
+    public static WarningEvent upgraded(WarningCurrent current, WarningLevel prevLevel) {
+        Objects.requireNonNull(current);
+        Objects.requireNonNull(prevLevel);
+        return new WarningEvent(
+                current.warningRegionCode(), current.kind(),
+                current.level(), prevLevel,
+                WarningEventType.UPGRADED,
+                current.announceTime(), current.effectiveTime()
+        );
+    }
+
+    public static WarningEvent downgraded(WarningCurrent current, WarningLevel prevLevel) {
+        Objects.requireNonNull(current);
+        Objects.requireNonNull(prevLevel);
+        return new WarningEvent(
+                current.warningRegionCode(), current.kind(),
+                current.level(), prevLevel,
+                WarningEventType.DOWNGRADED,
+                current.announceTime(), current.effectiveTime()
+        );
+    }
+
+    public static WarningEvent extended(WarningCurrent current) {
+        Objects.requireNonNull(current);
+        return new WarningEvent(
+                current.warningRegionCode(), current.kind(),
+                current.level(), null,
+                WarningEventType.EXTENDED,
+                current.announceTime(), current.effectiveTime()
+        );
+    }
+
+    public static WarningEvent lifted(WarningCurrent removed, LocalDateTime detectedAt) {
+        Objects.requireNonNull(removed);
+        Objects.requireNonNull(detectedAt);
+        return new WarningEvent(
+                removed.warningRegionCode(), removed.kind(),
+                removed.level(), null,
+                WarningEventType.LIFTED,
+                detectedAt, detectedAt
+        );
     }
 
     public boolean isActive() {

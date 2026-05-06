@@ -1,5 +1,6 @@
 package com.github.yun531.climate.warning.infra.persistence;
 
+import com.github.yun531.climate.warning.domain.model.WarningCurrent;
 import com.github.yun531.climate.warning.domain.model.WarningEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +20,18 @@ public interface JpaWarningEventRepository extends JpaRepository<WarningEvent, L
             ) latest ON e.id = latest.max_id
             """, nativeQuery = true)
     List<WarningEvent> findLatestByWarningRegionCodes(@Param("codes") List<String> warningRegionCodes);
+
+    @Query("""
+            SELECT new com.github.yun531.climate.warning.domain.model.WarningCurrent(
+                we.warningRegionCode, we.kind, we.level, we.announceTime, we.effectiveTime
+            )
+            FROM WarningEvent we
+            WHERE we.id IN (
+                SELECT MAX(we2.id)
+                FROM WarningEvent we2
+                GROUP BY we2.warningRegionCode, we2.kind
+            )
+            AND we.eventType <> com.github.yun531.climate.warning.domain.model.WarningEventType.LIFTED
+            """)
+    List<WarningCurrent> findActiveWarnings();
 }

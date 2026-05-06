@@ -6,8 +6,8 @@ import com.github.yun531.climate.warning.domain.WarningClient;
 import com.github.yun531.climate.warning.domain.detect.WarningChangeDetector;
 import com.github.yun531.climate.warning.domain.model.WarningCurrent;
 import com.github.yun531.climate.warning.domain.model.WarningEvent;
-import com.github.yun531.climate.warning.domain.repository.WarningCurrentRepository;
 import com.github.yun531.climate.warning.domain.repository.WarningEventRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -19,41 +19,28 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class WarningCollectService {
 
     private final WarningClient warningClient;
-    private final WarningCurrentRepository currentRepository;
     private final WarningEventRepository eventRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final WarningChangeDetector changeDetector;
-
-    public WarningCollectService(WarningClient warningClient,
-                                 WarningCurrentRepository currentRepository,
-                                 WarningEventRepository eventRepository,
-                                 ApplicationEventPublisher eventPublisher) {
-        this.warningClient = warningClient;
-        this.currentRepository = currentRepository;
-        this.eventRepository = eventRepository;
-        this.eventPublisher = eventPublisher;
-        this.changeDetector = new WarningChangeDetector();
-    }
+    private final WarningChangeDetector changeDetector = new WarningChangeDetector();
 
     @Transactional
     public void collect(LocalDateTime tm) {
         try (var ignored = MdcContext.of(Map.of("announceTime", tm.toString()))) {
-            List<WarningCurrent> currentWarnings  = warningClient.requestCurrentWarnings(tm);
-            List<WarningCurrent> previousWarnings = currentRepository.findAll();
+            List<WarningCurrent> currentWarnings = warningClient.requestCurrentWarnings(tm);
+            List<WarningCurrent> activeWarnings  = eventRepository.findActiveWarnings();
 
-            List<WarningEvent> warningEvents = changeDetector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = changeDetector.detect(activeWarnings, currentWarnings, tm);
 
-            currentRepository.replaceAll(currentWarnings);
+            if (warningEvents.isEmpty()) return;
 
-            if (!warningEvents.isEmpty()) {
-                eventRepository.saveAll(warningEvents);
-                log.info("이벤트 감지: count={} types={}", warningEvents.size(),
-                        warningEvents.stream().map(e -> e.getEventType().name()).toList());
-                eventPublisher.publishEvent(new WarningRefreshedEvent(tm));
-            }
+            eventRepository.saveAll(warningEvents);
+            log.info("이벤트 감지: count={} types={}", warningEvents.size(),
+                    warningEvents.stream().map(e -> e.getEventType().name()).toList());
+            eventPublisher.publishEvent(new WarningRefreshedEvent(tm));
         }
     }
 }

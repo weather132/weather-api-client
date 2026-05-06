@@ -22,20 +22,21 @@ class WarningChangeDetectorTest {
     private static final LocalDateTime PREV_EFFECTIVE_TIME = LocalDateTime.of(2026, 3, 30, 14, 0);
     private static final LocalDateTime ANNOUNCE_TIME       = LocalDateTime.of(2026, 3, 30, 15, 0);
     private static final LocalDateTime EFFECTIVE_TIME      = LocalDateTime.of(2026, 3, 30, 18, 0);
+    private static final LocalDateTime DETECTED_AT         = LocalDateTime.of(2026, 3, 30, 16, 0);
 
     @Nested
     @DisplayName("단일 이벤트 감지")
     class SingleEvent {
 
         @Test
-        @DisplayName("신규 발령 - previous 비어있고 current에 1건")
+        @DisplayName("신규 발령 - active 비어있고 current에 1건")
         void newWarning() {
-            List<WarningCurrent> previousWarnings = List.of();
+            List<WarningCurrent> activeWarnings = List.of();
             List<WarningCurrent> currentWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).hasSize(1);
             assertThat(warningEvents.get(0).getEventType()).isEqualTo(WarningEventType.NEW);
@@ -48,35 +49,35 @@ class WarningChangeDetectorTest {
         }
 
         @Test
-        @DisplayName("해제 - previous에 1건, current 비어있음")
+        @DisplayName("해제 - active에 1건, current 비어있음. 시각은 detectedAt")
         void liftedWarning() {
-            List<WarningCurrent> previousWarnings = List.of(
+            List<WarningCurrent> activeWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, PREV_ANNOUNCE_TIME, PREV_EFFECTIVE_TIME)
             );
             List<WarningCurrent> currentWarnings = List.of();
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).hasSize(1);
             assertThat(warningEvents.get(0).getEventType()).isEqualTo(WarningEventType.LIFTED);
             assertThat(warningEvents.get(0).getWarningRegionCode()).isEqualTo("L1051000");
             assertThat(warningEvents.get(0).getKind()).isEqualTo(WarningKind.RAIN);
             assertThat(warningEvents.get(0).getPrevLevel()).isNull();
-            assertThat(warningEvents.get(0).getAnnounceTime()).isEqualTo(PREV_ANNOUNCE_TIME);
-            assertThat(warningEvents.get(0).getEffectiveTime()).isEqualTo(PREV_EFFECTIVE_TIME);
+            assertThat(warningEvents.get(0).getAnnounceTime()).isEqualTo(DETECTED_AT);
+            assertThat(warningEvents.get(0).getEffectiveTime()).isEqualTo(DETECTED_AT);
         }
 
         @Test
         @DisplayName("상향 - ADVISORY 에서 WARNING 으로")
         void upgraded() {
-            List<WarningCurrent> previousWarnings = List.of(
+            List<WarningCurrent> activeWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, PREV_ANNOUNCE_TIME, PREV_EFFECTIVE_TIME)
             );
             List<WarningCurrent> currentWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.WARNING, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).hasSize(1);
             assertThat(warningEvents.get(0).getEventType()).isEqualTo(WarningEventType.UPGRADED);
@@ -89,14 +90,14 @@ class WarningChangeDetectorTest {
         @Test
         @DisplayName("하향 - WARNING 에서 ADVISORY로")
         void downgraded() {
-            List<WarningCurrent> previousWarnings = List.of(
+            List<WarningCurrent> activeWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.WARNING, PREV_ANNOUNCE_TIME, PREV_EFFECTIVE_TIME)
             );
             List<WarningCurrent> currentWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).hasSize(1);
             assertThat(warningEvents.get(0).getEventType()).isEqualTo(WarningEventType.DOWNGRADED);
@@ -109,14 +110,14 @@ class WarningChangeDetectorTest {
         @Test
         @DisplayName("연장 - 같은 레벨, 새로운 발표시각으로 갱신")
         void extended() {
-            List<WarningCurrent> previousWarnings = List.of(
+            List<WarningCurrent> activeWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, PREV_ANNOUNCE_TIME, PREV_EFFECTIVE_TIME)
             );
             List<WarningCurrent> currentWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).hasSize(1);
             assertThat(warningEvents.get(0).getEventType()).isEqualTo(WarningEventType.EXTENDED);
@@ -129,14 +130,14 @@ class WarningChangeDetectorTest {
         @Test
         @DisplayName("변화 없음 - 동일 레벨, 동일 발표시각")
         void noChange() {
-            List<WarningCurrent> previousWarnings = List.of(
+            List<WarningCurrent> activeWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
             List<WarningCurrent> currentWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).isEmpty();
         }
@@ -149,7 +150,7 @@ class WarningChangeDetectorTest {
         @Test
         @DisplayName("NEW + LIFTED + UPGRADED 동시 발생")
         void multipleEventTypes() {
-            List<WarningCurrent> previousWarnings = List.of(
+            List<WarningCurrent> activeWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, PREV_ANNOUNCE_TIME, PREV_EFFECTIVE_TIME),
                     new WarningCurrent("L1052300", WarningKind.HEAT, WarningLevel.WARNING, PREV_ANNOUNCE_TIME, PREV_EFFECTIVE_TIME)
             );
@@ -158,7 +159,7 @@ class WarningChangeDetectorTest {
                     new WarningCurrent("L1090800", WarningKind.WIND, WarningLevel.ADVISORY, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).hasSize(3);
             assertThat(warningEvents)
@@ -173,7 +174,7 @@ class WarningChangeDetectorTest {
         @Test
         @DisplayName("같은 지역 다른 kind - 하나는 유지, 하나는 신규")
         void sameRegionDifferentKind() {
-            List<WarningCurrent> previousWarnings = List.of(
+            List<WarningCurrent> activeWarnings = List.of(
                     new WarningCurrent("L1051000", WarningKind.RAIN, WarningLevel.ADVISORY, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
             List<WarningCurrent> currentWarnings = List.of(
@@ -181,7 +182,7 @@ class WarningChangeDetectorTest {
                     new WarningCurrent("L1051000", WarningKind.HEAT, WarningLevel.WARNING, ANNOUNCE_TIME, EFFECTIVE_TIME)
             );
 
-            List<WarningEvent> warningEvents = detector.detect(previousWarnings, currentWarnings);
+            List<WarningEvent> warningEvents = detector.detect(activeWarnings, currentWarnings, DETECTED_AT);
 
             assertThat(warningEvents).hasSize(1);
             assertThat(warningEvents.get(0).getEventType()).isEqualTo(WarningEventType.NEW);
