@@ -37,10 +37,9 @@ public class AlertController {
 
         try (var ignored = logger("alerts-rain-onset")) {
 
-            return makeResponse( regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours);
+            return makeResponse(regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours);
         }
     }
-
 
     @GetMapping("/rain-forecast")
     @Operation(
@@ -72,7 +71,10 @@ public class AlertController {
                         toKindCodes(warningKinds),
                         null);
 
-            return ResponseEntity.ok(service.generate(cmd));
+            return makeResponse(regionIds,
+                    EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
+                    warningKinds,
+                    null);
         }
     }
 
@@ -103,7 +105,6 @@ public class AlertController {
         return withinHours != null && isHourOutOfDayRange(withinHours) ? 24 : withinHours;
     }
 
-
     private boolean isHourOutOfDayRange(Integer withinHours) {
         return withinHours < 1 || withinHours > 24;
     }
@@ -120,6 +121,7 @@ public class AlertController {
                                                           EnumSet<AlertTypeEnum> rainOnset,
                                                           Set<WarningKind> warningKinds,
                                                           Integer hours) {
+
         var cmd = new GenerateAlertsCommand(
                 regionIds,
                 rainOnset,
