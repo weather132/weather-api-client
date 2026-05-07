@@ -1,4 +1,7 @@
-package com.github.yun531.climate.warning.domain.model;
+package com.github.yun531.climate.warning.domain.warningEvent;
+
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
 
 import java.time.LocalDateTime;
 import java.util.Objects;

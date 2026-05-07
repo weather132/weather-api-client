@@ -1,9 +1,13 @@
 package com.github.yun531.climate.notification.infra.alert;
 
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
-import com.github.yun531.climate.warning.domain.model.*;
-import com.github.yun531.climate.warning.domain.repository.RegionCodeMappingRepository;
-import com.github.yun531.climate.warning.domain.repository.WarningEventRepository;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEvent;
+import com.github.yun531.climate.warning.domain.mapping.RegionCodeMappingRepository;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEventRepository;
+import com.github.yun531.climate.warning.domain.shared.WarningEventType;
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

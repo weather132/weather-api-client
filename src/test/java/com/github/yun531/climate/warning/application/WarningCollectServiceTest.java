@@ -1,11 +1,11 @@
 package com.github.yun531.climate.warning.application;
 
 import com.github.yun531.climate.common.event.WarningRefreshedEvent;
-import com.github.yun531.climate.warning.domain.WarningClient;
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
-import com.github.yun531.climate.warning.domain.repository.WarningEventRepository;
+import com.github.yun531.climate.warning.domain.collect.WarningClient;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package com.github.yun531.climate.warning.domain.repository;
+package com.github.yun531.climate.warning.domain.mapping;
 
 import java.util.List;
 

@@ -1,5 +1,8 @@
-package com.github.yun531.climate.warning.domain.model;
+package com.github.yun531.climate.warning.domain.warningEvent;
 
+import com.github.yun531.climate.warning.domain.shared.WarningEventType;
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

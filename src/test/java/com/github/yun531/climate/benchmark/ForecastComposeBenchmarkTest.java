@@ -6,7 +6,7 @@ import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer;
 import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer.DailyComposeResult;
 import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer;
 import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer.HourlyComposeResult;
-import com.github.yun531.climate.warning.domain.WarningClient;
+import com.github.yun531.climate.warning.domain.collect.WarningClient;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.springframework.beans.factory.annotation.Autowired;

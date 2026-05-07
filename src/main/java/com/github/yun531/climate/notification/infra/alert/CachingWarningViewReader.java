@@ -3,9 +3,9 @@ package com.github.yun531.climate.notification.infra.alert;
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
 import com.github.yun531.climate.notification.domain.readmodel.WarningViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.WarningViewSelector;
-import com.github.yun531.climate.warning.domain.model.WarningEvent;
-import com.github.yun531.climate.warning.domain.repository.RegionCodeMappingRepository;
-import com.github.yun531.climate.warning.domain.repository.WarningEventRepository;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEvent;
+import com.github.yun531.climate.warning.domain.mapping.RegionCodeMappingRepository;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,7 @@
-package com.github.yun531.climate.warning.infra.persistence;
+package com.github.yun531.climate.warning.infra.persistence.event;
 
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
-import com.github.yun531.climate.warning.domain.model.WarningEvent;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

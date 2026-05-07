@@ -15,11 +15,10 @@ import com.github.yun531.climate.notification.domain.payload.WarningIssuedPayloa
 import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import com.github.yun531.climate.notification.infra.alert.PopCacheManager;
 import com.github.yun531.climate.warning.application.WarningCollectService;
-import com.github.yun531.climate.warning.domain.WarningClient;
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
-import com.github.yun531.climate.warning.domain.model.WarningEventType;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
+import com.github.yun531.climate.warning.domain.collect.WarningClient;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;

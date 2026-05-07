@@ -2,8 +2,8 @@ package com.github.yun531.climate.warning.infra.remote;
 
 import com.github.yun531.climate.common.apiKey.ApiKey;
 import com.github.yun531.climate.common.client.WeatherClient;
-import com.github.yun531.climate.warning.domain.WarningClient;
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
+import com.github.yun531.climate.warning.domain.collect.WarningClient;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,4 @@
-package com.github.yun531.climate.warning.domain.repository;
-
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
-import com.github.yun531.climate.warning.domain.model.WarningEvent;
+package com.github.yun531.climate.warning.domain.warningEvent;
 
 import java.util.List;
 
