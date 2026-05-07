@@ -30,17 +30,30 @@ public class WarningCollectService {
     @Transactional
     public void collect(LocalDateTime tm) {
         try (var ignored = MdcContext.of(Map.of("announceTime", tm.toString()))) {
-            List<WarningCurrent> currentWarnings = warningClient.requestCurrentWarnings(tm);
-            List<WarningCurrent> activeWarnings  = eventRepository.findActiveWarnings();
+            List<WarningEvent> detectedEvents = detectWarningEvents(tm);
 
-            List<WarningEvent> warningEvents = changeDetector.detect(activeWarnings, currentWarnings, tm);
+            if (detectedEvents.isEmpty()) return;
 
-            if (warningEvents.isEmpty()) return;
-
-            eventRepository.saveAll(warningEvents);
-            log.info("이벤트 감지: count={} types={}", warningEvents.size(),
-                    warningEvents.stream().map(e -> e.getEventType().name()).toList());
-            eventPublisher.publishEvent(new WarningRefreshedEvent(tm));
+            recordAndAnnounce(detectedEvents, tm);
         }
+    }
+
+    private List<WarningEvent> detectWarningEvents(LocalDateTime tm) {
+        List<WarningCurrent> current = warningClient.requestCurrentWarnings(tm);
+        List<WarningCurrent> active = eventRepository.findActiveWarnings();
+        return changeDetector.detect(active, current, tm);
+    }
+
+    private void recordAndAnnounce(List<WarningEvent> events, LocalDateTime tm) {
+        eventRepository.saveAll(events);
+        logWarningEvents(events);
+        eventPublisher.publishEvent(new WarningRefreshedEvent(tm));
+    }
+
+    private void logWarningEvents(List<WarningEvent> events) {
+        List<String> eventTypes = events.stream()
+                .map(e -> e.getEventType().name())
+                .toList();
+        log.info("이벤트 감지: count={} types={}", events.size(), eventTypes);
     }
 }

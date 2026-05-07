@@ -27,17 +27,21 @@ public class WarningChangeDetector {
     private List<WarningEvent> detectIssuedOrChanged(Map<String, WarningCurrent> activeMap,
                                                      Map<String, WarningCurrent> currentMap) {
         return currentMap.entrySet().stream()
-                .map(entry -> classifyEntry(activeMap.get(entry.getKey()), entry.getValue()))
+                .map(entry -> {
+                    WarningCurrent current = entry.getValue();
+                    WarningCurrent active = activeMap.get(entry.getKey());
+                    return classifyWarningEvent(active, current);
+                })
                 .flatMap(Optional::stream)
                 .toList();
     }
 
-    private Optional<WarningEvent> classifyEntry(WarningCurrent active, WarningCurrent current) {
+    private Optional<WarningEvent> classifyWarningEvent(WarningCurrent active, WarningCurrent current) {
         if (active == null) return Optional.of(WarningEvent.issued(current));
-        return classifyChange(active, current);
+        return classifyEventType(active, current);
     }
 
-    private Optional<WarningEvent> classifyChange(WarningCurrent active, WarningCurrent current) {
+    private Optional<WarningEvent> classifyEventType(WarningCurrent active, WarningCurrent current) {
         int levelDiff = current.level().compareTo(active.level());
         if (levelDiff > 0) return Optional.of(WarningEvent.upgraded(current, active.level()));
         if (levelDiff < 0) return Optional.of(WarningEvent.downgraded(current, active.level()));
