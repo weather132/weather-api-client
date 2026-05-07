@@ -1,8 +1,8 @@
 package com.github.yun531.climate.warning.infra.remote;
 
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -109,11 +109,11 @@ class WarningParserTest {
             assertThat(result).hasSize(1);
 
             WarningCurrent parsed = result.get(0);
-            assertThat(parsed.getWarningRegionCode()).isEqualTo("L1051000");
-            assertThat(parsed.getKind()).isEqualTo(WarningKind.WIND);
-            assertThat(parsed.getLevel()).isEqualTo(WarningLevel.ADVISORY);
-            assertThat(parsed.getAnnounceTime()).isEqualTo(LocalDateTime.of(2026, 3, 30, 20, 30));
-            assertThat(parsed.getEffectiveTime()).isEqualTo(LocalDateTime.of(2026, 3, 30, 20, 30));
+            assertThat(parsed.warningRegionCode()).isEqualTo("L1051000");
+            assertThat(parsed.kind()).isEqualTo(WarningKind.WIND);
+            assertThat(parsed.level()).isEqualTo(WarningLevel.ADVISORY);
+            assertThat(parsed.announceTime()).isEqualTo(LocalDateTime.of(2026, 3, 30, 20, 30));
+            assertThat(parsed.effectiveTime()).isEqualTo(LocalDateTime.of(2026, 3, 30, 20, 30));
         }
 
         @Test
@@ -130,8 +130,8 @@ class WarningParserTest {
             List<WarningCurrent> result = parser.parse(raw);
 
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).getWarningRegionCode()).isEqualTo("L1051000");
-            assertThat(result.get(1).getWarningRegionCode()).isEqualTo("L1090800");
+            assertThat(result.get(0).warningRegionCode()).isEqualTo("L1051000");
+            assertThat(result.get(1).warningRegionCode()).isEqualTo("L1090800");
         }
     }
 }

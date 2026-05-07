@@ -14,7 +14,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@Profile("prod")
+@Profile("!test & !integration-test")
 public class MidCollectionScheduler {
 
     private final MidCollectionService midCollectionService;

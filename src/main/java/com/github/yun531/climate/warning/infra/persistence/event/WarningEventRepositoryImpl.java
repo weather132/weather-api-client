@@ -1,23 +1,20 @@
-package com.github.yun531.climate.warning.infra.persistence;
+package com.github.yun531.climate.warning.infra.persistence.event;
 
-import com.github.yun531.climate.warning.domain.model.WarningEvent;
-import com.github.yun531.climate.warning.domain.repository.WarningEventRepository;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEvent;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEventRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
+@RequiredArgsConstructor
 public class WarningEventRepositoryImpl implements WarningEventRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final JpaWarningEventRepository jpaRepository;
-
-    public WarningEventRepositoryImpl(JdbcTemplate jdbcTemplate,
-                                      JpaWarningEventRepository jpaRepository) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.jpaRepository = jpaRepository;
-    }
 
     @Override
     public void saveAll(List<WarningEvent> events) {
@@ -41,5 +38,10 @@ public class WarningEventRepositoryImpl implements WarningEventRepository {
     public List<WarningEvent> findLatestByWarningRegionCodes(List<String> warningRegionCodes) {
         if (warningRegionCodes.isEmpty()) return List.of();
         return jpaRepository.findLatestByWarningRegionCodes(warningRegionCodes);
+    }
+
+    @Override
+    public List<WarningCurrent> findActiveWarnings() {
+        return jpaRepository.findActiveWarnings();
     }
 }

@@ -1,7 +1,7 @@
-package com.github.yun531.climate.warning.infra.persistence;
+package com.github.yun531.climate.warning.infra.persistence.mapping;
 
-import com.github.yun531.climate.warning.domain.model.RegionCodeMapping;
-import com.github.yun531.climate.warning.domain.repository.RegionCodeMappingRepository;
+import com.github.yun531.climate.warning.domain.mapping.RegionCodeMapping;
+import com.github.yun531.climate.warning.domain.mapping.RegionCodeMappingRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

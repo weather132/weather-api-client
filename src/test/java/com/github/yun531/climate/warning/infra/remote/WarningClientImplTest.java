@@ -2,7 +2,7 @@ package com.github.yun531.climate.warning.infra.remote;
 
 import com.github.yun531.climate.common.apiKey.ApiKey;
 import com.github.yun531.climate.common.client.WeatherClient;
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

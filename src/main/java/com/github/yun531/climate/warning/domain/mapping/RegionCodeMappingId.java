@@ -1,4 +1,4 @@
-package com.github.yun531.climate.warning.domain.model;
+package com.github.yun531.climate.warning.domain.mapping;
 
 import java.io.Serializable;
 import java.util.Objects;

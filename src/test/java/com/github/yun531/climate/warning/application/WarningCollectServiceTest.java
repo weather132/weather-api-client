@@ -1,12 +1,11 @@
 package com.github.yun531.climate.warning.application;
 
 import com.github.yun531.climate.common.event.WarningRefreshedEvent;
-import com.github.yun531.climate.warning.domain.WarningClient;
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
-import com.github.yun531.climate.warning.domain.repository.WarningCurrentRepository;
-import com.github.yun531.climate.warning.domain.repository.WarningEventRepository;
+import com.github.yun531.climate.warning.domain.collect.WarningClient;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,6 @@ import static org.mockito.Mockito.when;
 class WarningCollectServiceTest {
 
     @Mock WarningClient warningClient;
-    @Mock WarningCurrentRepository currentRepository;
     @Mock WarningEventRepository eventRepository;
     @Mock ApplicationEventPublisher eventPublisher;
 
@@ -41,18 +39,17 @@ class WarningCollectServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new WarningCollectService(
-                warningClient, currentRepository, eventRepository, eventPublisher);
+        service = new WarningCollectService(warningClient, eventRepository, eventPublisher);
     }
 
     @Test
     @DisplayName("변화 감지 -- saveAll 호출 + WarningRefreshedEvent 1회 발행")
     void collect_publishesEvent_whenWarningEventsExist() {
-        // previous는 비어 있고 current에 새 특보 1건 -- NEW 이벤트 발생
+        // active는 비어 있고 current에 새 특보 1건 -- NEW 이벤트 발생
         when(warningClient.requestCurrentWarnings(TM)).thenReturn(List.of(
                 new WarningCurrent("L1100100", WarningKind.RAIN, WarningLevel.ADVISORY, TM, TM)
         ));
-        when(currentRepository.findAll()).thenReturn(List.of());
+        when(eventRepository.findActiveWarnings()).thenReturn(List.of());
 
         service.collect(TM);
 
@@ -67,11 +64,11 @@ class WarningCollectServiceTest {
     @Test
     @DisplayName("변화 없음 -- saveAll 미호출 + 이벤트 미발행")
     void collect_doesNotPublish_whenNoWarningEvents() {
-        // previous와 current가 동일 값 -- changeDetector가 빈 리스트 반환
+        // active와 current가 동일 값 -- changeDetector가 빈 리스트 반환
         when(warningClient.requestCurrentWarnings(TM)).thenReturn(List.of(
                 new WarningCurrent("L1100100", WarningKind.RAIN, WarningLevel.ADVISORY, TM, TM)
         ));
-        when(currentRepository.findAll()).thenReturn(List.of(
+        when(eventRepository.findActiveWarnings()).thenReturn(List.of(
                 new WarningCurrent("L1100100", WarningKind.RAIN, WarningLevel.ADVISORY, TM, TM)
         ));
 

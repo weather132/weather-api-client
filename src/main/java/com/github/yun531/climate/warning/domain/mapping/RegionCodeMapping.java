@@ -1,4 +1,4 @@
-package com.github.yun531.climate.warning.domain.model;
+package com.github.yun531.climate.warning.domain.mapping;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
