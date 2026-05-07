@@ -22,7 +22,7 @@ public interface JpaWarningEventRepository extends JpaRepository<WarningEvent, L
     List<WarningEvent> findLatestByWarningRegionCodes(@Param("codes") List<String> warningRegionCodes);
 
     @Query("""
-            SELECT new com.github.yun531.climate.warning.domain.model.WarningCurrent(
+            SELECT new com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent(
                 we.warningRegionCode, we.kind, we.level, we.announceTime, we.effectiveTime
             )
             FROM WarningEvent we
@@ -31,7 +31,7 @@ public interface JpaWarningEventRepository extends JpaRepository<WarningEvent, L
                 FROM WarningEvent we2
                 GROUP BY we2.warningRegionCode, we2.kind
             )
-            AND we.eventType <> com.github.yun531.climate.warning.domain.model.WarningEventType.LIFTED
+            AND we.eventType <> com.github.yun531.climate.warning.domain.shared.WarningEventType.LIFTED
             """)
     List<WarningCurrent> findActiveWarnings();
 }
