@@ -4,6 +4,12 @@ create table province_region_code
     region_code varchar(20) not null unique
 );
 
+create table sido_region_code
+(
+    id   bigint primary key auto_increment,
+    code varchar(20) not null unique
+);
+
 create table city_region_code
 (
     id                      bigint primary key auto_increment,
@@ -11,7 +17,9 @@ create table city_region_code
     x                       int         not null,
     y                       int         not null,
     province_region_code_id bigint,
-    foreign key (province_region_code_id) references province_region_code (id) on delete set null
+    sido_region_code_id     bigint,
+    foreign key (province_region_code_id) references province_region_code (id) on delete set null,
+    foreign key (sido_region_code_id) references sido_region_code (id) on delete set null
 );
 
 create table short_grid
