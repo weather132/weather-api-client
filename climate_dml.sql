@@ -175,6 +175,25 @@ values (null, '11B10101', 60, 127, null),
        (null, '11G00401', 53, 33, null),
        (null, '11G00601', 28, 8, null);
 
+insert into sido_region_code
+values (null, 'seoul'),
+       (null, 'busan'),
+       (null, 'daegu'),
+       (null, 'incheon'),
+       (null, 'gwangju'),
+       (null, 'daejeon'),
+       (null, 'ulsan'),
+       (null, 'sejong'),
+       (null, 'gyeonggi'),
+       (null, 'gangwon'),
+       (null, 'chungbuk'),
+       (null, 'chungnam'),
+       (null, 'jeonbuk'),
+       (null, 'jeonnam'),
+       (null, 'gyeongbuk'),
+       (null, 'gyeongnam'),
+       (null, 'jeju');
+
 set SQL_SAFE_UPDATES = 0;
 update city_region_code as c
 set c.province_region_code_id = (select id
@@ -187,67 +206,67 @@ set c.province_region_code_id = p.id
 where substring(c.region_code, 3, 2) = substring(p.region_code, 3, 2);
 set SQL_SAFE_UPDATES = 1;
 
-set SQL_SAFE_UPDATES = 0;
+SET SQL_SAFE_UPDATES = 0;
 
 -- 서울 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'SEOUL')
+set sido_region_code_id = (select id from sido_region_code where code = 'seoul')
 where region_code in (
     '11B10101'
     );
 
 -- 부산 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'BUSAN')
+set sido_region_code_id = (select id from sido_region_code where code = 'busan')
 where region_code in (
     '11H20201'
     );
 
 -- 대구 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'DAEGU')
+set sido_region_code_id = (select id from sido_region_code where code = 'daegu')
 where region_code in (
     '11H10701'
     );
 
 -- 인천 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'INCHEON')
+set sido_region_code_id = (select id from sido_region_code where code = 'incheon')
 where region_code in (
     '11B20201'
     );
 
 -- 광주 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'GWANGJU')
+set sido_region_code_id = (select id from sido_region_code where code = 'gwangju')
 where region_code in (
     '11F20501'
     );
 
 -- 대전 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'DAEJEON')
+set sido_region_code_id = (select id from sido_region_code where code = 'daejeon')
 where region_code in (
     '11C20401'
     );
 
 -- 울산 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'ULSAN')
+set sido_region_code_id = (select id from sido_region_code where code = 'ulsan')
 where region_code in (
     '11H20101'
     );
 
 -- 세종 (1)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'SEJONG')
+set sido_region_code_id = (select id from sido_region_code where code = 'sejong')
 where region_code in (
     '11C20404'
     );
 
 -- 경기 (31)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'GYEONGGI')
+set sido_region_code_id = (select id from sido_region_code where code = 'gyeonggi')
 where region_code in (
                       '11B20601', '11B20605', '11B20602', '11B10103',
                       '11B10102', '11B20606', '11B20603', '11B20609',
@@ -261,7 +280,7 @@ where region_code in (
 
 -- 강원 (18)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'GANGWON')
+set sido_region_code_id = (select id from sido_region_code where code = 'gangwon')
 where region_code in (
                       '11D10101', '11D10102', '11D10201', '11D10202',
                       '11D10301', '11D10302', '11D10401', '11D10402',
@@ -272,7 +291,7 @@ where region_code in (
 
 -- 충북 (11)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'CHUNGBUK')
+set sido_region_code_id = (select id from sido_region_code where code = 'chungbuk')
 where region_code in (
                       '11C10301', '11C10304', '11C10303', '11C10102',
                       '11C10101', '11C10103', '11C10201', '11C10202',
@@ -281,7 +300,7 @@ where region_code in (
 
 -- 충남 (15)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'CHUNGNAM')
+set sido_region_code_id = (select id from sido_region_code where code = 'chungnam')
 where region_code in (
                       '11C20402', '11C20602', '11C20403', '11C20601',
                       '11C20301', '11C20302', '11C20303', '11C20101',
@@ -291,7 +310,7 @@ where region_code in (
 
 -- 전북 (14)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'JEONBUK')
+set sido_region_code_id = (select id from sido_region_code where code = 'jeonbuk')
 where region_code in (
                       '11F10201', '11F10202', '21F10501', '11F10203',
                       '21F10502', '11F10401', '21F10601', '11F10302',
@@ -301,7 +320,7 @@ where region_code in (
 
 -- 전남 (22)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'JEONNAM')
+set sido_region_code_id = (select id from sido_region_code where code = 'jeonnam')
 where region_code in (
                       '11F20503', '11F20502', '11F20504', '11F20505',
                       '21F20102', '21F20101', '21F20801', '21F20804',
@@ -313,7 +332,7 @@ where region_code in (
 
 -- 경북 (21)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'GYEONGBUK')
+set sido_region_code_id = (select id from sido_region_code where code = 'gyeongbuk')
 where region_code in (
                       '11H10702', '11H10703', '11H10704', '11H10705',
                       '11H10601', '11H10602', '11H10604', '11H10605',
@@ -325,7 +344,7 @@ where region_code in (
 
 -- 경남 (18)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'GYEONGNAM')
+set sido_region_code_id = (select id from sido_region_code where code = 'gyeongnam')
 where region_code in (
                       '11H20304', '11H20102', '11H20301', '11H20601',
                       '11H20603', '11H20604', '11H20602', '11H20701',
@@ -336,7 +355,7 @@ where region_code in (
 
 -- 제주 (3)
 update city_region_code
-set sido_region_code_id = (select id from sido_region_code where code = 'JEJU')
+set sido_region_code_id = (select id from sido_region_code where code = 'jeju')
 where region_code in (
                       '11G00201', '11G00401', '11G00601'
     );
@@ -568,22 +587,3 @@ values ('11B10101', 'L1100100'), -- 서울동남권
        ('11G00201', 'L1090700'), -- 제주 → 제주도북부
        ('11G00401', 'L1090900'); -- 서귀포 → 제주도남부
 
-
-insert into sido_region_code
-values (null, 'SEOUL'),
-       (null, 'BUSAN'),
-       (null, 'DAEGU'),
-       (null, 'INCHEON'),
-       (null, 'GWANGJU'),
-       (null, 'DAEJEON'),
-       (null, 'ULSAN'),
-       (null, 'SEJONG'),
-       (null, 'GYEONGGI'),
-       (null, 'GANGWON'),
-       (null, 'CHUNGBUK'),
-       (null, 'CHUNGNAM'),
-       (null, 'JEONBUK'),
-       (null, 'JEONNAM'),
-       (null, 'GYEONGBUK'),
-       (null, 'GYEONGNAM'),
-       (null, 'JEJU');
