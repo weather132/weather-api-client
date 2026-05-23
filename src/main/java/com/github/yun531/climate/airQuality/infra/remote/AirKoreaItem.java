@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.yun531.climate.airQuality.domain.AirQuality;
 import com.github.yun531.climate.airQuality.domain.PmItemCode;
-import com.github.yun531.climate.airQuality.infra.cache.SidoRegionCodeCache;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

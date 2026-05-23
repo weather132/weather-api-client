@@ -2,8 +2,6 @@ package com.github.yun531.climate.airQuality.infra.remote;
 
 import com.github.yun531.climate.airQuality.domain.AirQuality;
 import com.github.yun531.climate.airQuality.domain.PmItemCode;
-import com.github.yun531.climate.airQuality.infra.cache.SidoRegionCodeCache;
-import com.github.yun531.climate.airQuality.infra.remote.AirKoreaItem;
 import com.github.yun531.climate.common.parseConfig.ParseConfig;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
