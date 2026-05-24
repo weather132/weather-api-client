@@ -1,9 +1,8 @@
-package com.github.yun531.climate.forecast.infra.persistence;
+package com.github.yun531.climate.notification.infra.alert;
 
-import com.github.yun531.climate.forecast.domain.compose.AirQualityComposer;
-import com.github.yun531.climate.forecast.domain.reader.AirQualityViewReader;
-import com.github.yun531.climate.forecast.domain.readmodel.AirQualityView;
-import com.github.yun531.climate.forecast.infra.cache.AirQualityCacheManager;
+import com.github.yun531.climate.notification.domain.compose.AirQualityComposer;
+import com.github.yun531.climate.notification.domain.readmodel.AirQualityView;
+import com.github.yun531.climate.notification.domain.readmodel.AirQualityViewReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CachingAirQualityViewReader implements AirQualityViewReader {
 
-    private final AirQualityCacheManager cacheManager;
+    private final AirQualityViewCacheManager cacheManager;
     private final AirQualityComposer composer;
 
     @Override
