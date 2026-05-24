@@ -1,6 +1,7 @@
 package com.github.yun531.climate.notification.infra.alert;
 
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsService;
+import com.github.yun531.climate.notification.domain.detect.PmAlertThresholds;
 import com.github.yun531.climate.notification.domain.adjust.RainForecastAdjuster;
 import com.github.yun531.climate.notification.domain.adjust.RainOnsetAdjuster;
 import com.github.yun531.climate.notification.domain.detect.RainForecastDetector;
@@ -53,6 +54,21 @@ public class AlertConfig {
             @Value("${notification.window-hours:24}") int windowHours
     ) {
         return new RainForecastAdjuster(maxShiftHours, windowHours, 1);
+    }
+
+    // ---- Thresholds ----
+
+    @Bean
+    public PmAlertThresholds pmAlertThresholds(
+            @Value("${air-quality.grade.pm10.moderate-max}") int pm10ModerateMax,
+            @Value("${air-quality.grade.pm10.bad-max}") int pm10BadMax,
+            @Value("${air-quality.grade.pm25.moderate-max}") int pm25ModerateMax,
+            @Value("${air-quality.grade.pm25.bad-max}") int pm25BadMax
+    ) {
+        return new PmAlertThresholds(
+                new PmAlertThresholds.Thresholds(pm10ModerateMax, pm10BadMax),
+                new PmAlertThresholds.Thresholds(pm25ModerateMax, pm25BadMax)
+        );
     }
 
     // ---- Service ----

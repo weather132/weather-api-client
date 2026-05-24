@@ -6,5 +6,6 @@ package com.github.yun531.climate.notification.domain.model;
 public enum AlertTypeEnum {
     RAIN_ONSET,
     RAIN_FORECAST,
-    WARNING_ISSUED;
+    WARNING_ISSUED,
+    AIR_POLLUTION;
 }
