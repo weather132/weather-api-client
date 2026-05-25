@@ -88,10 +88,30 @@ public class AlertController {
         }
     }
 
+    @GetMapping("/air-pollution")
+    @Operation(
+            summary = "미세먼지 알림",
+            description = "매시 발표되는 PM10/PM2.5 측정값이 임계치를 초과할 때의 알림"
+    )
+    public ResponseEntity<List<AlertEvent>> getAirPollution(
+            @RequestParam List<String> regionIds
+    ) {
+        try (var ignored = MdcContext.of(Map.of(
+                "traceId", TraceIdGenerator.generate(),
+                "job", "alerts-air-pollution"))) {
+
+            var cmd = new GenerateAlertsCommand(
+                    regionIds, EnumSet.of(AlertTypeEnum.AIR_POLLUTION), null, null
+            );
+            return ResponseEntity.ok(service.generate(cmd));
+        }
+    }
+
     @GetMapping("/summary")
     @Operation(
-            summary = "단기 예보 + 기상특보 통합 알림",
-            description = "3시간 단기예보 변동사항(RAIN_ONSET)과 기상특보 변동사항(WARNING_ISSUED)을 통합 조회"
+            summary = "단기 예보 + 기상특보 + 미세먼지 통합 알림",
+            description = "3시간 단기예보 변동사항(RAIN_ONSET), 기상특보 변동사항(WARNING_ISSUED), "
+                    + "미세먼지(AIR_POLLUTION)를 통합 조회"
     )
     public ResponseEntity<List<AlertEvent>> getSummary(
             @RequestParam List<String> regionIds,
@@ -106,7 +126,7 @@ public class AlertController {
 
             var cmd = new GenerateAlertsCommand(
                     regionIds,
-                    EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED),
+                    EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED, AlertTypeEnum.AIR_POLLUTION),
                     toKindCodes(warningKinds), withinHours
             );
             return ResponseEntity.ok(service.generate(cmd));

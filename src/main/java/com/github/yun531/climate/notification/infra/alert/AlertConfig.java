@@ -4,9 +4,11 @@ import com.github.yun531.climate.notification.application.alert.GenerateAlertsSe
 import com.github.yun531.climate.notification.domain.detect.PmAlertThresholds;
 import com.github.yun531.climate.notification.domain.adjust.RainForecastAdjuster;
 import com.github.yun531.climate.notification.domain.adjust.RainOnsetAdjuster;
+import com.github.yun531.climate.notification.domain.detect.PmAlertDetector;
 import com.github.yun531.climate.notification.domain.detect.RainForecastDetector;
 import com.github.yun531.climate.notification.domain.detect.RainOnsetDetector;
 import com.github.yun531.climate.notification.domain.detect.WarningIssuedDetector;
+import com.github.yun531.climate.notification.domain.readmodel.AirQualityViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.PopViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.WarningViewReader;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,9 +79,11 @@ public class AlertConfig {
     public GenerateAlertsService generateAlertsService(
             PopViewReader popViewReader,
             WarningViewReader warningViewReader,
+            AirQualityViewReader airQualityViewReader,
             RainOnsetDetector rainOnsetDetector,
             RainForecastDetector rainForecastDetector,
             WarningIssuedDetector warningIssuedDetector,
+            PmAlertDetector pmAlertDetector,
             RainOnsetAdjuster onsetAdjuster,
             RainForecastAdjuster forecastAdjuster,
             @Value("${notification.max-region-count:3}") int maxRegionCount
@@ -87,9 +91,11 @@ public class AlertConfig {
         return new GenerateAlertsService(
                 popViewReader,
                 warningViewReader,
+                airQualityViewReader,
                 rainOnsetDetector,
                 rainForecastDetector,
                 warningIssuedDetector,
+                pmAlertDetector,
                 onsetAdjuster,
                 forecastAdjuster,
                 maxRegionCount
