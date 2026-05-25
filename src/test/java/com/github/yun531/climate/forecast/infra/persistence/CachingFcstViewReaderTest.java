@@ -2,15 +2,15 @@ package com.github.yun531.climate.forecast.infra.persistence;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
-import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer;
-import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer.DailyComposeResult;
-import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer;
-import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer.HourlyComposeResult;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
-import com.github.yun531.climate.forecast.infra.cache.ForecastCacheManager;
+import com.github.yun531.climate.forecast.domain.compose.DailyFcstComposer;
+import com.github.yun531.climate.forecast.domain.compose.DailyFcstComposer.DailyComposeResult;
+import com.github.yun531.climate.forecast.domain.compose.HourlyFcstComposer;
+import com.github.yun531.climate.forecast.domain.compose.HourlyFcstComposer.HourlyComposeResult;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyView;
+import com.github.yun531.climate.forecast.infra.cache.FcstCacheManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,21 +28,24 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CachingForecastViewReaderTest {
+class CachingFcstViewReaderTest {
 
-    @Mock ForecastCacheManager cache;
-    @Mock HourlyForecastComposer hourlyComposer;
-    @Mock DailyForecastComposer dailyComposer;
+    @Mock
+    FcstCacheManager cache;
+    @Mock
+    HourlyFcstComposer hourlyComposer;
+    @Mock
+    DailyFcstComposer dailyComposer;
     @Mock CityRegionCodeRepository cityRegionCodeRepository;
     @Mock CityRegionCode cityRegionCode;
 
-    private CachingForecastViewReader reader;
+    private CachingFcstViewReader reader;
 
     private static final LocalDateTime ANNOUNCE_TIME = LocalDateTime.of(2026, 1, 22, 5, 0);
 
     @BeforeEach
     void setUp() {
-        reader = new CachingForecastViewReader(cache, hourlyComposer, dailyComposer, cityRegionCodeRepository);
+        reader = new CachingFcstViewReader(cache, hourlyComposer, dailyComposer, cityRegionCodeRepository);
     }
 
     @Nested
@@ -52,10 +55,10 @@ class CachingForecastViewReaderTest {
         @Test
         @DisplayName("캐시 히트 → Composer 미호출, 캐시 결과 반환")
         void cacheHit_returnsWithoutCompose() {
-            ForecastHourlyView cached = buildHourlyView();
+            FcstHourlyView cached = buildHourlyView();
             when(cache.getHourly("R1")).thenReturn(cached);
 
-            ForecastHourlyView result = reader.loadHourly("R1");
+            FcstHourlyView result = reader.loadHourly("R1");
 
             assertThat(result).isSameAs(cached);
             verify(hourlyComposer, never()).compose(any());
@@ -68,9 +71,9 @@ class CachingForecastViewReaderTest {
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(cityRegionCode);
             when(hourlyComposer.compose(cityRegionCode)).thenReturn(
                     new HourlyComposeResult(ANNOUNCE_TIME, List.of(
-                            new ForecastHourlyPoint(ANNOUNCE_TIME.plusHours(1), 10, 20))));
+                            new FcstHourlyPoint(ANNOUNCE_TIME.plusHours(1), 10, 20))));
 
-            ForecastHourlyView result = reader.loadHourly("R1");
+            FcstHourlyView result = reader.loadHourly("R1");
 
             assertThat(result).isNotNull();
             assertThat(result.regionId()).isEqualTo("R1");
@@ -110,10 +113,10 @@ class CachingForecastViewReaderTest {
         @Test
         @DisplayName("캐시 히트 → Composer 미호출, 캐시 결과 반환")
         void cacheHit_returnsWithoutCompose() {
-            ForecastDailyView cached = buildDailyView();
+            FcstDailyView cached = buildDailyView();
             when(cache.getDaily("R1")).thenReturn(cached);
 
-            ForecastDailyView result = reader.loadDaily("R1");
+            FcstDailyView result = reader.loadDaily("R1");
 
             assertThat(result).isSameAs(cached);
             verify(dailyComposer, never()).compose(any());
@@ -126,9 +129,9 @@ class CachingForecastViewReaderTest {
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(cityRegionCode);
             when(dailyComposer.compose(cityRegionCode)).thenReturn(
                     new DailyComposeResult(ANNOUNCE_TIME, List.of(
-                            new ForecastDailyPoint(0, -5, 5, 30, 60))));
+                            new FcstDailyPoint(0, -5, 5, 30, 60))));
 
-            ForecastDailyView result = reader.loadDaily("R1");
+            FcstDailyView result = reader.loadDaily("R1");
 
             assertThat(result).isNotNull();
             assertThat(result.regionId()).isEqualTo("R1");
@@ -161,13 +164,13 @@ class CachingForecastViewReaderTest {
 
     // ==================== helper ====================
 
-    private ForecastHourlyView buildHourlyView() {
-        return new ForecastHourlyView("R1", ANNOUNCE_TIME, List.of(
-                new ForecastHourlyPoint(ANNOUNCE_TIME.plusHours(1), 10, 20)));
+    private FcstHourlyView buildHourlyView() {
+        return new FcstHourlyView("R1", ANNOUNCE_TIME, List.of(
+                new FcstHourlyPoint(ANNOUNCE_TIME.plusHours(1), 10, 20)));
     }
 
-    private ForecastDailyView buildDailyView() {
-        return new ForecastDailyView("R1", ANNOUNCE_TIME, List.of(
-                new ForecastDailyPoint(0, -5, 5, 30, 60)));
+    private FcstDailyView buildDailyView() {
+        return new FcstDailyView("R1", ANNOUNCE_TIME, List.of(
+                new FcstDailyPoint(0, -5, 5, 30, 60)));
     }
 }

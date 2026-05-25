@@ -2,8 +2,8 @@ package com.github.yun531.climate.forecast.domain.compose;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.Coordinates;
-import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer.HourlyComposeResult;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
+import com.github.yun531.climate.forecast.domain.compose.HourlyFcstComposer.HourlyComposeResult;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyPoint;
 import com.github.yun531.climate.shortGrid.domain.AnnounceTime;
 import com.github.yun531.climate.shortGrid.domain.ShortGrid;
 import com.github.yun531.climate.shortGrid.domain.ShortGridRepository;
@@ -27,13 +27,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class HourlyForecastComposerTest {
+class HourlyFcstComposerTest {
 
     @Mock ShortGridRepository shortGridRepository;
     @Mock CityRegionCode regionCode;
     @Mock Coordinates coordinates;
 
-    private HourlyForecastComposer composer;
+    private HourlyFcstComposer composer;
 
     private static final LocalDateTime ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 28, 14, 0);
 
@@ -45,7 +45,7 @@ class HourlyForecastComposerTest {
 
     @BeforeEach
     void setUp() {
-        composer = new HourlyForecastComposer(shortGridRepository);
+        composer = new HourlyFcstComposer(shortGridRepository);
         when(regionCode.getCoordinates()).thenReturn(coordinates);
         when(coordinates.getX()).thenReturn(60);
         when(coordinates.getY()).thenReturn(127);
@@ -63,9 +63,9 @@ class HourlyForecastComposerTest {
 
             HourlyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastHourlyPoints()).hasSize(26);
-            assertThat(result.forecastHourlyPoints())
-                    .extracting(ForecastHourlyPoint::pop)
+            assertThat(result.fcstHourlyPoints()).hasSize(26);
+            assertThat(result.fcstHourlyPoints())
+                    .extracting(FcstHourlyPoint::pop)
                     .containsExactly(LATEST_POPS);
         }
 
@@ -76,8 +76,8 @@ class HourlyForecastComposerTest {
 
             HourlyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastHourlyPoints())
-                    .extracting(ForecastHourlyPoint::temp)
+            assertThat(result.fcstHourlyPoints())
+                    .extracting(FcstHourlyPoint::temp)
                     .containsExactly(IntStream.rangeClosed(1, 26).boxed().toArray(Integer[]::new));
         }
 
@@ -88,8 +88,8 @@ class HourlyForecastComposerTest {
 
             HourlyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastHourlyPoints())
-                    .extracting(ForecastHourlyPoint::effectiveTime)
+            assertThat(result.fcstHourlyPoints())
+                    .extracting(FcstHourlyPoint::effectiveTime)
                     .containsExactly(IntStream.rangeClosed(1, 26)
                             .mapToObj(ANNOUNCE_TIME::plusHours)
                             .toArray(LocalDateTime[]::new));
@@ -121,7 +121,7 @@ class HourlyForecastComposerTest {
 
             assertSoftly(softly -> {
                 softly.assertThat(result.announceTime()).isNull();
-                softly.assertThat(result.forecastHourlyPoints()).isEmpty();
+                softly.assertThat(result.fcstHourlyPoints()).isEmpty();
             });
         }
     }
@@ -145,8 +145,8 @@ class HourlyForecastComposerTest {
 
             HourlyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastHourlyPoints()).hasSize(1);
-            assertThat(result.forecastHourlyPoints().get(0).effectiveTime())
+            assertThat(result.fcstHourlyPoints()).hasSize(1);
+            assertThat(result.fcstHourlyPoints().get(0).effectiveTime())
                     .isEqualTo(ANNOUNCE_TIME.plusHours(1));
         }
 
@@ -164,8 +164,8 @@ class HourlyForecastComposerTest {
 
             HourlyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastHourlyPoints())
-                    .extracting(ForecastHourlyPoint::effectiveTime)
+            assertThat(result.fcstHourlyPoints())
+                    .extracting(FcstHourlyPoint::effectiveTime)
                     .isSorted();
         }
 
@@ -186,13 +186,13 @@ class HourlyForecastComposerTest {
             HourlyComposeResult result = composer.compose(regionCode);
 
             assertSoftly(softly -> {
-                softly.assertThat(result.forecastHourlyPoints()).hasSize(26);
-                softly.assertThat(result.forecastHourlyPoints())
-                        .extracting(ForecastHourlyPoint::effectiveTime)
+                softly.assertThat(result.fcstHourlyPoints()).hasSize(26);
+                softly.assertThat(result.fcstHourlyPoints())
+                        .extracting(FcstHourlyPoint::effectiveTime)
                         .isSorted();
-                softly.assertThat(result.forecastHourlyPoints())
+                softly.assertThat(result.fcstHourlyPoints())
                         .allMatch(p -> p.effectiveTime() != null);
-                softly.assertThat(result.forecastHourlyPoints().get(0).effectiveTime())
+                softly.assertThat(result.fcstHourlyPoints().get(0).effectiveTime())
                         .isEqualTo(ANNOUNCE_TIME.plusHours(1));
             });
         }

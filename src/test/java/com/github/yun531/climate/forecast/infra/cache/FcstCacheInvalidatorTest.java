@@ -16,17 +16,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-class ForecastCacheInvalidatorTest {
+class FcstCacheInvalidatorTest {
 
-    @Mock ForecastCacheManager cacheManager;
+    @Mock
+    FcstCacheManager cacheManager;
 
-    private ForecastCacheInvalidator invalidator;
+    private FcstCacheInvalidator invalidator;
 
     private static final LocalDateTime ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 28, 14, 0);
 
     @BeforeEach
     void setUp() {
-        invalidator = new ForecastCacheInvalidator(cacheManager);
+        invalidator = new FcstCacheInvalidator(cacheManager);
     }
 
     @Test

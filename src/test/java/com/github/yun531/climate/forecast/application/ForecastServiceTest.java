@@ -1,11 +1,11 @@
 package com.github.yun531.climate.forecast.application;
 
-import com.github.yun531.climate.forecast.domain.adjust.ForecastWindowAdjuster;
-import com.github.yun531.climate.forecast.domain.reader.ForecastViewReader;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
+import com.github.yun531.climate.forecast.domain.adjust.FcstWindowAdjuster;
+import com.github.yun531.climate.forecast.domain.reader.FcstViewReader;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,8 +24,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ForecastServiceTest {
 
-    @Mock ForecastViewReader viewReader;
-    @Mock ForecastWindowAdjuster windowAdjuster;
+    @Mock
+    FcstViewReader viewReader;
+    @Mock
+    FcstWindowAdjuster windowAdjuster;
 
     private ForecastService service;
 
@@ -45,12 +47,12 @@ class ForecastServiceTest {
         @Test
         @DisplayName("reader 로드 -> adjuster 적용 결과 반환")
         void delegatesToReaderThenAdjuster() {
-            ForecastHourlyView base = new ForecastHourlyView("R1", NOW, List.of(
-                    new ForecastHourlyPoint(NOW.plusHours(1), 10, 20),
-                    new ForecastHourlyPoint(NOW.plusHours(2), 12, 30)
+            FcstHourlyView base = new FcstHourlyView("R1", NOW, List.of(
+                    new FcstHourlyPoint(NOW.plusHours(1), 10, 20),
+                    new FcstHourlyPoint(NOW.plusHours(2), 12, 30)
             ));
-            ForecastHourlyView adjusted = new ForecastHourlyView("R1", NOW, List.of(
-                    new ForecastHourlyPoint(NOW.plusHours(2), 12, 30)
+            FcstHourlyView adjusted = new FcstHourlyView("R1", NOW, List.of(
+                    new FcstHourlyPoint(NOW.plusHours(2), 12, 30)
             ));
 
             when(viewReader.loadHourly("R1")).thenReturn(base);
@@ -76,8 +78,8 @@ class ForecastServiceTest {
         @Test
         @DisplayName("reader 결과 그대로 반환")
         void delegatesToReader() {
-            ForecastDailyView view = new ForecastDailyView("R1", NOW, List.of(
-                    new ForecastDailyPoint(0, -5, 5, 30, 60)
+            FcstDailyView view = new FcstDailyView("R1", NOW, List.of(
+                    new FcstDailyPoint(0, -5, 5, 30, 60)
             ));
             when(viewReader.loadDaily("R1")).thenReturn(view);
 

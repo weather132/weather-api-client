@@ -2,8 +2,8 @@ package com.github.yun531.climate.forecast.domain.compose;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.common.MidAnnounceTime;
-import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer.DailyComposeResult;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
+import com.github.yun531.climate.forecast.domain.compose.DailyFcstComposer.DailyComposeResult;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
 import com.github.yun531.climate.midLand.domain.MidLand;
 import com.github.yun531.climate.midLand.domain.MidLandRepository;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
@@ -36,7 +36,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DailyForecastComposerTest {
+class DailyFcstComposerTest {
 
     @Mock ShortLandRepository shortLandRepository;
     @Mock MidLandRepository midLandRepository;
@@ -45,7 +45,7 @@ class DailyForecastComposerTest {
     @Mock CityRegionCode regionCode;
     @Mock ProvinceRegionCode provinceRegionCode;
 
-    private DailyForecastComposer composer;
+    private DailyFcstComposer composer;
 
     private static final Long CITY_ID     = 1L;
     private static final Long PROVINCE_ID = 100L;
@@ -63,7 +63,7 @@ class DailyForecastComposerTest {
 
     @BeforeEach
     void setUp() {
-        composer = new DailyForecastComposer(
+        composer = new DailyFcstComposer(
                 shortLandRepository, midLandRepository,
                 midTemperatureRepository, provinceRegionCodeRepository,
                 FIXED_CLOCK);
@@ -83,7 +83,7 @@ class DailyForecastComposerTest {
 
             DailyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastDailyPoints()).hasSize(7);
+            assertThat(result.fcstDailyPoints()).hasSize(7);
             verify(midLandRepository, never()).findRecentAll(any(), any());
             verify(midTemperatureRepository, never()).findRecentAll(any(), any());
         }
@@ -115,7 +115,7 @@ class DailyForecastComposerTest {
 
             verify(shortLandRepository, atLeastOnce()).findRecentPop(eq(regionCode), any());
             // D+0 AM POP이 fallback 값으로 채워짐
-            assertThat(result.forecastDailyPoints().get(0).amPop()).isEqualTo(45);
+            assertThat(result.fcstDailyPoints().get(0).amPop()).isEqualTo(45);
         }
 
         @Test
@@ -135,7 +135,7 @@ class DailyForecastComposerTest {
             DailyComposeResult result = composer.compose(regionCode);
 
             // AM(09:00) → minTemp, PM(21:00) → maxTemp
-            ForecastDailyPoint day0 = result.forecastDailyPoints().get(0);
+            FcstDailyPoint day0 = result.fcstDailyPoints().get(0);
             assertSoftly(softly -> {
                 softly.assertThat(day0.minTemp()).isEqualTo(10);
                 softly.assertThat(day0.maxTemp()).isEqualTo(25);
@@ -155,7 +155,7 @@ class DailyForecastComposerTest {
 
             DailyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastDailyPoints()).hasSize(7);
+            assertThat(result.fcstDailyPoints()).hasSize(7);
         }
 
         @Test
@@ -166,7 +166,7 @@ class DailyForecastComposerTest {
             DailyComposeResult result = composer.compose(regionCode);
 
             // AM 슬롯(day*2) = minTemp, PM 슬롯(day*2+1) = maxTemp
-            ForecastDailyPoint day0 = result.forecastDailyPoints().get(0);
+            FcstDailyPoint day0 = result.fcstDailyPoints().get(0);
             assertSoftly(softly -> {
                 softly.assertThat(day0.minTemp()).isEqualTo(10);
                 softly.assertThat(day0.maxTemp()).isEqualTo(25);
@@ -193,7 +193,7 @@ class DailyForecastComposerTest {
 
             verify(midLandRepository, never()).findRecentAll(any(), any());
             verify(midTemperatureRepository, never()).findRecentAll(any(), any());
-            assertThat(result.forecastDailyPoints()).isEmpty();
+            assertThat(result.fcstDailyPoints()).isEmpty();
         }
     }
 
@@ -209,9 +209,9 @@ class DailyForecastComposerTest {
 
             DailyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastDailyPoints()).hasSize(7);
-            assertThat(result.forecastDailyPoints())
-                    .extracting(ForecastDailyPoint::daysAhead)
+            assertThat(result.fcstDailyPoints()).hasSize(7);
+            assertThat(result.fcstDailyPoints())
+                    .extracting(FcstDailyPoint::daysAhead)
                     .containsExactly(0, 1, 2, 3, 4, 5, 6);
         }
 
@@ -222,7 +222,7 @@ class DailyForecastComposerTest {
 
             DailyComposeResult result = composer.compose(regionCode);
 
-            ForecastDailyPoint day0 = result.forecastDailyPoints().get(0);
+            FcstDailyPoint day0 = result.fcstDailyPoints().get(0);
             assertSoftly(softly -> {
                 softly.assertThat(day0.amPop()).isEqualTo(30);
                 softly.assertThat(day0.pmPop()).isEqualTo(70);
@@ -242,7 +242,7 @@ class DailyForecastComposerTest {
 
             DailyComposeResult result = composer.compose(regionCode);
 
-            assertThat(result.forecastDailyPoints()).isEmpty();
+            assertThat(result.fcstDailyPoints()).isEmpty();
         }
 
         @Test
@@ -273,16 +273,16 @@ class DailyForecastComposerTest {
 
             assertSoftly(softly -> {
                 // D+0: 데이터 존재
-                softly.assertThat(result.forecastDailyPoints().get(0).amPop()).isEqualTo(50);
-                softly.assertThat(result.forecastDailyPoints().get(0).pmPop()).isEqualTo(50);
+                softly.assertThat(result.fcstDailyPoints().get(0).amPop()).isEqualTo(50);
+                softly.assertThat(result.fcstDailyPoints().get(0).pmPop()).isEqualTo(50);
                 // D+1: 누락 → null
-                softly.assertThat(result.forecastDailyPoints().get(1).amPop()).isNull();
-                softly.assertThat(result.forecastDailyPoints().get(1).pmPop()).isNull();
-                softly.assertThat(result.forecastDailyPoints().get(1).minTemp()).isNull();
-                softly.assertThat(result.forecastDailyPoints().get(1).maxTemp()).isNull();
+                softly.assertThat(result.fcstDailyPoints().get(1).amPop()).isNull();
+                softly.assertThat(result.fcstDailyPoints().get(1).pmPop()).isNull();
+                softly.assertThat(result.fcstDailyPoints().get(1).minTemp()).isNull();
+                softly.assertThat(result.fcstDailyPoints().get(1).maxTemp()).isNull();
                 // D+2: 데이터 존재
-                softly.assertThat(result.forecastDailyPoints().get(2).amPop()).isEqualTo(50);
-                softly.assertThat(result.forecastDailyPoints().get(2).pmPop()).isEqualTo(50);
+                softly.assertThat(result.fcstDailyPoints().get(2).amPop()).isEqualTo(50);
+                softly.assertThat(result.fcstDailyPoints().get(2).pmPop()).isEqualTo(50);
             });
         }
     }

@@ -1,9 +1,9 @@
 package com.github.yun531.climate.forecast.infra.cache;
 
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,15 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ForecastCacheManagerTest {
+class FcstCacheManagerTest {
 
-    private ForecastCacheManager cacheManager;
+    private FcstCacheManager cacheManager;
 
     private static final LocalDateTime ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 28, 14, 0);
 
     @BeforeEach
     void setUp() {
-        cacheManager = new ForecastCacheManager();
+        cacheManager = new FcstCacheManager();
     }
 
     @Nested
@@ -32,7 +32,7 @@ class ForecastCacheManagerTest {
         @Test
         @DisplayName("put 후 get — 동일 객체 반환")
         void putThenGet() {
-            ForecastHourlyView view = buildHourlyView("R1");
+            FcstHourlyView view = buildHourlyView("R1");
             cacheManager.putHourly("R1", view);
 
             assertThat(cacheManager.getHourly("R1")).isSameAs(view);
@@ -74,7 +74,7 @@ class ForecastCacheManagerTest {
         @Test
         @DisplayName("put 후 get — 동일 객체 반환")
         void putThenGet() {
-            ForecastDailyView view = buildDailyView("R1");
+            FcstDailyView view = buildDailyView("R1");
             cacheManager.putDaily("R1", view);
 
             assertThat(cacheManager.getDaily("R1")).isSameAs(view);
@@ -111,13 +111,13 @@ class ForecastCacheManagerTest {
 
     // ==================== helper ====================
 
-    private ForecastHourlyView buildHourlyView(String regionId) {
-        return new ForecastHourlyView(regionId, ANNOUNCE_TIME, List.of(
-                new ForecastHourlyPoint(ANNOUNCE_TIME.plusHours(1), 10, 20)));
+    private FcstHourlyView buildHourlyView(String regionId) {
+        return new FcstHourlyView(regionId, ANNOUNCE_TIME, List.of(
+                new FcstHourlyPoint(ANNOUNCE_TIME.plusHours(1), 10, 20)));
     }
 
-    private ForecastDailyView buildDailyView(String regionId) {
-        return new ForecastDailyView(regionId, ANNOUNCE_TIME, List.of(
-                new ForecastDailyPoint(0, -5, 5, 30, 60)));
+    private FcstDailyView buildDailyView(String regionId) {
+        return new FcstDailyView(regionId, ANNOUNCE_TIME, List.of(
+                new FcstDailyPoint(0, -5, 5, 30, 60)));
     }
 }

@@ -20,7 +20,7 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class AirQualityComposer {
+public class FcstAirQualityComposer {
 
     private static final int FALLBACK_HOURS = 3;
 

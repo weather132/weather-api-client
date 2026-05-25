@@ -8,12 +8,12 @@ import java.util.Objects;
  * 시간대별 예보 DTO
  * - hourlyPoints: (announceTime, temp, pop)
  */
-public record ForecastHourlyView(
+public record FcstHourlyView(
         String regionId,
         LocalDateTime announceTime,
-        List<ForecastHourlyPoint> hourlyPoints
+        List<FcstHourlyPoint> hourlyPoints
 ) {
-    public ForecastHourlyView {
+    public FcstHourlyView {
         Objects.requireNonNull(hourlyPoints, "hourlyPoints must not be null");
         hourlyPoints = List.copyOf(hourlyPoints);
     }

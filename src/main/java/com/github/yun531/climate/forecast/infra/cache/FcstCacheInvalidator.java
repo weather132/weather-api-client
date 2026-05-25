@@ -15,9 +15,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ForecastCacheInvalidator {
+public class FcstCacheInvalidator {
 
-    private final ForecastCacheManager cacheManager;
+    private final FcstCacheManager cacheManager;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     void on(ShortGridRefreshedEvent e) {

@@ -1,10 +1,10 @@
 package com.github.yun531.climate.integration;
 
 import com.github.yun531.climate.forecast.application.ForecastService;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyView;
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsCommand;
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsService;
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
@@ -379,10 +379,10 @@ class IntegrationTest {
             void hourlyForecastPopMatchesScenario() {
                 LocalDateTime announceTime = loadAnnounceTime();
 
-                ForecastHourlyView hourly = forecastService.getHourlyForecast(REGION_ID);
+                FcstHourlyView hourly = forecastService.getHourlyForecast(REGION_ID);
                 assertThat(hourly).as("시간별 예보 뷰").isNotNull();
 
-                List<ForecastHourlyPoint> points = hourly.hourlyPoints();
+                List<FcstHourlyPoint> points = hourly.hourlyPoints();
                 LocalDateTime shiftedAnnounceTime = hourly.announceTime();
                 int shiftHours = (int) Duration.between(announceTime, shiftedAnnounceTime).toHours();
 
@@ -393,7 +393,7 @@ class IntegrationTest {
                 assertThat(points)
                         .allMatch(p -> p.effectiveTime().isAfter(shiftedAnnounceTime));
 
-                for (ForecastHourlyPoint p : points) {
+                for (FcstHourlyPoint p : points) {
                     long offsetFromShifted = Duration.between(shiftedAnnounceTime, p.effectiveTime()).toHours();
                     int latestPopsIndex = (int) offsetFromShifted + shiftHours - 1;
 
@@ -407,7 +407,7 @@ class IntegrationTest {
             @Test
             @DisplayName("dailyForecast 7일치 생성 및 daysAhead 시퀀스")
             void createsDailyForecastWithSevenDays() {
-                ForecastDailyView daily = forecastService.getDailyForecast(REGION_ID);
+                FcstDailyView daily = forecastService.getDailyForecast(REGION_ID);
 
                 assertThat(daily).as("일별 예보 뷰").isNotNull();
                 assertThat(daily.dailyPoints())
@@ -415,7 +415,7 @@ class IntegrationTest {
                         .hasSize(EXPECTED_FORECAST_DAYS);
 
                 List<Integer> daysAhead = daily.dailyPoints().stream()
-                        .map(ForecastDailyPoint::daysAhead)
+                        .map(FcstDailyPoint::daysAhead)
                         .toList();
 
                 assertThat(daysAhead)

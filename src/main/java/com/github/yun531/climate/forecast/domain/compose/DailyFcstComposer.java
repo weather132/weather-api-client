@@ -1,7 +1,7 @@
 package com.github.yun531.climate.forecast.domain.compose;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
 import com.github.yun531.climate.midLand.domain.MidLand;
 import com.github.yun531.climate.midLand.domain.MidLandRepository;
 import com.github.yun531.climate.midTemperature.domain.MidTemperature;
@@ -25,7 +25,7 @@ import java.util.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DailyForecastComposer {
+public class DailyFcstComposer {
 
     private static final int DAILY_RANGE = 7;
 
@@ -37,7 +37,7 @@ public class DailyForecastComposer {
 
     public record DailyComposeResult(
             LocalDateTime announceTime,
-            List<ForecastDailyPoint> forecastDailyPoints
+            List<FcstDailyPoint> fcstDailyPoints
     ) {}
 
     public DailyComposeResult compose(CityRegionCode cityRegionCode) {
@@ -48,10 +48,10 @@ public class DailyForecastComposer {
 
         Map<LocalDateTime, DailyRawItem> rawItemMap  =
                 collectRawItems(effectiveTimes, shortLandItems, midResult.items(), cityRegionCode);
-        List<ForecastDailyPoint> forecastDailyPoints = buildDaily(effectiveTimes, rawItemMap);
+        List<FcstDailyPoint> fcstDailyPoints = buildDaily(effectiveTimes, rawItemMap);
         LocalDateTime announceTime                   = extractAnnounceTime(shortLandItems, midResult);
 
-        DailyComposeResult result = new DailyComposeResult(announceTime, forecastDailyPoints);
+        DailyComposeResult result = new DailyComposeResult(announceTime, fcstDailyPoints);
         logIfDegraded(cityRegionCode, result);
         return result;
     }
@@ -142,13 +142,13 @@ public class DailyForecastComposer {
      * → index day*2 = AM(09:00, minTemp), day*2+1 = PM(21:00, maxTemp)
      * rawItemMap 비어있음 → 빈 리스트 반환.
      */
-    private List<ForecastDailyPoint> buildDaily(
+    private List<FcstDailyPoint> buildDaily(
             List<LocalDateTime> effectiveTimes,
             Map<LocalDateTime, DailyRawItem> rawItemMap
     ) {
         if (rawItemMap.isEmpty()) return List.of();
 
-        List<ForecastDailyPoint> dailyPoints = new ArrayList<>(DAILY_RANGE);
+        List<FcstDailyPoint> dailyPoints = new ArrayList<>(DAILY_RANGE);
         for (int day = 0; day < DAILY_RANGE; day++) {
             DailyRawItem amItem = rawItemMap.get(effectiveTimes.get(day * 2));
             DailyRawItem pmItem = rawItemMap.get(effectiveTimes.get(day * 2 + 1));
@@ -158,7 +158,7 @@ public class DailyForecastComposer {
             Integer amPop   = amItem != null ? amItem.pop() : null;
             Integer pmPop   = pmItem != null ? pmItem.pop() : null;
 
-            dailyPoints.add(new ForecastDailyPoint(day, minTemp, maxTemp, amPop, pmPop));
+            dailyPoints.add(new FcstDailyPoint(day, minTemp, maxTemp, amPop, pmPop));
         }
         return dailyPoints;
     }
@@ -180,12 +180,12 @@ public class DailyForecastComposer {
     private void logIfDegraded(CityRegionCode regionCode, DailyComposeResult result) {
         String regionId = regionCode.getRegionCode();
 
-        if (result.forecastDailyPoints().isEmpty()) {
+        if (result.fcstDailyPoints().isEmpty()) {
             log.warn("DailyForecast 결과 없음. regionId={}", regionId);
             return;
         }
 
-        long emptyDays = result.forecastDailyPoints().stream()
+        long emptyDays = result.fcstDailyPoints().stream()
                 .filter(p -> p.minTemp() == null || p.maxTemp() == null
                         || p.amPop() == null || p.pmPop() == null)
                 .count();
