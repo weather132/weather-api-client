@@ -2,10 +2,10 @@ package com.github.yun531.climate.benchmark;
 
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
-import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer;
-import com.github.yun531.climate.forecast.domain.compose.DailyForecastComposer.DailyComposeResult;
-import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer;
-import com.github.yun531.climate.forecast.domain.compose.HourlyForecastComposer.HourlyComposeResult;
+import com.github.yun531.climate.forecast.domain.compose.DailyFcstComposer;
+import com.github.yun531.climate.forecast.domain.compose.DailyFcstComposer.DailyComposeResult;
+import com.github.yun531.climate.forecast.domain.compose.HourlyFcstComposer;
+import com.github.yun531.climate.forecast.domain.compose.HourlyFcstComposer.HourlyComposeResult;
 import com.github.yun531.climate.warning.domain.collect.WarningClient;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -75,8 +75,10 @@ class ForecastComposeBenchmarkTest {
         }
     }
 
-    @Autowired HourlyForecastComposer hourlyComposer;
-    @Autowired DailyForecastComposer dailyComposer;
+    @Autowired
+    HourlyFcstComposer hourlyComposer;
+    @Autowired
+    DailyFcstComposer dailyComposer;
     @Autowired DataSource dataSource;
     @Autowired JdbcTemplate jdbcTemplate;
 
@@ -118,17 +120,17 @@ class ForecastComposeBenchmarkTest {
         HourlyComposeResult hourly = hourlyComposer.compose(first);
         DailyComposeResult daily = dailyComposer.compose(first);
 
-        assertThat(hourly.forecastHourlyPoints())
+        assertThat(hourly.fcstHourlyPoints())
                 .as("hourly 벤치마크 데이터 정합성")
                 .isNotEmpty();
-        assertThat(daily.forecastDailyPoints())
+        assertThat(daily.fcstDailyPoints())
                 .as("daily 벤치마크 데이터 정합성")
                 .isNotEmpty();
 
         System.out.printf("[VERIFY] regionId=%s, hourly=%d건, daily=%d건%n",
                 first.getRegionCode(),
-                hourly.forecastHourlyPoints().size(),
-                daily.forecastDailyPoints().size());
+                hourly.fcstHourlyPoints().size(),
+                daily.fcstDailyPoints().size());
     }
 
     @Test
@@ -156,8 +158,8 @@ class ForecastComposeBenchmarkTest {
             DailyComposeResult daily = dailyComposer.compose(region);
             perRegionNanos[i] = System.nanoTime() - regionStart;
 
-            if (!hourly.forecastHourlyPoints().isEmpty()
-                    && !daily.forecastDailyPoints().isEmpty()) {
+            if (!hourly.fcstHourlyPoints().isEmpty()
+                    && !daily.fcstDailyPoints().isEmpty()) {
                 successCount++;
             } else {
                 failCount++;
@@ -238,7 +240,7 @@ class ForecastComposeBenchmarkTest {
                 DailyComposeResult daily = dailyComposer.compose(region);
                 perRegionNanos[i] = System.nanoTime() - regionStart;
 
-                if (!daily.forecastDailyPoints().isEmpty()) successCount++;
+                if (!daily.fcstDailyPoints().isEmpty()) successCount++;
                 else failCount++;
             }
 

@@ -9,7 +9,14 @@ public class ApiKey {
     @Getter
     private final String apiKey;
 
-    public ApiKey(@Value("${api-key}") String apiKey) {
+    @Getter
+    private final String airQualityApiKey;
+
+    public ApiKey(
+            @Value("${api-key}") String apiKey,
+            @Value("${air-quality.api-key}") String airQualityApiKey
+    ) {
         this.apiKey = apiKey;
+        this.airQualityApiKey = airQualityApiKey;
     }
 }

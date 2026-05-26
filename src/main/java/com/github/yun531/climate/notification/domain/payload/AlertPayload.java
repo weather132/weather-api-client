@@ -18,10 +18,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = RainOnsetPayload.class, name = "RAIN_ONSET"),
         @JsonSubTypes.Type(value = RainForecastPayload.class, name = "RAIN_FORECAST"),
-        @JsonSubTypes.Type(value = WarningIssuedPayload.class, name = "WARNING_ISSUED")
+        @JsonSubTypes.Type(value = WarningIssuedPayload.class, name = "WARNING_ISSUED"),
+        @JsonSubTypes.Type(value = AirPollutionPayload.class, name = "AIR_POLLUTION")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public sealed interface AlertPayload
-        permits RainOnsetPayload, RainForecastPayload, WarningIssuedPayload {
+        permits RainOnsetPayload, RainForecastPayload, WarningIssuedPayload, AirPollutionPayload {
 }

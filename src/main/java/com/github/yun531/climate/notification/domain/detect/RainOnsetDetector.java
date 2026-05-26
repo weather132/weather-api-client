@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * PopView.Pair(현재/이전 POP) -> "비 시작" AlertEvent 목록 계산.
+ * 이전/현재 POV 예보(PopView.Pair)를 비교해 "비 시작" 시각을 AlertEvent로 변환.
  */
 public class RainOnsetDetector {
 
@@ -25,64 +25,106 @@ public class RainOnsetDetector {
         this.maxHourlyPoints = Math.max(1, maxHourlyPoints);
     }
 
-    /**
-     * @return 비 예보시각 AlertEvents 목록 (빈 리스트 가능)
-     */
     public List<AlertEvent> detect(String regionId, PopView.Pair pair, LocalDateTime now) {
-        if (regionId == null || regionId.isBlank()) return List.of();
-        if (pair == null || pair.current() == null || pair.previous() == null) return List.of();
-        if (now == null) return List.of();
+        if (cannotDetect(regionId, pair, now)) {
+            return List.of();
+        }
+        return scanForRainOnsets(regionId, pair, now);
+    }
 
-        PopView curView = pair.current();
-        LocalDateTime computedAt = TimeUtil.truncateToMinutes(
-                curView.announceTime() != null ? curView.announceTime() : now);
-        Map<LocalDateTime, Integer> prevPopMap = buildPrevPopMap(pair.previous());
+    private boolean cannotDetect(String regionId, PopView.Pair pair, LocalDateTime now) {
+        if (regionId == null || regionId.isBlank()) {
+            return true;
+        }
+        if (now == null) {
+            return true;
+        }
+        if (pair == null) {
+            return true;
+        }
+        return pair.current() == null || pair.previous() == null;
+    }
 
-        // cur 순회하면서 비 시작 감지
+    private List<AlertEvent> scanForRainOnsets(String regionId, PopView.Pair pair, LocalDateTime now) {
+        PopView curPopView = pair.current();
+        LocalDateTime computedAt = computedAtOf(curPopView, now);
+        Map<LocalDateTime, Integer> previousPopLookup = popLookup(pair.previous());
+
         List<AlertEvent> rainOnsetAlerts = new ArrayList<>(8);
-        List<PopView.Hourly.Pop> hourlyPops = curView.hourly().pops();
-
-        // maxHourlyPoints는 리스트 인덱스(i)가 아니라, 실제 처리한 "유효 포인트"(seen) 기준으로 제한
-        int seen = 0;
-        for (PopView.Hourly.Pop pop : hourlyPops) {
-            if (seen >= maxHourlyPoints) break;
-            if (pop == null || pop.effectiveTime() == null) continue;
-
-            Integer curPop = pop.pop();
-            if (curPop == null) { seen++; continue; }
-
-            // 이전 예보의 같은 effectiveTime 시각 POP과 비교(예보 업데이트 전후 변화 감지)
-            if (isOnset(curPop, prevPopMap.get(pop.effectiveTime()))) {
-                rainOnsetAlerts.add(new AlertEvent(AlertTypeEnum.RAIN_ONSET, regionId, computedAt,
-                        new RainOnsetPayload(pop.effectiveTime(), curPop)));
+        int scannedPoints = 0;
+        for (PopView.Hourly.Pop hourlyPop : curPopView.hourly().pops()) {
+            if (scanLimitReached(scannedPoints)) {
+                break;
             }
-            seen++;
+            if (hasNoEffectiveTime(hourlyPop)) {
+                continue;
+            }
+            scannedPoints++;
+            if (isRainOnset(hourlyPop, previousPopLookup )) {
+                rainOnsetAlerts.add(rainOnsetAlert(regionId, computedAt, hourlyPop));
+            }
         }
-
-        return rainOnsetAlerts.isEmpty() ? List.of() : List.copyOf(rainOnsetAlerts);
+        return List.copyOf(rainOnsetAlerts);
     }
 
-    /** 이전에 비 아님 -> 현재 비 = onset. 비교 불가(prev 없음)면 현재 비 여부만 판단 */
-    private boolean isOnset(int curPop, Integer prevPop) {
-        if (prevPop != null) {
-            return prevPop < rainThreshold && curPop >= rainThreshold;
-        }
-        return curPop >= rainThreshold;
+    private LocalDateTime computedAtOf(PopView currentForecast, LocalDateTime now) {
+        LocalDateTime source = currentForecast.announceTime() != null ? currentForecast.announceTime() : now;
+        return TimeUtil.truncateToMinutes(source);
     }
 
-    private Map<LocalDateTime, Integer> buildPrevPopMap(PopView prvView) {
-        Map<LocalDateTime, Integer> map = new HashMap<>(PopView.HOURLY_SIZE * 2);
-
-        for (PopView.Hourly.Pop p : prvView.hourly().pops()) {
-            if (p == null) continue;
-
-            LocalDateTime at = p.effectiveTime();
-            if (at == null) continue;
-
-            Integer pop = p.pop();
-            if (pop != null) map.put(at, pop);
+    private Map<LocalDateTime, Integer> popLookup(PopView forecast) {
+        Map<LocalDateTime, Integer> popByTime = new HashMap<>(PopView.HOURLY_SIZE * 2);
+        for (PopView.Hourly.Pop hourlyPop : forecast.hourly().pops()) {
+            if (hourlyPop == null) {
+                continue;
+            }
+            LocalDateTime effectiveTime = hourlyPop.effectiveTime();
+            if (effectiveTime == null) {
+                continue;
+            }
+            Integer pop = hourlyPop.pop();
+            if (pop == null) {
+                continue;
+            }
+            popByTime.put(effectiveTime, pop);
         }
+        return popByTime;
+    }
 
-        return map;
+    private AlertEvent rainOnsetAlert(String regionId, LocalDateTime computedAt, PopView.Hourly.Pop hourlyPop) {
+        return new AlertEvent(
+                AlertTypeEnum.RAIN_ONSET,
+                regionId,
+                computedAt,
+                new RainOnsetPayload(hourlyPop.effectiveTime(), hourlyPop.pop()));
+    }
+
+    private boolean scanLimitReached(int scannedPoints) {
+        return scannedPoints >= maxHourlyPoints;
+    }
+
+    private boolean hasNoEffectiveTime(PopView.Hourly.Pop hourlyPop) {
+        return hourlyPop == null || hourlyPop.effectiveTime() == null;
+    }
+
+    private boolean isRainOnset(PopView.Hourly.Pop hourlyPop, Map<LocalDateTime, Integer> previousPopByTime) {
+        Integer currentPop = hourlyPop.pop();
+        if (currentPop == null) {
+            return false;
+        }
+        Integer previousPop = previousPopByTime.get(hourlyPop.effectiveTime());
+        return startedRaining(previousPop, currentPop);
+    }
+
+    /** 이전 예보가 없으면 현재 비 여부만, 있으면 '비 아님 -> 비'로의 전환만 onset으로 본다. */
+    private boolean startedRaining(Integer previousPop, int currentPop) {
+        if (previousPop == null) {
+            return isRain(currentPop);
+        }
+        return !isRain(previousPop) && isRain(currentPop);
+    }
+
+    private boolean isRain(int pop) {
+        return pop >= rainThreshold;
     }
 }

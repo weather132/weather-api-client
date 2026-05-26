@@ -1,9 +1,9 @@
 package com.github.yun531.climate.forecast.application;
 
-import com.github.yun531.climate.forecast.domain.adjust.ForecastWindowAdjuster;
-import com.github.yun531.climate.forecast.domain.reader.ForecastViewReader;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
+import com.github.yun531.climate.forecast.domain.adjust.FcstWindowAdjuster;
+import com.github.yun531.climate.forecast.domain.reader.FcstViewReader;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyView;
 import com.github.yun531.climate.common.time.TimeUtil;
 
 import java.time.Clock;
@@ -15,13 +15,13 @@ import java.time.LocalDateTime;
  */
 public class ForecastService {
 
-    private final ForecastViewReader viewReader;
-    private final ForecastWindowAdjuster windowAdjuster;
+    private final FcstViewReader viewReader;
+    private final FcstWindowAdjuster windowAdjuster;
     private final Clock clock;
 
     public ForecastService(
-            ForecastViewReader viewReader,
-            ForecastWindowAdjuster windowAdjuster,
+            FcstViewReader viewReader,
+            FcstWindowAdjuster windowAdjuster,
             Clock clock
     ) {
         this.viewReader = viewReader;
@@ -31,14 +31,14 @@ public class ForecastService {
 
     // ======================= Hourly =======================
 
-    public ForecastHourlyView getHourlyForecast(String regionId) {
+    public FcstHourlyView getHourlyForecast(String regionId) {
         return getHourlyForecast(regionId, now());
     }
 
-    public ForecastHourlyView getHourlyForecast(String regionId, LocalDateTime now) {
+    public FcstHourlyView getHourlyForecast(String regionId, LocalDateTime now) {
         LocalDateTime effectiveNow = normalizeNow(now);
 
-        ForecastHourlyView base = viewReader.loadHourly(regionId);
+        FcstHourlyView base = viewReader.loadHourly(regionId);
         if (base == null) return null;
 
         return windowAdjuster.adjust(base, effectiveNow);
@@ -46,7 +46,7 @@ public class ForecastService {
 
     // ======================= Daily =======================
 
-    public ForecastDailyView getDailyForecast(String regionId) {
+    public FcstDailyView getDailyForecast(String regionId) {
         return viewReader.loadDaily(regionId);
     }
 

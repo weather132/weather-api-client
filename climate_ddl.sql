@@ -7,6 +7,12 @@ create table province_region_code
     region_code varchar(20) not null unique
 );
 
+create table sido_region_code
+(
+    id   bigint primary key auto_increment,
+    code varchar(20) not null unique
+);
+
 create table city_region_code
 (
     id                      bigint primary key auto_increment,
@@ -14,7 +20,9 @@ create table city_region_code
     x                       int         not null,
     y                       int         not null,
     province_region_code_id bigint,
-    foreign key (province_region_code_id) references province_region_code (id) on delete set null
+    sido_region_code_id     bigint,
+    foreign key (province_region_code_id) references province_region_code (id) on delete set null,
+    foreign key (sido_region_code_id) references sido_region_code (id) on delete set null
 );
 
 create table short_grid
@@ -80,4 +88,16 @@ create table warning_event
     announce_time       datetime    not null,
     effective_time      datetime    not null,
     index idx_wrn_reg_kind_id (warning_region_code, kind, id)
+);
+
+create table air_quality
+(
+    id                  bigint primary key auto_increment,
+    sido_region_code_id bigint   not null,
+    announce_time       datetime not null,
+    pm10                int,
+    pm25                int,
+    unique key uk_sido_announce (sido_region_code_id, announce_time),
+    index idx_announce_time (announce_time),
+    foreign key (sido_region_code_id) references sido_region_code (id)
 );

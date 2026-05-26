@@ -232,4 +232,23 @@ values ('11B10101', 'L1100100'), -- 서울동남권
 -- 제주도
 -- ---------------------------------------------------------
        ('11G00201', 'L1090700'), -- 제주 → 제주도북부
-       ('11G00401', 'L1090900'); -- 서귀포 → 제
+       ('11G00401', 'L1090900'); -- 서귀포 → 제주도남부
+
+insert into sido_region_code
+values (null, 'seoul'),
+       (null, 'busan'),
+       (null, 'daegu'),
+       (null, 'incheon'),
+       (null, 'gwangju'),
+       (null, 'daejeon'),
+       (null, 'ulsan'),
+       (null, 'sejong'),
+       (null, 'gyeonggi'),
+       (null, 'gangwon'),
+       (null, 'chungbuk'),
+       (null, 'chungnam'),
+       (null, 'jeonbuk'),
+       (null, 'jeonnam'),
+       (null, 'gyeongbuk'),
+       (null, 'gyeongnam'),
+       (null, 'jeju');

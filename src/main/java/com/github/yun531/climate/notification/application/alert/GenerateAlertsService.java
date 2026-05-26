@@ -3,11 +3,14 @@ package com.github.yun531.climate.notification.application.alert;
 import com.github.yun531.climate.common.time.TimeUtil;
 import com.github.yun531.climate.notification.domain.adjust.RainForecastAdjuster;
 import com.github.yun531.climate.notification.domain.adjust.RainOnsetAdjuster;
+import com.github.yun531.climate.notification.domain.detect.PmAlertDetector;
 import com.github.yun531.climate.notification.domain.detect.RainForecastDetector;
 import com.github.yun531.climate.notification.domain.detect.RainOnsetDetector;
 import com.github.yun531.climate.notification.domain.detect.WarningIssuedDetector;
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
 import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
+import com.github.yun531.climate.notification.domain.readmodel.AirQualityView;
+import com.github.yun531.climate.notification.domain.readmodel.AirQualityViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import com.github.yun531.climate.notification.domain.readmodel.PopViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
@@ -27,9 +30,11 @@ public class GenerateAlertsService {
 
     private final PopViewReader popViewReader;
     private final WarningViewReader warningViewReader;
+    private final AirQualityViewReader airQualityViewReader;
     private final RainOnsetDetector rainOnsetDetector;
     private final RainForecastDetector rainForecastDetector;
     private final WarningIssuedDetector warningIssuedDetector;
+    private final PmAlertDetector pmAlertDetector;
     private final RainOnsetAdjuster rainOnsetAdjuster;
     private final RainForecastAdjuster rainForecastAdjuster;
     private final int maxRegionCount;
@@ -42,18 +47,22 @@ public class GenerateAlertsService {
     public GenerateAlertsService(
             PopViewReader popViewReader,
             WarningViewReader warningViewReader,
+            AirQualityViewReader airQualityViewReader,
             RainOnsetDetector rainOnsetDetector,
             RainForecastDetector rainForecastDetector,
             WarningIssuedDetector warningIssuedDetector,
+            PmAlertDetector pmAlertDetector,
             RainOnsetAdjuster rainOnsetAdjuster,
             RainForecastAdjuster rainForecastAdjuster,
             int maxRegionCount
     ) {
         this.popViewReader = popViewReader;
         this.warningViewReader = warningViewReader;
+        this.airQualityViewReader = airQualityViewReader;
         this.rainOnsetDetector = rainOnsetDetector;
         this.rainForecastDetector = rainForecastDetector;
         this.warningIssuedDetector = warningIssuedDetector;
+        this.pmAlertDetector = pmAlertDetector;
         this.rainOnsetAdjuster = rainOnsetAdjuster;
         this.rainForecastAdjuster = rainForecastAdjuster;
         this.maxRegionCount = Math.max(0, maxRegionCount);
@@ -98,6 +107,9 @@ public class GenerateAlertsService {
 
             if (cmd.isEnabled(AlertTypeEnum.WARNING_ISSUED))
                 alertEvents.addAll(detectWarningIssued(regionId, cmd.warningKinds()));
+
+            if (cmd.isEnabled(AlertTypeEnum.AIR_POLLUTION))
+                alertEvents.addAll(detectAirPollution(regionId));
         }
 
         return alertEvents.isEmpty() ? List.of() : alertEvents;
@@ -136,6 +148,14 @@ public class GenerateAlertsService {
         if (warningViews == null || warningViews.isEmpty()) return List.of();
 
         return warningIssuedDetector.detect(regionId, warningViews, warningKinds);
+    }
+
+    /** load view -> detect air pollution (임계 판정 + 등급 평가) */
+    private List<AlertEvent> detectAirPollution(String regionId) {
+        AirQualityView view = airQualityViewReader.loadAirQuality(regionId);
+        if (view == null || view.announceTime() == null) return List.of();
+
+        return pmAlertDetector.detect(regionId, view);
     }
 
     // ============ 정규화 헬퍼 ============
