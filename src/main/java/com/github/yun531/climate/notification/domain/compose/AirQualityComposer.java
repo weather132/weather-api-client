@@ -41,7 +41,7 @@ public class AirQualityComposer {
 
     private Optional<AirQuality> findRecentAirQuality(Long sidoId) {
         LocalDateTime now = LocalDateTime.now(clock);
-        return jpaAirQualityRepository.findRecentBySido(
+        return jpaAirQualityRepository.findRecentBySidoWithin(
                 sidoId, now.minusHours(FALLBACK_HOURS), now, Limit.of(1));
     }
 

@@ -200,8 +200,8 @@ class AirQualityIntegrationTest {
         }
 
         @Test
-        @DisplayName("FIXED_NOW 기준 3시간 내 최신 1건 -> view 매핑 + 등급")
-        void findsRecentWithinFallback() {
+        @DisplayName("여러 측정 중 가장 최신 1건 -> view 매핑 + 등급 (시간 제한 없음)")
+        void findsLatest() {
             Long sidoId = seoulSidoId();
             insertAirQuality(sidoId, FIXED_NOW.minusHours(2), 95, 80);
             insertAirQuality(sidoId, FIXED_NOW.minusHours(4), 10, 5);
@@ -216,11 +216,23 @@ class AirQualityIntegrationTest {
         }
 
         @Test
-        @DisplayName("3시간 밖 측정만 존재 -> 빈 view")
-        void onlyOutsideFallback_emptyView() {
+        @DisplayName("오래된 측정만 존재해도 반환 (제한 없음, 신선도는 announceTime 으로 판단)")
+        void returnsStaleMeasurement() {
             Long sidoId = seoulSidoId();
-            insertAirQuality(sidoId, FIXED_NOW.minusHours(5), 50, 30);
+            // 3시간을 한참 넘긴 측정도 반환됨
+            insertAirQuality(sidoId, FIXED_NOW.minusHours(10), 50, 30);
 
+            AirQualityView view = airQualityService.getAirQuality(SEOUL_REGION_ID);
+
+            assertThat(view).isNotNull();
+            assertThat(view.announceTime()).isEqualTo(FIXED_NOW.minusHours(10));
+            assertThat(view.pm10()).isEqualTo(50);
+        }
+
+        @Test
+        @DisplayName("측정 자체가 없음 -> 빈 view")
+        void noMeasurement_emptyView() {
+            // air_quality 비어있음
             AirQualityView view = airQualityService.getAirQuality(SEOUL_REGION_ID);
 
             assertThat(view.announceTime()).isNull();

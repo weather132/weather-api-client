@@ -15,22 +15,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Limit;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FcstAirQualityComposer")
 class FcstAirQualityComposerTest {
 
-    private static final LocalDateTime NOW = LocalDateTime.of(2026, 5, 21, 11, 30);
-    private static final Clock FIXED_CLOCK = Clock.fixed(
-            NOW.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+    private static final LocalDateTime ANNOUNCE_TIME = LocalDateTime.of(2026, 5, 21, 10, 0);
 
     // PM10: good=30, moderate=80, bad=150 / PM25: good=15, moderate=35, bad=75
     private final AirQualityGradeThresholds thresholds = new AirQualityGradeThresholds(
@@ -45,7 +43,7 @@ class FcstAirQualityComposerTest {
     @BeforeEach
     void setUp() {
         composer = new FcstAirQualityComposer(
-                cityRegionCodeRepository, jpaAirQualityRepository, thresholds, FIXED_CLOCK);
+                cityRegionCodeRepository, jpaAirQualityRepository, thresholds);
     }
 
     @Nested
@@ -53,15 +51,16 @@ class FcstAirQualityComposerTest {
     class Compose {
 
         @Test
-        @DisplayName("측정값 -> 등급 평가 포함 view")
+        @DisplayName("최신 측정값 -> 등급 평가 포함 view (시간 제한 없음)")
         void composesWithGrade() {
             CityRegionCode city = cityWithSido(10L);
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(city);
-            when(jpaAirQualityRepository.findRecentBySido(eq(10L), any(), any(), any(Limit.class)))
-                    .thenReturn(Optional.of(new AirQuality(10L, NOW.minusHours(1), 95, 80)));
+            when(jpaAirQualityRepository.findLatestBySido(eq(10L), any(Limit.class)))
+                    .thenReturn(Optional.of(new AirQuality(10L, ANNOUNCE_TIME, 95, 80)));
 
             AirQualityView view = composer.compose("R1");
 
+            assertThat(view.announceTime()).isEqualTo(ANNOUNCE_TIME);
             assertThat(view.pm10()).isEqualTo(95);
             assertThat(view.pm10Grade()).isEqualTo("BAD");       // 80 < 95 <= 150
             assertThat(view.pm25()).isEqualTo(80);
@@ -86,11 +85,11 @@ class FcstAirQualityComposerTest {
         }
 
         @Test
-        @DisplayName("3시간 내 측정 없음 -> 빈 view")
-        void noRecentMeasurement() {
+        @DisplayName("측정 자체가 없음 -> 빈 view")
+        void noMeasurement() {
             CityRegionCode city = cityWithSido(10L);
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(city);
-            when(jpaAirQualityRepository.findRecentBySido(eq(10L), any(), any(), any(Limit.class)))
+            when(jpaAirQualityRepository.findLatestBySido(eq(10L), any(Limit.class)))
                     .thenReturn(Optional.empty());
 
             AirQualityView view = composer.compose("R1");
@@ -101,7 +100,7 @@ class FcstAirQualityComposerTest {
     }
 
     private CityRegionCode cityWithSido(Long sidoId) {
-        CityRegionCode city = org.mockito.Mockito.mock(CityRegionCode.class);
+        CityRegionCode city = mock(CityRegionCode.class);
         when(city.getSidoRegionCodeId()).thenReturn(sidoId);
         return city;
     }

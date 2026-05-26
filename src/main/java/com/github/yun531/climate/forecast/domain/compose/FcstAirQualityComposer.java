@@ -11,8 +11,6 @@ import org.springframework.data.domain.Limit;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -22,18 +20,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FcstAirQualityComposer {
 
-    private static final int FALLBACK_HOURS = 3;
-
     private final CityRegionCodeRepository cityRegionCodeRepository;
     private final JpaAirQualityRepository jpaAirQualityRepository;
     private final AirQualityGradeThresholds thresholds;
-    private final Clock clock;
 
     public AirQualityView compose(String regionId) {
         Long sidoId = resolveSidoId(regionId);
         if (sidoId == null) return emptyView();
 
-        return toViewOrEmpty(findRecentAirQuality(sidoId));
+        return toViewOrEmpty(findLatestAirQuality(sidoId));
     }
 
     private Long resolveSidoId(String regionId) {
@@ -42,10 +37,8 @@ public class FcstAirQualityComposer {
         return cityRegionCode.getSidoRegionCodeId();
     }
 
-    private Optional<AirQuality> findRecentAirQuality(Long sidoId) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        return jpaAirQualityRepository.findRecentBySido(
-                sidoId, now.minusHours(FALLBACK_HOURS), now, Limit.of(1));
+    private Optional<AirQuality> findLatestAirQuality(Long sidoId) {
+        return jpaAirQualityRepository.findLatestBySido(sidoId, Limit.of(1));
     }
 
     private AirQualityView toViewOrEmpty(Optional<AirQuality> measurement) {

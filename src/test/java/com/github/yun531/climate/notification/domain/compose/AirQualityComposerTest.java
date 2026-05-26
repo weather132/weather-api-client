@@ -53,7 +53,7 @@ class AirQualityComposerTest {
         void composesRawValues() {
             CityRegionCode city = cityWithSido(10L);
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(city);
-            when(jpaAirQualityRepository.findRecentBySido(eq(10L), any(), any(), any(Limit.class)))
+            when(jpaAirQualityRepository.findRecentBySidoWithin(eq(10L), any(), any(), any(Limit.class)))
                     .thenReturn(Optional.of(new AirQuality(10L, NOW.minusHours(1), 95, 80)));
 
             AirQualityView view = composer.compose("R1");
@@ -85,7 +85,7 @@ class AirQualityComposerTest {
         void noRecentMeasurement() {
             CityRegionCode city = cityWithSido(10L);
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(city);
-            when(jpaAirQualityRepository.findRecentBySido(eq(10L), any(), any(), any(Limit.class)))
+            when(jpaAirQualityRepository.findRecentBySidoWithin(eq(10L), any(), any(), any(Limit.class)))
                     .thenReturn(Optional.empty());
 
             AirQualityView view = composer.compose("R1");
