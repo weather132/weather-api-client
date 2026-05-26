@@ -186,7 +186,7 @@ class AirQualityIntegrationTest {
     }
 
     @Nested
-    @DisplayName("읽기 경로 -- forecast 조회 (findRecentBySido JPQL)")
+    @DisplayName("읽기 경로 -- forecast 조회 (findLatestBySido JPQL)")
     @TestInstance(Lifecycle.PER_CLASS)
     class ForecastReadPathTest {
 

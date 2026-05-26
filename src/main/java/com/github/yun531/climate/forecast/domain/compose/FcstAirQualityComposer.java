@@ -1,13 +1,12 @@
 package com.github.yun531.climate.forecast.domain.compose;
 
 import com.github.yun531.climate.airQuality.domain.AirQuality;
-import com.github.yun531.climate.airQuality.infra.persistence.JpaAirQualityRepository;
+import com.github.yun531.climate.airQuality.domain.AirQualityRepository;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.forecast.domain.readmodel.AirQualityGradeThresholds;
 import com.github.yun531.climate.forecast.domain.readmodel.AirQualityView;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Limit;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +20,7 @@ import java.util.Optional;
 public class FcstAirQualityComposer {
 
     private final CityRegionCodeRepository cityRegionCodeRepository;
-    private final JpaAirQualityRepository jpaAirQualityRepository;
+    private final AirQualityRepository airQualityRepository;
     private final AirQualityGradeThresholds thresholds;
 
     public AirQualityView compose(String regionId) {
@@ -38,7 +37,7 @@ public class FcstAirQualityComposer {
     }
 
     private Optional<AirQuality> findLatestAirQuality(Long sidoId) {
-        return jpaAirQualityRepository.findLatestBySido(sidoId, Limit.of(1));
+        return airQualityRepository.findLatestBySido(sidoId);
     }
 
     private AirQualityView toViewOrEmpty(Optional<AirQuality> measurement) {

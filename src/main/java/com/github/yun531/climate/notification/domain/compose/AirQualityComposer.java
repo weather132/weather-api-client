@@ -1,12 +1,11 @@
 package com.github.yun531.climate.notification.domain.compose;
 
 import com.github.yun531.climate.airQuality.domain.AirQuality;
-import com.github.yun531.climate.airQuality.infra.persistence.JpaAirQualityRepository;
+import com.github.yun531.climate.airQuality.domain.AirQualityRepository;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.notification.domain.readmodel.AirQualityView;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -23,7 +22,7 @@ public class AirQualityComposer {
     private static final int FALLBACK_HOURS = 3;
 
     private final CityRegionCodeRepository cityRegionCodeRepository;
-    private final JpaAirQualityRepository jpaAirQualityRepository;
+    private final AirQualityRepository airQualityRepository;
     private final Clock clock;
 
     public AirQualityView compose(String regionId) {
@@ -41,8 +40,8 @@ public class AirQualityComposer {
 
     private Optional<AirQuality> findRecentAirQuality(Long sidoId) {
         LocalDateTime now = LocalDateTime.now(clock);
-        return jpaAirQualityRepository.findRecentBySidoWithin(
-                sidoId, now.minusHours(FALLBACK_HOURS), now, Limit.of(1));
+        return airQualityRepository.findRecentBySidoWithin(
+                sidoId, now.minusHours(FALLBACK_HOURS), now);
     }
 
     private AirQualityView toViewOrEmpty(Optional<AirQuality> measurement) {

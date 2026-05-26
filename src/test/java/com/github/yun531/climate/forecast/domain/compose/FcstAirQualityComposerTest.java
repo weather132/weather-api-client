@@ -1,7 +1,7 @@
 package com.github.yun531.climate.forecast.domain.compose;
 
 import com.github.yun531.climate.airQuality.domain.AirQuality;
-import com.github.yun531.climate.airQuality.infra.persistence.JpaAirQualityRepository;
+import com.github.yun531.climate.airQuality.domain.AirQualityRepository;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.forecast.domain.readmodel.AirQualityGradeThresholds;
@@ -13,13 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Limit;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,14 +34,14 @@ class FcstAirQualityComposerTest {
             new AirQualityGradeThresholds.Thresholds(15, 35, 75));
 
     @Mock CityRegionCodeRepository cityRegionCodeRepository;
-    @Mock JpaAirQualityRepository jpaAirQualityRepository;
+    @Mock AirQualityRepository airQualityRepository;
 
     private FcstAirQualityComposer composer;
 
     @BeforeEach
     void setUp() {
         composer = new FcstAirQualityComposer(
-                cityRegionCodeRepository, jpaAirQualityRepository, thresholds);
+                cityRegionCodeRepository, airQualityRepository, thresholds);
     }
 
     @Nested
@@ -55,7 +53,7 @@ class FcstAirQualityComposerTest {
         void composesWithGrade() {
             CityRegionCode city = cityWithSido(10L);
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(city);
-            when(jpaAirQualityRepository.findLatestBySido(eq(10L), any(Limit.class)))
+            when(airQualityRepository.findLatestBySido(eq(10L)))
                     .thenReturn(Optional.of(new AirQuality(10L, ANNOUNCE_TIME, 95, 80)));
 
             AirQualityView view = composer.compose("R1");
@@ -89,7 +87,7 @@ class FcstAirQualityComposerTest {
         void noMeasurement() {
             CityRegionCode city = cityWithSido(10L);
             when(cityRegionCodeRepository.findByRegionCode("R1")).thenReturn(city);
-            when(jpaAirQualityRepository.findLatestBySido(eq(10L), any(Limit.class)))
+            when(airQualityRepository.findLatestBySido(eq(10L)))
                     .thenReturn(Optional.empty());
 
             AirQualityView view = composer.compose("R1");

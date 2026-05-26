@@ -2,6 +2,7 @@ package com.github.yun531.climate.airQuality.infra.persistence;
 
 import com.github.yun531.climate.airQuality.domain.AirQuality;
 import com.github.yun531.climate.airQuality.domain.AirQualityRepository;
+import org.springframework.data.domain.Limit;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -37,6 +38,16 @@ public class AirQualityRepositoryImpl implements AirQualityRepository {
     @Override
     public Optional<LocalDateTime> findLatestAnnounceTime() {
         return Optional.ofNullable(jpa.findMaxAnnounceTime());
+    }
+
+    @Override
+    public Optional<AirQuality> findRecentBySidoWithin(Long sidoId, LocalDateTime from, LocalDateTime to) {
+        return jpa.findRecentBySidoWithin(sidoId, from, to, Limit.of(1));
+    }
+
+    @Override
+    public Optional<AirQuality> findLatestBySido(Long sidoId) {
+        return jpa.findLatestBySido(sidoId, Limit.of(1));
     }
 
     private void bind(PreparedStatement ps, AirQuality measurement) throws SQLException {
