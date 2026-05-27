@@ -20,7 +20,7 @@ public class AirQualityScheduler {
         this.collectService = collectService;
     }
 
-    @Scheduled(cron = "0 22 * * * *")
+    @Scheduled(cron = "0 10 * * * *")
     public void collect() {
         try (var ignored = MdcContext.of(Map.of(
                 "traceId", TraceIdGenerator.generate(),
