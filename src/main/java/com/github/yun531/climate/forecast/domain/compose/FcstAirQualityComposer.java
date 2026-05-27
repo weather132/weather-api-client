@@ -6,10 +6,12 @@ import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.forecast.domain.readmodel.AirQualityGradeThresholds;
 import com.github.yun531.climate.forecast.domain.readmodel.AirQualityView;
+import com.github.yun531.climate.forecast.domain.readmodel.RegionAirQualityView;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,6 +30,12 @@ public class FcstAirQualityComposer {
         if (sidoId == null) return emptyView();
 
         return toViewOrEmpty(findLatestAirQuality(sidoId));
+    }
+
+    public List<RegionAirQualityView> composeAll(List<String> regionIds) {
+        if (regionIds == null || regionIds.isEmpty()) return List.of();
+
+        return composeEach(regionIds);
     }
 
     private Long resolveSidoId(String regionId) {
@@ -49,6 +57,12 @@ public class FcstAirQualityComposer {
                 measurement.getAnnounceTime(),
                 measurement.getPm10(), gradeOfPm10(measurement.getPm10()),
                 measurement.getPm25(), gradeOfPm25(measurement.getPm25()));
+    }
+
+    private List<RegionAirQualityView> composeEach(List<String> regionIds) {
+        return regionIds.stream()
+                .map(regionId -> new RegionAirQualityView(regionId, compose(regionId)))
+                .toList();
     }
 
     @Nullable

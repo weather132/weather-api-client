@@ -6,6 +6,7 @@ import com.github.yun531.climate.cityRegionCode.domain.CityRegionCode;
 import com.github.yun531.climate.cityRegionCode.domain.CityRegionCodeRepository;
 import com.github.yun531.climate.forecast.domain.readmodel.AirQualityGradeThresholds;
 import com.github.yun531.climate.forecast.domain.readmodel.AirQualityView;
+import com.github.yun531.climate.forecast.domain.readmodel.RegionAirQualityView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,12 +16,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FcstAirQualityComposer")
@@ -97,9 +98,70 @@ class FcstAirQualityComposerTest {
         }
     }
 
+    @Nested
+    @DisplayName("composeAll - 다지역")
+    class ComposeAll {
+
+        @Test
+        @DisplayName("각 regionId 의 view 를 등급 포함해 반환")
+        void composesEachWithGrade() {
+            stubRegionSido("R1", 10L);
+            stubRegionSido("R2", 20L);
+            stubLatest(10L, new AirQuality(10L, ANNOUNCE_TIME, 40, 20));
+            stubLatest(20L, new AirQuality(20L, ANNOUNCE_TIME, 95, 80));
+
+            List<RegionAirQualityView> result = composer.composeAll(List.of("R1", "R2"));
+
+            assertThat(result).extracting(r -> r.view().pm10()).containsExactly(40, 95);
+            assertThat(result).extracting(r -> r.view().pm10Grade())
+                    .containsExactly("MODERATE", "BAD");
+        }
+
+        @Test
+        @DisplayName("응답은 요청 regionId 순서를 보존")
+        void preservesRequestOrder() {
+            stubRegionSido("R3", 30L);
+            stubRegionSido("R1", 10L);
+            stubRegionSido("R2", 20L);
+            stubLatest(30L, new AirQuality(30L, ANNOUNCE_TIME, 10, 5));
+            stubLatest(10L, new AirQuality(10L, ANNOUNCE_TIME, 40, 20));
+            stubLatest(20L, new AirQuality(20L, ANNOUNCE_TIME, 95, 80));
+
+            List<RegionAirQualityView> result = composer.composeAll(List.of("R3", "R1", "R2"));
+
+            assertThat(result).extracting(RegionAirQualityView::regionId)
+                    .containsExactly("R3", "R1", "R2");
+        }
+
+        @Test
+        @DisplayName("미존재 regionId -> 빈 view 로 포함, 순서 유지")
+        void unknownRegion_emptyViewIncluded() {
+            stubRegionSido("R1", 10L);
+            when(cityRegionCodeRepository.findByRegionCode("RX")).thenReturn(null);
+            stubLatest(10L, new AirQuality(10L, ANNOUNCE_TIME, 40, 20));
+
+            List<RegionAirQualityView> result = composer.composeAll(List.of("R1", "RX"));
+
+            assertThat(result).hasSize(2);
+            assertThat(result.get(1).regionId()).isEqualTo("RX");
+            assertThat(result.get(1).view().pm10()).isNull();
+        }
+    }
+
     private CityRegionCode cityWithSido(Long sidoId) {
         CityRegionCode city = mock(CityRegionCode.class);
         when(city.getSidoRegionCodeId()).thenReturn(sidoId);
         return city;
+    }
+
+    private void stubRegionSido(String regionId, Long sidoId) {
+        CityRegionCode city = mock(CityRegionCode.class);
+        when(city.getSidoRegionCodeId()).thenReturn(sidoId);
+        when(cityRegionCodeRepository.findByRegionCode(regionId)).thenReturn(city);
+    }
+
+    private void stubLatest(Long sidoId, AirQuality measurement) {
+        when(airQualityRepository.findLatestBySido(eq(sidoId)))
+                .thenReturn(Optional.of(measurement));
     }
 }
