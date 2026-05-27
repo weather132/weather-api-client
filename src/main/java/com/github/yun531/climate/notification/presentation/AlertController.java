@@ -107,20 +107,20 @@ public class AlertController {
         }
     }
 
-    @GetMapping("/summary")
+    @GetMapping("/combined")
     @Operation(
             summary = "단기 예보 + 기상특보 + 미세먼지 통합 알림",
             description = "3시간 단기예보 변동사항(RAIN_ONSET), 기상특보 변동사항(WARNING_ISSUED), "
                     + "미세먼지(AIR_POLLUTION)를 통합 조회"
     )
-    public ResponseEntity<List<AlertEvent>> getSummary(
+    public ResponseEntity<List<AlertEvent>> getCombined(
             @RequestParam List<String> regionIds,
             @RequestParam(value = "withinHours", required = false) Integer withinHours,
             @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds
     ) {
         try (var ignored = MdcContext.of(Map.of(
                 "traceId", TraceIdGenerator.generate(),
-                "job", "alerts-summary"))) {
+                "job", "alerts-combined"))) {
 
             if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
 
