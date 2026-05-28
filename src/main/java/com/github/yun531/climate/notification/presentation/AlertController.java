@@ -31,11 +31,10 @@ public class AlertController {
     @Operation(
             summary = "일기예보 변동사항 알림",
             description = "3시간 마다 발표되는 24시간이내의 일기예보의 변동사항에 대한 알림")
-    public ResponseEntity<List<AlertEvent>> get3HourIntervalForecast(
-            @RequestParam List<String> regionIds,
-            @RequestParam(value = "withinHours", required = false) Integer withinHours) {
+    public ResponseEntity<List<AlertEvent>> get3HourIntervalForecast(@RequestParam List<String> regionIds,
+                                                                     @RequestParam(value = "withinHours", required = false) Integer withinHours) {
 
-        try (var ignored = logger("alerts-rain-onset")) {
+        try (var ignored = setMdc("alerts-rain-onset")) {
 
             return makeResponse(regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours);
         }
@@ -46,7 +45,7 @@ public class AlertController {
             summary = "일기예보 요약 알림",
             description = "24시간 이내의 비오는 시간대와, 7일이내의 오전/오후 일기예보 알림")
     public ResponseEntity<List<AlertEvent>> getDayForecast(@RequestParam List<String> regionIds) {
-        try (var ignored = logger("alerts-rain-forecast")) {
+        try (var ignored = setMdc("alerts-rain-forecast")) {
 
             return makeResponse(regionIds,
                     EnumSet.of(AlertTypeEnum.RAIN_FORECAST),
@@ -59,17 +58,10 @@ public class AlertController {
     @Operation(
             summary = "기상특보 변동사항 알림",
             description = "1시간마다 발표되는 기상특보의 변동사항에 대한 알림")
-    public ResponseEntity<List<AlertEvent>> getWarning(
-            @RequestParam List<String> regionIds,
-            @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds) {
+    public ResponseEntity<List<AlertEvent>> getWarning(@RequestParam List<String> regionIds,
+                                                       @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds) {
 
-        try (var ignored = logger("alerts-warning-issued")) {
-
-            var cmd = new GenerateAlertsCommand(
-                        regionIds,
-                        EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
-                        toKindCodes(warningKinds),
-                        null);
+        try (var ignored = setMdc("alerts-warning-issued")) {
 
             return makeResponse(regionIds,
                     EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
@@ -82,12 +74,11 @@ public class AlertController {
     @Operation(
             summary = "단기 예보 + 기상특보 통합 알림",
             description = "3시간 단기예보 변동사항(RAIN_ONSET)과 기상특보 변동사항(WARNING_ISSUED)을 통합 조회")
-    public ResponseEntity<List<AlertEvent>> getSummary(
-            @RequestParam List<String> regionIds,
-            @RequestParam(value = "withinHours", required = false) Integer withinHours,
-            @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds) {
+    public ResponseEntity<List<AlertEvent>> getSummary(@RequestParam List<String> regionIds,
+                                                       @RequestParam(value = "withinHours", required = false) Integer withinHours,
+                                                       @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds) {
 
-        try (var ignored = logger("alerts-summary")) {
+        try (var ignored = setMdc("alerts-summary")) {
 
             Integer hours = validateWithinHours(withinHours);
 
@@ -109,7 +100,7 @@ public class AlertController {
         return withinHours < 1 || withinHours > 24;
     }
 
-    private MdcContext logger(String v2) {
+    private MdcContext setMdc(String v2) {
         return MdcContext.of(Map.of(
                 "traceId",
                 TraceIdGenerator.generate(),
