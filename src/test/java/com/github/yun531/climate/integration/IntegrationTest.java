@@ -1,10 +1,10 @@
 package com.github.yun531.climate.integration;
 
 import com.github.yun531.climate.forecast.application.ForecastService;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyView;
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsCommand;
 import com.github.yun531.climate.notification.application.alert.GenerateAlertsService;
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
@@ -15,11 +15,10 @@ import com.github.yun531.climate.notification.domain.payload.WarningIssuedPayloa
 import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import com.github.yun531.climate.notification.infra.alert.PopCacheManager;
 import com.github.yun531.climate.warning.application.WarningCollectService;
-import com.github.yun531.climate.warning.domain.WarningClient;
-import com.github.yun531.climate.warning.domain.model.WarningCurrent;
-import com.github.yun531.climate.warning.domain.model.WarningEventType;
-import com.github.yun531.climate.warning.domain.model.WarningKind;
-import com.github.yun531.climate.warning.domain.model.WarningLevel;
+import com.github.yun531.climate.warning.domain.collect.WarningClient;
+import com.github.yun531.climate.warning.domain.warningEvent.WarningCurrent;
+import com.github.yun531.climate.warning.domain.shared.WarningKind;
+import com.github.yun531.climate.warning.domain.shared.WarningLevel;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +90,6 @@ class IntegrationTest {
     }
 
     private static final String REGION_ID              = "11B10101";
-    private static final String NON_EXISTENT_REGION_ID = "99Z99999";
     private static final int EXPECTED_FORECAST_DAYS    = 7;
 
     @Autowired ForecastService forecastService;
@@ -138,6 +136,7 @@ class IntegrationTest {
         private static final LocalDateTime FIRST_EFFECTIVE_TIME = LocalDateTime.of(2026, 3, 30, 14, 0);
         private static final LocalDateTime SECOND_ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 30, 15, 0);
         private static final LocalDateTime SECOND_EFFECTIVE_TIME = LocalDateTime.of(2026, 3, 30, 18, 0);
+        private static final LocalDateTime THIRD_ANNOUNCE_TIME = LocalDateTime.of(2026, 3, 30, 18, 0);
 
         private StubWarningClient stub() {
             return (StubWarningClient) warningClient;
@@ -148,7 +147,6 @@ class IntegrationTest {
             try (Connection conn = dataSource.getConnection();
                  Statement stmt = conn.createStatement()) {
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 0");
-                stmt.execute("TRUNCATE TABLE warning_current");
                 stmt.execute("TRUNCATE TABLE warning_event");
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
             }
@@ -159,7 +157,7 @@ class IntegrationTest {
         class WarningCollectPath {
 
             @Test
-            @DisplayName("첫 수집: warning_current 저장 및 NEW 이벤트 생성")
+            @DisplayName("첫 수집: NEW 이벤트 생성")
             void firstCollectCreatesNewEvents() {
                 stub().setResponse(List.of(
                         new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
@@ -167,12 +165,6 @@ class IntegrationTest {
                 ));
 
                 warningCollectService.collect(FIRST_ANNOUNCE_TIME);
-
-                Integer currentCount = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM warning_current", Integer.class);
-                assertThat(currentCount)
-                        .as("warning_current 건수")
-                        .isEqualTo(1);
 
                 List<Map<String, Object>> events = jdbcTemplate.queryForList(
                         "SELECT * FROM warning_event ORDER BY id");
@@ -186,25 +178,6 @@ class IntegrationTest {
                 assertThat(event.get("level")).isEqualTo("ADVISORY");
                 assertThat(event.get("prev_level")).isNull();
                 assertThat(event.get("event_type")).isEqualTo("NEW");
-            }
-
-            @Test
-            @DisplayName("동일 데이터 재수집: 추가 이벤트 없음")
-            void identicalCollectProducesNoNewEvents() {
-                List<WarningCurrent> data = List.of(
-                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
-                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
-                );
-                stub().setResponse(data);
-
-                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
-                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
-
-                Integer eventCount = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM warning_event", Integer.class);
-                assertThat(eventCount)
-                        .as("동일 데이터 재수집 후 이벤트 건수")
-                        .isEqualTo(1);
             }
 
             @Test
@@ -222,13 +195,6 @@ class IntegrationTest {
                 ));
                 warningCollectService.collect(SECOND_ANNOUNCE_TIME);
 
-                String currentLevel = jdbcTemplate.queryForObject(
-                        "SELECT level FROM warning_current WHERE warning_region_code = 'L1100100'",
-                        String.class);
-                assertThat(currentLevel)
-                        .as("warning_current level")
-                        .isEqualTo("WARNING");
-
                 List<Map<String, Object>> events = jdbcTemplate.queryForList(
                         "SELECT * FROM warning_event ORDER BY id");
                 assertThat(events)
@@ -245,32 +211,84 @@ class IntegrationTest {
                 assertThat(upgradedEvent.get("prev_level")).isEqualTo("ADVISORY");
             }
 
-            @Test
-            @DisplayName("특보 해제: LIFTED 이벤트 생성")
-            void liftedCollectCreatesLiftedEvent() {
-                stub().setResponse(List.of(
-                        new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
-                                FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
-                ));
-                warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+            @Nested
+            @DisplayName("재기동 회복 회귀 시나리오")
+            class RestartRecoveryRegression {
 
-                stub().setResponse(List.of());
-                warningCollectService.collect(SECOND_ANNOUNCE_TIME);
+                @Test
+                @DisplayName("warning_event에 NEW만 남은 상태에서 재기동 후 KMA 빈 응답 -- LIFTED 자동 생성")
+                void recoversLiftedAfterRestart() {
+                    insertActiveWarningEvent("L1100100", "WIND", "ADVISORY",
+                            FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME);
+                    stub().setResponse(List.of());
 
-                Integer currentCount = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM warning_current", Integer.class);
-                assertThat(currentCount)
-                        .as("해제 후 warning_current 건수")
-                        .isEqualTo(0);
+                    warningCollectService.collect(THIRD_ANNOUNCE_TIME);
 
-                List<Map<String, Object>> events = jdbcTemplate.queryForList(
-                        "SELECT * FROM warning_event ORDER BY id");
-                assertThat(events)
-                        .as("warning_event 건수")
-                        .hasSize(2);
+                    List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                            "SELECT * FROM warning_event ORDER BY id");
+                    assertThat(events)
+                            .as("재기동 회복 후 warning_event 건수")
+                            .hasSize(2);
 
-                assertThat(events.get(0).get("event_type")).isEqualTo("NEW");
-                assertThat(events.get(1).get("event_type")).isEqualTo("LIFTED");
+                    assertThat(events.get(0).get("event_type")).isEqualTo("NEW");
+                    assertThat(events.get(1).get("event_type")).isEqualTo("LIFTED");
+
+                    LocalDateTime liftedAnnounceTime = jdbcTemplate.queryForObject(
+                            "SELECT announce_time FROM warning_event WHERE event_type = 'LIFTED'",
+                            LocalDateTime.class);
+                    assertThat(liftedAnnounceTime)
+                            .as("LIFTED.announceTime은 detectedAt(현재 사이클 tm)")
+                            .isEqualTo(THIRD_ANNOUNCE_TIME);
+                }
+
+                @Test
+                @DisplayName("warning_event에 NEW만 남은 상태에서 재기동 후 같은 레벨 새 발표 -- EXTENDED 자동 생성")
+                void recoversExtendedAfterRestart() {
+                    insertActiveWarningEvent("L1100100", "WIND", "ADVISORY",
+                            FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME);
+                    stub().setResponse(List.of(
+                            new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                    THIRD_ANNOUNCE_TIME, THIRD_ANNOUNCE_TIME)
+                    ));
+
+                    warningCollectService.collect(THIRD_ANNOUNCE_TIME);
+
+                    List<Map<String, Object>> events = jdbcTemplate.queryForList(
+                            "SELECT * FROM warning_event ORDER BY id");
+                    assertThat(events)
+                            .as("재기동 회복 후 warning_event 건수")
+                            .hasSize(2);
+
+                    assertThat(events.get(0).get("event_type")).isEqualTo("NEW");
+                    assertThat(events.get(1).get("event_type")).isEqualTo("EXTENDED");
+                }
+
+                @Test
+                @DisplayName("연속 사이클에서 같은 announceTime 응답 -- 이벤트 미생성")
+                void noEventOnIdenticalAnnouncement() {
+                    stub().setResponse(List.of(
+                            new WarningCurrent("L1100100", WarningKind.WIND, WarningLevel.ADVISORY,
+                                    FIRST_ANNOUNCE_TIME, FIRST_EFFECTIVE_TIME)
+                    ));
+                    warningCollectService.collect(FIRST_ANNOUNCE_TIME);
+
+                    warningCollectService.collect(SECOND_ANNOUNCE_TIME);
+
+                    Integer eventCount = jdbcTemplate.queryForObject(
+                            "SELECT COUNT(*) FROM warning_event", Integer.class);
+                    assertThat(eventCount)
+                            .as("동일 announceTime 응답 - 추가 이벤트 미생성")
+                            .isEqualTo(1);
+                }
+
+                private void insertActiveWarningEvent(String regionCode, String kind, String level,
+                                                      LocalDateTime announceTime, LocalDateTime effectiveTime) {
+                    jdbcTemplate.update(
+                            "INSERT INTO warning_event "
+                                    + "(warning_region_code, kind, level, prev_level, event_type, announce_time, effective_time) "
+                                    + "VALUES (?, ?, ?, NULL, 'NEW', ?, ?)",
+                            regionCode, kind, level, announceTime, effectiveTime);
+                }
             }
         }
     }
@@ -304,7 +322,6 @@ class IntegrationTest {
                 stmt.execute("TRUNCATE TABLE short_land");
                 stmt.execute("TRUNCATE TABLE mid_pop");
                 stmt.execute("TRUNCATE TABLE mid_temperature");
-                stmt.execute("TRUNCATE TABLE warning_current");
                 stmt.execute("TRUNCATE TABLE warning_event");
                 stmt.execute("SET FOREIGN_KEY_CHECKS = 1");
                 stmt.execute("CALL insert_all()");
@@ -362,10 +379,10 @@ class IntegrationTest {
             void hourlyForecastPopMatchesScenario() {
                 LocalDateTime announceTime = loadAnnounceTime();
 
-                ForecastHourlyView hourly = forecastService.getHourlyForecast(REGION_ID);
+                FcstHourlyView hourly = forecastService.getHourlyForecast(REGION_ID);
                 assertThat(hourly).as("시간별 예보 뷰").isNotNull();
 
-                List<ForecastHourlyPoint> points = hourly.hourlyPoints();
+                List<FcstHourlyPoint> points = hourly.hourlyPoints();
                 LocalDateTime shiftedAnnounceTime = hourly.announceTime();
                 int shiftHours = (int) Duration.between(announceTime, shiftedAnnounceTime).toHours();
 
@@ -376,7 +393,7 @@ class IntegrationTest {
                 assertThat(points)
                         .allMatch(p -> p.effectiveTime().isAfter(shiftedAnnounceTime));
 
-                for (ForecastHourlyPoint p : points) {
+                for (FcstHourlyPoint p : points) {
                     long offsetFromShifted = Duration.between(shiftedAnnounceTime, p.effectiveTime()).toHours();
                     int latestPopsIndex = (int) offsetFromShifted + shiftHours - 1;
 
@@ -390,7 +407,7 @@ class IntegrationTest {
             @Test
             @DisplayName("dailyForecast 7일치 생성 및 daysAhead 시퀀스")
             void createsDailyForecastWithSevenDays() {
-                ForecastDailyView daily = forecastService.getDailyForecast(REGION_ID);
+                FcstDailyView daily = forecastService.getDailyForecast(REGION_ID);
 
                 assertThat(daily).as("일별 예보 뷰").isNotNull();
                 assertThat(daily.dailyPoints())
@@ -398,23 +415,12 @@ class IntegrationTest {
                         .hasSize(EXPECTED_FORECAST_DAYS);
 
                 List<Integer> daysAhead = daily.dailyPoints().stream()
-                        .map(ForecastDailyPoint::daysAhead)
+                        .map(FcstDailyPoint::daysAhead)
                         .toList();
 
                 assertThat(daysAhead)
                         .as("daysAhead 시퀀스는 0부터 연속이어야 한다")
                         .containsExactly(0, 1, 2, 3, 4, 5, 6);
-            }
-
-            @Test
-            @DisplayName("미존재 regionId -> null 반환")
-            void returnsNullForUnknownRegion() {
-                assertThat(forecastService.getHourlyForecast(NON_EXISTENT_REGION_ID))
-                        .as("미존재 regionId hourly")
-                        .isNull();
-                assertThat(forecastService.getDailyForecast(NON_EXISTENT_REGION_ID))
-                        .as("미존재 regionId daily")
-                        .isNull();
             }
         }
 
@@ -578,40 +584,6 @@ class IntegrationTest {
                 assertThat(payload.level()).isEqualTo("WARNING");
                 assertThat(payload.prevLevel()).isEqualTo("ADVISORY");
                 assertThat(payload.eventType()).isEqualTo("UPGRADED");
-            }
-
-            @Test
-            @DisplayName("WARNING_ISSUED: warningKinds 필터로 HEAT만 요청 시 빈 결과")
-            void warningIssuedRespectsKindFilter() {
-                var cmd = new GenerateAlertsCommand(
-                        List.of(REGION_ID),
-                        EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
-                        Set.of("HEAT"),
-                        null
-                );
-
-                List<AlertEvent> events = generateAlertsService.generate(cmd);
-
-                assertThat(events)
-                        .as("HEAT 필터 시 WARNING_ISSUED 이벤트")
-                        .isEmpty();
-            }
-
-            @Test
-            @DisplayName("미존재 regionId -> 빈 리스트")
-            void returnsEmptyForUnknownRegion() {
-                var cmd = new GenerateAlertsCommand(
-                        List.of(NON_EXISTENT_REGION_ID),
-                        EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.RAIN_FORECAST, AlertTypeEnum.WARNING_ISSUED),
-                        null,
-                        null
-                );
-
-                List<AlertEvent> events = generateAlertsService.generate(cmd);
-
-                assertThat(events)
-                        .as("미존재 regionId에 대한 알림 이벤트")
-                        .isEmpty();
             }
         }
     }

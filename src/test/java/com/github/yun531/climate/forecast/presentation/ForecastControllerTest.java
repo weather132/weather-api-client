@@ -1,10 +1,10 @@
 package com.github.yun531.climate.forecast.presentation;
 
 import com.github.yun531.climate.forecast.application.ForecastService;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastDailyView;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyPoint;
-import com.github.yun531.climate.forecast.domain.readmodel.ForecastHourlyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstDailyView;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyPoint;
+import com.github.yun531.climate.forecast.domain.readmodel.FcstHourlyView;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,9 +36,9 @@ class ForecastControllerTest {
         @Test
         @DisplayName("정상 응답 -> 200 + 직렬화")
         void returnsOk() throws Exception {
-            ForecastHourlyView view = new ForecastHourlyView("R1", ANNOUNCE_TIME, List.of(
-                    new ForecastHourlyPoint(ANNOUNCE_TIME.plusHours(1), 5, 30),
-                    new ForecastHourlyPoint(ANNOUNCE_TIME.plusHours(2), 8, 60)
+            FcstHourlyView view = new FcstHourlyView("R1", ANNOUNCE_TIME, List.of(
+                    new FcstHourlyPoint(ANNOUNCE_TIME.plusHours(1), 5, 30),
+                    new FcstHourlyPoint(ANNOUNCE_TIME.plusHours(2), 8, 60)
             ));
             when(forecastService.getHourlyForecast("R1")).thenReturn(view);
 
@@ -74,9 +74,9 @@ class ForecastControllerTest {
         @Test
         @DisplayName("정상 응답 -> 200 + 직렬화")
         void returnsOk() throws Exception {
-            ForecastDailyView view = new ForecastDailyView("R1", ANNOUNCE_TIME, List.of(
-                    new ForecastDailyPoint(0, -5, 5, 30, 60),
-                    new ForecastDailyPoint(1, -3, 7, 20, 40)
+            FcstDailyView view = new FcstDailyView("R1", ANNOUNCE_TIME, List.of(
+                    new FcstDailyPoint(0, -5, 5, 30, 60),
+                    new FcstDailyPoint(1, -3, 7, 20, 40)
             ));
             when(forecastService.getDailyForecast("R1")).thenReturn(view);
 

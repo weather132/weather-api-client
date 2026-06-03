@@ -72,6 +72,7 @@ jobs:
 #                -e DB_USERNAME=climate_user \
 #                -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
 #                -e API_KEY=${{ secrets.API_KEY }} \
+#                -e AIR_QUALITY_API_KEY=${{ secrets.AIR_QUALITY_API_KEY }} \
 #                -e FIREBASE_SA_PATH=/app/firebase-sa.json \
 #                ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
 #            "

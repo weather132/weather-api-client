@@ -17,6 +17,7 @@ public class CityRegionCode {
     @Embedded
     private Coordinates coordinates;
     private Long provinceRegionCodeId;
+    private Long sidoRegionCodeId;
 
     protected CityRegionCode() {}
 }

@@ -3,6 +3,7 @@ package com.github.yun531.climate.notification.application.alert;
 import com.github.yun531.climate.notification.domain.adjust.RainForecastAdjuster;
 import com.github.yun531.climate.notification.domain.adjust.RainOnsetAdjuster;
 import com.github.yun531.climate.notification.domain.detect.RainForecastDetector;
+import com.github.yun531.climate.notification.domain.detect.PmAlertDetector;
 import com.github.yun531.climate.notification.domain.detect.RainOnsetDetector;
 import com.github.yun531.climate.notification.domain.detect.WarningIssuedDetector;
 import com.github.yun531.climate.notification.domain.model.AlertEvent;
@@ -10,6 +11,7 @@ import com.github.yun531.climate.notification.domain.model.AlertTypeEnum;
 import com.github.yun531.climate.notification.domain.payload.RainForecastPayload;
 import com.github.yun531.climate.notification.domain.payload.RainOnsetPayload;
 import com.github.yun531.climate.notification.domain.payload.WarningIssuedPayload;
+import com.github.yun531.climate.notification.domain.readmodel.AirQualityViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.PopView;
 import com.github.yun531.climate.notification.domain.readmodel.PopViewReader;
 import com.github.yun531.climate.notification.domain.readmodel.WarningView;
@@ -35,9 +37,11 @@ class GenerateAlertsServiceTest {
 
     @Mock PopViewReader popViewReader;
     @Mock WarningViewReader warningViewReader;
+    @Mock AirQualityViewReader airQualityViewReader;
     @Mock RainOnsetDetector rainOnsetDetector;
     @Mock RainForecastDetector rainForecastDetector;
     @Mock WarningIssuedDetector warningIssuedDetector;
+    @Mock PmAlertDetector pmAlertDetector;
     @Mock RainOnsetAdjuster rainOnsetAdjuster;
     @Mock RainForecastAdjuster rainForecastAdjuster;
 
@@ -48,8 +52,9 @@ class GenerateAlertsServiceTest {
     @BeforeEach
     void setUp() {
         service = new GenerateAlertsService(
-                popViewReader, warningViewReader, rainOnsetDetector, rainForecastDetector,
-                warningIssuedDetector, rainOnsetAdjuster, rainForecastAdjuster, 3
+                popViewReader, warningViewReader, airQualityViewReader,
+                rainOnsetDetector, rainForecastDetector, warningIssuedDetector, pmAlertDetector,
+                rainOnsetAdjuster, rainForecastAdjuster, 3
         );
     }
 

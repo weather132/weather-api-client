@@ -119,21 +119,21 @@ class AlertControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // --- summary ---
+    // --- combined ---
 
     @Test
-    @DisplayName("GET /summary -> RAIN_ONSET + WARNING_ISSUED 통합 Command 조립")
-    void summary_assemblesCorrectCommand() throws Exception {
+    @DisplayName("GET /combined -> RAIN_ONSET + WARNING_ISSUED + AIR_POLLUTION 통합 Command 조립")
+    void combined_assemblesCorrectCommand() throws Exception {
         when(service.generate(cmdCaptor.capture())).thenReturn(List.of());
 
-        mvc.perform(get(BASE_PATH + "/summary")
+        mvc.perform(get(BASE_PATH + "/combined")
                         .param("regionIds", "R1", "R2")
                         .param("withinHours", "12"))
                 .andExpect(status().isOk());
 
         GenerateAlertsCommand cmd = cmdCaptor.getValue();
         assertThat(cmd.enabledTypes())
-                .containsExactlyInAnyOrder(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED);
+                .containsExactlyInAnyOrder(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED, AlertTypeEnum.AIR_POLLUTION);
         assertThat(cmd.regionIds()).containsExactly("R1", "R2");
         assertThat(cmd.withinHours()).isEqualTo(12);
     }
