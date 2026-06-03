@@ -30,61 +30,43 @@ public class AlertController {
     @GetMapping("/rain-onset")
     @Operation(
             summary = "일기예보 변동사항 알림",
-            description = "3시간 마다 발표되는 24시간이내의 일기예보의 변동사항에 대한 알림"
-    )
-    public ResponseEntity<List<AlertEvent>> get3HourIntervalForecast(
-            @RequestParam List<String> regionIds,
-            @RequestParam(value = "withinHours", required = false) Integer withinHours
-    ) {
-        try (var ignored = MdcContext.of(Map.of(
-                "traceId", TraceIdGenerator.generate(),
-                "job", "alerts-rain-onset"))) {
+            description = "3시간 마다 발표되는 24시간이내의 일기예보의 변동사항에 대한 알림")
+    public ResponseEntity<List<AlertEvent>> get3HourIntervalForecast(@RequestParam List<String> regionIds,
+                                                                     @RequestParam(value = "withinHours", required = false) Integer withinHours) {
 
-            if (withinHours != null && (withinHours < 1 || withinHours > 24)) withinHours = 24;
+        try (var ignored = setMdc("alerts-rain-onset")) {
 
-            var cmd = new GenerateAlertsCommand(
-                    regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours
-            );
-            return ResponseEntity.ok(service.generate(cmd));
+            return makeResponse(regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, withinHours);
         }
     }
 
     @GetMapping("/rain-forecast")
     @Operation(
             summary = "일기예보 요약 알림",
-            description = "24시간 이내의 비오는 시간대와, 7일이내의 오전/오후 일기예보 알림"
-    )
-    public ResponseEntity<List<AlertEvent>> getDayForecast(
-            @RequestParam List<String> regionIds
-    ) {
-        try (var ignored = MdcContext.of(Map.of(
-                "traceId", TraceIdGenerator.generate(),
-                "job", "alerts-rain-forecast"))) {
+            description = "24시간 이내의 비오는 시간대와, 7일이내의 오전/오후 일기예보 알림")
+    public ResponseEntity<List<AlertEvent>> getDayForecast(@RequestParam List<String> regionIds) {
+        try (var ignored = setMdc("alerts-rain-forecast")) {
 
-            var cmd = new GenerateAlertsCommand(
-                    regionIds, EnumSet.of(AlertTypeEnum.RAIN_FORECAST), null, null
-            );
-            return ResponseEntity.ok(service.generate(cmd));
+            return makeResponse(regionIds,
+                    EnumSet.of(AlertTypeEnum.RAIN_FORECAST),
+                    null,
+                    null);
         }
     }
 
     @GetMapping("/warning-issued")
     @Operation(
             summary = "기상특보 변동사항 알림",
-            description = "1시간마다 발표되는 기상특보의 변동사항에 대한 알림"
-    )
-    public ResponseEntity<List<AlertEvent>> getWarning(
-            @RequestParam List<String> regionIds,
-            @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds
-    ) {
-        try (var ignored = MdcContext.of(Map.of(
-                "traceId", TraceIdGenerator.generate(),
-                "job", "alerts-warning-issued"))) {
+            description = "1시간마다 발표되는 기상특보의 변동사항에 대한 알림")
+    public ResponseEntity<List<AlertEvent>> getWarning(@RequestParam List<String> regionIds,
+                                                       @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds) {
 
-            var cmd = new GenerateAlertsCommand(
-                    regionIds, EnumSet.of(AlertTypeEnum.WARNING_ISSUED), toKindCodes(warningKinds), null
-            );
-            return ResponseEntity.ok(service.generate(cmd));
+        try (var ignored = setMdc("alerts-warning-issued")) {
+
+            return makeResponse(regionIds,
+                    EnumSet.of(AlertTypeEnum.WARNING_ISSUED),
+                    warningKinds,
+                    null);
         }
     }
 
@@ -133,8 +115,40 @@ public class AlertController {
         }
     }
 
+
     @Nullable
-    private static Set<String> toKindCodes(@Nullable Set<WarningKind> kinds) {
+    private Set<String> toKindCodes(@Nullable Set<WarningKind> kinds) {
         return kinds == null ? null : kinds.stream().map(Enum::name).collect(toUnmodifiableSet());
     }
+
+    private Integer validateWithinHours(Integer withinHours) {
+        return withinHours != null && isHourOutOfDayRange(withinHours) ? 24 : withinHours;
+    }
+
+    private boolean isHourOutOfDayRange(Integer withinHours) {
+        return withinHours < 1 || withinHours > 24;
+    }
+
+    private MdcContext setMdc(String v2) {
+        return MdcContext.of(Map.of(
+                "traceId",
+                TraceIdGenerator.generate(),
+                "job",
+                v2));
+    }
+
+    private ResponseEntity<List<AlertEvent>> makeResponse(List<String> regionIds,
+                                                          EnumSet<AlertTypeEnum> rainOnset,
+                                                          Set<WarningKind> warningKinds,
+                                                          Integer hours) {
+
+        var cmd = new GenerateAlertsCommand(
+                regionIds,
+                rainOnset,
+                toKindCodes(warningKinds),
+                hours);
+
+        return ResponseEntity.ok(service.generate(cmd));
+    }
+
 }
