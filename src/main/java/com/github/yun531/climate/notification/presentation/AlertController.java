@@ -120,7 +120,7 @@ public class AlertController {
     }
 
     private Integer validateWithinHours(Integer withinHours) {
-        return withinHours != null && isHourOutOfDayRange(withinHours) ? 24 : withinHours;
+        return withinHours != null && isHourOutOfDayRange(withinHours) ? Integer.valueOf(24) : withinHours;
     }
 
     private boolean isHourOutOfDayRange(Integer withinHours) {
