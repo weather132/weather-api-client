@@ -38,7 +38,10 @@ public class AlertController {
 
             Integer hours = validateWithinHours(withinHours);
 
-            return makeResponse(regionIds, EnumSet.of(AlertTypeEnum.RAIN_ONSET), null, hours);
+            return makeResponse(regionIds,
+                    EnumSet.of(AlertTypeEnum.RAIN_ONSET),
+                    null,
+                    hours);
         }
     }
 
@@ -78,41 +81,35 @@ public class AlertController {
             description = "매시 발표되는 PM10/PM2.5 측정값이 임계치를 초과할 때의 알림")
     public ResponseEntity<List<AlertEvent>> getAirPollution(@RequestParam List<String> regionIds) {
 
-        try (var ignored = MdcContext.of(Map.of(
-                "traceId", TraceIdGenerator.generate(),
-                "job", "alerts-air-pollution"))) {
+        try (var ignored = setMdc("alerts-air-pollution")) {
 
-            var cmd = new GenerateAlertsCommand(
-                    regionIds, EnumSet.of(AlertTypeEnum.AIR_POLLUTION), null, null);
-
-            return ResponseEntity.ok(service.generate(cmd));
+            return makeResponse(regionIds,
+                    EnumSet.of(AlertTypeEnum.AIR_POLLUTION),
+                    null,
+                    null);
         }
     }
 
     @GetMapping("/combined")
     @Operation(
             summary = "단기 예보 + 기상특보 + 미세먼지 통합 알림",
-            description = "3시간 단기예보 변동사항(RAIN_ONSET), 기상특보 변동사항(WARNING_ISSUED), "
-                    + "미세먼지(AIR_POLLUTION)를 통합 조회")
+            description = "3시간 단기예보 변동사항(RAIN_ONSET), 기상특보 변동사항(WARNING_ISSUED), 미세먼지(AIR_POLLUTION)를 통합 조회")
     public ResponseEntity<List<AlertEvent>> getCombined(@RequestParam List<String> regionIds,
                                                         @RequestParam(value = "withinHours", required = false) Integer withinHours,
                                                         @RequestParam(value = "warningKinds", required = false) Set<WarningKind> warningKinds) {
 
-        try (var ignored = MdcContext.of(Map.of(
-                "traceId", TraceIdGenerator.generate(),
-                "job", "alerts-combined"))) {
+        try (var ignored = setMdc("alerts-combined")) {
 
             Integer hours = validateWithinHours(withinHours);
 
-            var cmd = new GenerateAlertsCommand(
+            return makeResponse(
                     regionIds,
                     EnumSet.of(AlertTypeEnum.RAIN_ONSET, AlertTypeEnum.WARNING_ISSUED, AlertTypeEnum.AIR_POLLUTION),
-                    toKindCodes(warningKinds), hours
+                    warningKinds,
+                    hours
             );
-            return ResponseEntity.ok(service.generate(cmd));
         }
     }
-
 
     @Nullable
     private Set<String> toKindCodes(@Nullable Set<WarningKind> kinds) {
@@ -127,26 +124,26 @@ public class AlertController {
         return withinHours < 1 || withinHours > 24;
     }
 
-    private MdcContext setMdc(String v2) {
+    private MdcContext setMdc(String jobName) {
         return MdcContext.of(Map.of(
                 "traceId",
                 TraceIdGenerator.generate(),
                 "job",
-                v2));
+                jobName
+        ));
     }
 
     private ResponseEntity<List<AlertEvent>> makeResponse(List<String> regionIds,
-                                                          EnumSet<AlertTypeEnum> rainOnset,
+                                                          EnumSet<AlertTypeEnum> alertTypes,
                                                           Set<WarningKind> warningKinds,
                                                           Integer hours) {
 
         var cmd = new GenerateAlertsCommand(
                 regionIds,
-                rainOnset,
+                alertTypes,
                 toKindCodes(warningKinds),
-                hours);
-
+                hours
+        );
         return ResponseEntity.ok(service.generate(cmd));
     }
-
 }
