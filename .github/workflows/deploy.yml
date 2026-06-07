@@ -1,25 +1,23 @@
-name: Build & Deploy to GCE
+name: Build & Deploy to Pi
 
 on:
   push:
     branches: [ main ]
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: asia-northeast3
-  REPO: climate-repo
-  IMAGE: climate-api
-  VM_NAME: instance-20260402-055048
-  VM_ZONE: asia-northeast3-a
+  IMAGE: ghcr.io/weather132/weather-api-client
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
 
-      # ── test ──
+      # ── 테스트 (amd64 네이티브, 빠름) ──
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -29,50 +27,41 @@ jobs:
       - name: Test with Gradle
         run: ./gradlew test
 
-#      # ── GCP 인증 ──
-#      - id: auth
-#        uses: google-github-actions/auth@v2
-#        with:
-#          credentials_json: ${{ secrets.GCP_SA_KEY }}
-#
-#      - uses: google-github-actions/setup-gcloud@v2
-#
-#      - run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-#
-#      # ── Firebase 서비스 계정 복원 ──
-#      - name: Decode Firebase service account
-#        run: echo "${{ secrets.FIREBASE_SA_BASE64 }}" | base64 -d > firebase-sa.json
-#
-#      # ── Docker 빌드 & 푸시 ──
-#      - name: Build and push image
-#        run: |
-#          TAG=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:${GITHUB_SHA::7}
-#          LATEST=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
-#
-#          docker build -t ${TAG} -t ${LATEST} .
-#          docker push ${TAG}
-#          docker push ${LATEST}
-#
-#      # ── VM 배포 ──
-#      - name: Deploy to GCE
-#        run: |
-#          gcloud compute ssh ${VM_NAME} \
-#            --zone=${VM_ZONE} \
-#            --command="
-#              gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet && \
-#              docker pull ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest && \
-#              docker stop climate-api || true && \
-#              docker rm climate-api || true && \
-#              docker run -d \
-#                --name climate-api \
-#                --restart unless-stopped \
-#                -p 8080:8080 \
-#                -e TZ=Asia/Seoul \
-#                -e DB_HOST=10.178.0.5 \
-#                -e DB_USERNAME=climate_user \
-#                -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-#                -e API_KEY=${{ secrets.API_KEY }} \
-#                -e AIR_QUALITY_API_KEY=${{ secrets.AIR_QUALITY_API_KEY }} \
-#                -e FIREBASE_SA_PATH=/app/firebase-sa.json \
-#                ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest
-#            "
+      # ── arm64 빌드 준비 ──
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── GHCR 로그인 ──
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── arm64 이미지 빌드 & 푸시 ──
+      - name: Build and push (arm64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+
+      # ── Pi 배포 (SSH) ──
+      - name: Deploy to Pi
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PI_HOST }}
+          port: ${{ secrets.PI_PORT }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          script: |
+            cd ~/Desktop/project/climate
+            sudo -n docker compose pull climate-app
+            sudo -n docker compose up -d climate-app
