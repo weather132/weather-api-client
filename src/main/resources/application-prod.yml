@@ -10,6 +10,10 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+api-key: ${API_KEY}
+air-quality:
+  api-key: ${AIR_QUALITY_API_KEY}
+
 firebase:
   service-account-path: ${FIREBASE_SA_PATH:/app/firebase-sa.json}
 
@@ -27,4 +31,4 @@ management:
 
 logging:
   loki:
-    url: ${LOKI_URL:http://monitoring:3100/loki/api/v1/push}
+    url: ${LOKI_URL:http://loki:3100/loki/api/v1/push}
