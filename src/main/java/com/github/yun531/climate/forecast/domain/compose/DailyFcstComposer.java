@@ -172,9 +172,13 @@ public class DailyFcstComposer {
                 .map(ShortLand::getAnnounceTime)
                 .orElse(null);
 
-        return (shortLandAnnounceTime != null)
-                ? shortLandAnnounceTime
-                : midResult.announceTime();
+        return latestOf(shortLandAnnounceTime, midResult.announceTime());
+    }
+
+    private LocalDateTime latestOf(LocalDateTime a, LocalDateTime b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return a.isAfter(b) ? a : b;
     }
 
     private void logIfDegraded(CityRegionCode regionCode, DailyComposeResult result) {
